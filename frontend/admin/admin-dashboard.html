@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <link rel="stylesheet" href="../assets/css/admin-dark.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        
+        /* Simplified Header Card */
+        .admin-hero {
+            background: linear-gradient(135deg, #1d1d1f, #434345);
+            color: white;
+            padding: var(--l-card-p);
+            border-radius: var(--l-card-r);
+            margin-bottom: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Dark cards for admin - now in admin-dark.css */
+        
+        .grid-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 24px;
+            margin-bottom: 16px;
+        }
+        
+
+    </style>
+</head>
+<body>
+    
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        
+        <main class="liquid-main">
+            <header style="margin-bottom: 16px;">
+                <h1 class="vibrant-h1">Admin Center</h1>
+                <p style="color: #6e6e73; font-size: 1.2rem; font-weight: 500;">Monitor your pharmacy orders and platform health.</p>
+            </header>
+
+            <div class="admin-hero" style="padding: 24px 32px; border-radius: 20px;">
+                <h2 style="font-size: 1.4rem; margin-bottom: 4px; font-weight: 800;">Platform Overview</h2>
+                <p style="font-weight: 500; font-size: 0.85rem; margin-bottom: 0;">Real-time platform metrics</p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 24px;">
+                <div class="liquid-card">
+                    <h3 style="font-weight: 800; margin-bottom: 20px;">Revenue Trend (Last 30 Days)</h3>
+                    <canvas id="revenueChart" height="100"></canvas>
+                </div>
+                <div class="liquid-card">
+                    <h3 style="font-weight: 800; margin-bottom: 20px;">User Growth</h3>
+                    <canvas id="growthChart" height="200"></canvas>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+                <div class="liquid-card">
+                    <h3 style="font-weight: 800; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                        <i data-lucide="alert-circle" style="color: var(--warning);"></i> Clinical Actions Required
+                    </h3>
+                    <div id="actions-container" style="display: grid; gap: 12px;">
+                        <div style="padding: 32px; text-align: center; color: #6e6e73; font-weight: 600;">
+                            Scanning clinical nodes...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="liquid-card">
+                    <h3 style="font-weight: 800; margin-bottom: 20px;">Platform Status</h3>
+                    <div id="status-container" style="display: flex; flex-direction: column; gap: 16px;">
+                        <div style="padding: 20px; text-align: center; color: #6e6e73;">
+                            Syncing telemetry...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        // Check Admin Auth
+        const user = auth.getUser();
+        if (!user || user.role !== 'admin') {
+            console.warn("Unauthorized Access: Admin credentials missing or role mismatch.");
+            window.location.href = '../auth/admin-login.html';
+        }
+
+        // Load Sidebar
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('admin');
+        lucide.createIcons();
+
+        let revenueChart, growthChart;
+
+        // Phase 6: API Wiring
+        async function loadDashboard() {
+            try {
+                components.showLoader();
+                const [dashboardRes, reportsRes] = await Promise.all([
+                    api.get('/admin/dashboard'),
+                    api.get('/admin/reports/revenue')
+                ]);
+
+                const stats = dashboardRes.data.stats;
+                const reports = reportsRes.data;
+
+                // Update Stats
+                document.querySelector('.admin-hero p').innerHTML = `
+                    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-top:16px;">
+                        <a href="admin-users.html" style="text-decoration:none; color:#fff; background:linear-gradient(135deg, #007aff, #5856d6); padding:16px; border-radius:14px; text-align:center; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+                            <div style="font-size:0.65rem; opacity:1; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#fff;">Total Users</div>
+                            <div style="font-size:1.6rem; font-weight:800; margin-top:4px; color:#fff;">${stats.total_users}</div>
+                        </a>
+                        <a href="admin-medicines.html" style="text-decoration:none; color:#fff; background:linear-gradient(135deg, #34c759, #30d158); padding:16px; border-radius:14px; text-align:center; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+                            <div style="font-size:0.65rem; opacity:1; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#fff;">Medicines</div>
+                            <div style="font-size:1.6rem; font-weight:800; margin-top:4px; color:#fff;">${stats.total_medicines || 0}</div>
+                        </a>
+                        <a href="admin-financials.html" style="text-decoration:none; color:#fff; background:linear-gradient(135deg, #ff9500, #ff6b00); padding:16px; border-radius:14px; text-align:center; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+                            <div style="font-size:0.65rem; opacity:1; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#fff;">Revenue</div>
+                            <div style="font-size:1.6rem; font-weight:800; margin-top:4px; color:#fff;">₹${stats.total_revenue.toLocaleString()}</div>
+                        </a>
+                        <a href="admin-pharmacy-approvals.html" style="text-decoration:none; color:#fff; background:linear-gradient(135deg, #ff3b30, #ff6961); padding:16px; border-radius:14px; text-align:center; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+                            <div style="font-size:0.65rem; opacity:1; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#fff;">Pending RX</div>
+                            <div style="font-size:1.6rem; font-weight:800; margin-top:4px; color:#fff;">${stats.pending_reviews}</div>
+                        </a>
+                    </div>
+                `;
+
+                // Render Charts
+                renderCharts(reports);
+
+                // Update Clinical Actions
+                const actionsContainer = document.getElementById('actions-container');
+                let actionsHtml = '';
+                
+                // 1. Show Pending Dispatches (Priority)
+                if (dashboardRes.data.unassigned && dashboardRes.data.unassigned.length > 0) {
+                    actionsHtml += dashboardRes.data.unassigned.map(o => `
+                        <div style="background: rgba(255,149,0,0.05); padding: 12px; border-radius: 12px; border: 1px solid rgba(255,149,0,0.1); display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-weight: 700; font-size: 0.9rem;">Dispatch Required: ORD-${o.id}</div>
+                                <div style="font-size: 0.75rem; color: #6e6e73;">Customer: ${o.customer} · ₹${o.amount}</div>
+                            </div>
+                            <button class="pill-button" style="padding: 6px 12px; font-size: 0.7rem; background: var(--primary);" onclick="window.location.href='admin-order-pulse.html'">Assign</button>
+                        </div>
+                    `).join('');
+                }
+
+                // 2. Show System Logs (Secondary)
+                if (dashboardRes.data.system_logs && dashboardRes.data.system_logs.length > 0) {
+                    actionsHtml += dashboardRes.data.system_logs.map(log => `
+                        <div style="background: rgba(0,122,255,0.05); padding: 12px; border-radius: 12px; border: 1px solid rgba(0,122,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-weight: 700; font-size: 0.9rem;">${log.action.replace('_', ' ')}</div>
+                                <div style="font-size: 0.75rem; color: #6e6e73;">${log.target_type} #${log.target_id} · ${new Date(log.created_at).toLocaleTimeString()}</div>
+                            </div>
+                            <span style="font-size: 0.7rem; font-weight: 800; color: #007aff;">LOGGED</span>
+                        </div>
+                    `).join('');
+                }
+
+                actionsContainer.innerHTML = actionsHtml || '<div style="padding: 32px; text-align: center; color: #6e6e73;">No urgent actions required.</div>';
+
+                // Update Status
+                const statusContainer = document.getElementById('status-container');
+                statusContainer.innerHTML = `
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="font-weight: 600; color: #6e6e73;">Total Vendors</span>
+                        <span style="font-weight: 700;">${stats.total_vendors} Nodes</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="font-weight: 600; color: #6e6e73;">Low Stock Alerts</span>
+                        <span style="font-weight: 700; color: ${stats.low_stock_alerts > 0 ? 'var(--danger)' : 'var(--success)'};">${stats.low_stock_alerts} Alerts</span>
+                    </div>
+                    <div style="height: 1px; background: rgba(0,0,0,0.05); margin: 8px 0;"></div>
+                    <p style="font-size: 0.75rem; color: #6e6e73; font-weight: 500;">Dossier synced at ${new Date(dashboardRes.data.timestamp).toLocaleTimeString()}</p>
+                `;
+
+            } catch (err) {
+                console.error(err);
+            } finally {
+                components.hideLoader();
+                lucide.createIcons();
+            }
+        }
+
+        function renderCharts(data) {
+            const ctxRev = document.getElementById('revenueChart').getContext('2d');
+            const ctxGrowth = document.getElementById('growthChart').getContext('2d');
+
+            const revLabels = data.revenue_series.map(d => d.date).reverse();
+            const revValues = data.revenue_series.map(d => d.amount).reverse();
+            
+            const growthLabels = data.user_growth.map(d => d.date).reverse();
+            const growthValues = data.user_growth.map(d => d.count).reverse();
+
+            revenueChart = new Chart(ctxRev, {
+                type: 'line',
+                data: {
+                    labels: revLabels,
+                    datasets: [{
+                        label: 'Revenue (₹)',
+                        data: revValues,
+                        borderColor: '#007aff',
+                        backgroundColor: 'rgba(0,122,255,0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+            });
+
+            growthChart = new Chart(ctxGrowth, {
+                type: 'bar',
+                data: {
+                    labels: growthLabels,
+                    datasets: [{
+                        label: 'New Users',
+                        data: growthValues,
+                        backgroundColor: '#5856d6',
+                        borderRadius: 6
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { display: false } } }
+            });
+        }
+
+        loadDashboard();
+    </script>
+</body>
+</html>

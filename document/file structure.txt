@@ -1,0 +1,117 @@
+------------------------------------------------------------
+  MEDIMITRA: FULL VANILLA FRONTEND ARCHITECTURE
+------------------------------------------------------------
+This document lists all system components converted from 
+React (.jsx) to Pure Web Technology (.html, .css, .js).
+
+/frontend
+├── index.html              (Landing & Global Entry)
+├── /assets
+│   ├── /css (style.css, animations.css)
+│   ├── /js (api.js, auth.js, dashboard.js)
+│   └── /images
+│
+├── /admin
+│   ├── admin-activity-logs.html
+│   ├── admin-audit-detail.html
+│   ├── admin-backup.html
+│   ├── admin-backup-recovery.html
+│   ├── admin-banner-manager.html
+│   ├── admin-brand-management.html
+│   ├── admin-bulk-operations.html
+│   ├── admin-dashboard.html
+│   ├── admin-financials.html
+│   ├── admin-kyc-verification.html
+│   ├── admin-medicine-categorization.html
+│   ├── admin-newsletter.html
+│   ├── admin-order-pulse.html
+│   ├── admin-pharmacy-approvals.html
+│   ├── admin-roles-permissions.html
+│   ├── admin-security-settings.html
+│   ├── admin-support-tickets.html
+│   ├── admin-system-logs.html
+│   ├── admin-system-pulse.html
+│   ├── admin-system-settings.html
+│   ├── admin-users.html
+│   ├── admin-vendor-form.html
+│   └── admin-vendors.html
+│
+├── /auth
+│   ├── login.html
+│   ├── register.html
+│   ├── forgot-password.html
+│   ├── reset-password.html
+│   ├── auth-recovery.html
+│   └── auth-pages-layout.html
+│
+├── /delivery
+│   ├── delivery-dashboard.html
+│   ├── delivery-earnings.html
+│   ├── delivery-history.html
+│   ├── delivery-order-details.html
+│   ├── delivery-orders.html
+│   ├── delivery-profile.html
+│   ├── delivery-queue.html
+│   ├── delivery-route-map.html
+│   ├── delivery-settings.html
+│   └── optimized-dispatch.html
+│
+├── /guest
+│   ├── browse-medicines.html
+│   ├── faq-page.html
+│   ├── medicine-check-tool.html
+│   ├── medicine-safety-sheet.html
+│   └── sitemap.html
+│
+├── /public
+│   ├── about-page.html
+│   ├── contact-page.html
+│   ├── faq-page.html
+│   ├── home-page.html
+│   └── legal-page.html
+│
+├── /user
+│   ├── user-dashboard.html
+│   ├── cart-page.html
+│   ├── checkout-ui.html
+│   ├── medicine-details.html
+│   ├── medicines-page.html
+│   ├── order-details.html
+│   ├── orders-page.html
+│   ├── order-tracking-map.html
+│   ├── user-addresses.html
+│   ├── user-address-wallet.html
+│   ├── user-notifications.html
+│   ├── user-payment-history.html
+│   ├── user-prescription-flow.html
+│   ├── user-prescriptions.html
+│   ├── user-profile.html
+│   ├── user-recommendations.html
+│   ├── user-returns.html
+│   └── user-wishlist.html
+│
+└── /vendor
+    ├── vendor-dashboard.html
+    ├── vendor-analytical-reports.html
+    ├── vendor-approval-tracker.html
+    ├── vendor-brand-category.html
+    ├── vendor-catalog-config.html
+    ├── vendor-commission-summary.html
+    ├── vendor-customer-detail.html
+    ├── vendor-customers.html
+    ├── vendor-earnings.html
+    ├── vendor-inventory.html
+    ├── vendor-inventory-reports.html
+    ├── vendor-medicine-form.html
+    ├── vendor-orders.html
+    ├── vendor-payout-manager.html
+    ├── vendor-pos.html
+    ├── vendor-prescription-review.html
+    ├── vendor-prescriptions.html
+    ├── vendor-reports.html
+    ├── vendor-returns.html
+    └── vendor-settings.html
+
+------------------------------------------------------------
+  STRUCTURE FINALIZED - ALL JSX DEPENDENCIES REMOVED
+------------------------------------------------------------

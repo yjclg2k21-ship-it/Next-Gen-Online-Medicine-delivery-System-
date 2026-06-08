@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Article | MediMitra</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        body { background: white; min-height: 100vh; display: block; overflow-x: hidden; }
+        
+        .article-header {
+            padding: 140px 0 60px;
+            background: var(--light);
+            text-align: center;
+        }
+
+        .article-title {
+            font-size: 3.5rem;
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            max-width: 900px;
+            margin: 0 auto 20px;
+            line-height: 1.2;
+        }
+
+        .article-meta {
+            color: var(--grey);
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .article-body {
+            max-width: 800px;
+            margin: 60px auto 100px;
+            font-size: 1.2rem;
+            line-height: 1.8;
+            color: #333;
+        }
+
+        .article-body h2 {
+            font-weight: 800;
+            font-size: 2rem;
+            margin: 40px 0 20px;
+            color: black;
+        }
+
+        .article-body p {
+            margin-bottom: 24px;
+        }
+        
+        .article-image {
+            width: 100%;
+            height: 400px;
+            background: #e2e8f0;
+            border-radius: 24px;
+            margin: -40px auto 40px;
+            max-width: 1000px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div id="loader" class="loader-overlay"><div class="loader-spinner"></div></div>
+    <div id="header-root"></div>
+    
+    <main>
+        <section class="article-header">
+            <div class="container">
+                <a href="blog.html" style="color: var(--grey); text-decoration: none; font-weight: 700; margin-bottom: 20px; display: inline-block;">← Back to Blogs</a>
+                <h1 class="article-title" id="blogTitle">Loading...</h1>
+                <div class="article-meta" id="blogMeta"></div>
+            </div>
+        </section>
+
+        <div class="article-image" id="blogImage" style="display: none;"></div>
+
+        <section class="container">
+            <div class="article-body" id="blogContent">
+                <!-- Content injected here -->
+            </div>
+        </section>
+    </main>
+
+    <div id="footer-root"></div>
+
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script src="../assets/js/ui-loader.js"></script>
+    <script>
+        async function loadArticle() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const slug = urlParams.get('slug');
+
+            if (!slug) {
+                window.location.href = 'blog.html';
+                return;
+            }
+
+            try {
+                const res = await api.get(`/public/blogs/${slug}`);
+                if (!res.data || !res.data.blog) throw new Error('Not found');
+                
+                const blog = res.data.blog;
+                
+                document.title = `${blog.title} | MediMitra`;
+                document.getElementById('blogTitle').textContent = blog.title;
+                
+                const date = new Date(blog.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+                document.getElementById('blogMeta').innerHTML = `By <b>${blog.author_name}</b> &nbsp; • &nbsp; ${date}`;
+
+                if (blog.cover_image) {
+                    const img = document.getElementById('blogImage');
+                    img.style.backgroundImage = `url('${blog.cover_image}')`;
+                    img.style.display = 'block';
+                }
+
+                document.getElementById('blogContent').innerHTML = blog.content;
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('blogTitle').textContent = 'Article Not Found';
+                document.getElementById('blogContent').innerHTML = '<p style="text-align:center;">The article you are looking for does not exist or has been removed.</p>';
+            }
+        }
+
+        loadArticle();
+    </script>
+</body>
+</html>

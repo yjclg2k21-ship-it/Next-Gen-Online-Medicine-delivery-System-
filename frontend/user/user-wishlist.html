@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wishlist | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        body { background: #f4f7fa; margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; font-family: 'Plus Jakarta Sans', sans-serif; }
+        .squircle-card { width: 100%; height: 100%; border-radius: 0; display: flex; overflow: hidden; }
+        .wish-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+            gap: 20px;
+            overflow-y: auto;
+            max-height: calc(100vh - 160px);
+            padding: 10px;
+        }
+
+        .wish-card {
+            background: white;
+            border-radius: 20px;
+            padding: 15px;
+            border: 1px solid rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+        }
+        .wish-card:hover { transform: translateY(-5px); box-shadow: 0 12px 30px rgba(0,0,0,0.06); }
+
+        .wish-img {
+            height: 150px; background: white; border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .wish-img img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.1); transition: 0.3s; }
+
+        .heart-btn {
+            position: absolute; top: 15px; right: 15px;
+            width: 40px; height: 40px; border-radius: 50%;
+            background: rgba(255, 255, 255, 0.8); display: flex;
+            align-items: center; justify-content: center; color: var(--danger);
+            cursor: pointer; border: none; z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        
+        <main class="liquid-main">
+            <header style="margin-bottom: 16px;">
+                <h1 class="vibrant-h1">Wishlist</h1>
+                <p style="color: #6e6e73; font-size: 1.2rem; font-weight: 500;">Saved medicines for your future orders.</p>
+            </header>
+
+            <div class="wish-grid" id="wishlist-container">
+                <!-- Dynamic Items -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        const user = auth.getUser();
+        if (!user) { window.location.href = '../auth/login.html'; }
+
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('user');
+        lucide.createIcons();
+        
+        async function renderWishlist() {
+            const container = document.getElementById('wishlist-container');
+            
+            try {
+                components.showLoader();
+                const res = await api.get('/user/wishlist');
+                const wishItems = res.data.wishlist || [];
+
+                if (wishItems.length === 0) {
+                    container.innerHTML = `
+                        <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px; background: rgba(255,255,255,0.4); border-radius: 24px; border: 1px dashed rgba(0,0,0,0.1);">
+                            <i data-lucide="heart-off" style="width: 60px; height: 60px; color: #6e6e73; margin-bottom: 20px;"></i>
+                            <h2 style="font-weight: 800; color: #1d1d1f; margin-bottom: 8px;">Your wishlist is empty</h2>
+                            <p style="color: #6e6e73; margin-bottom: 24px;">Save medicines you want to buy later.</p>
+                            <a href="medicines-page.html" class="pill-button" style="text-decoration: none; display: inline-flex;">Browse Medicines</a>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = wishItems.map(item => {
+                        let displayImg = '../assets/images/medicines/tablet_blister.png';
+                        const lowName = (item.name || '').toLowerCase();
+                        if (lowName.includes('paracetamol')) displayImg = '../assets/images/medicines/paracetamol-500mg.jpg';
+                        else if (lowName.includes('amoxicillin')) displayImg = '../assets/images/medicines/aspirin-150mg.jpg';
+                        else if (lowName.includes('syrup')) displayImg = '../assets/images/medicines/cough-syrup-ex.jpg';
+
+                        return `
+                        <div class="wish-card animate-scale-in">
+                            <button class="heart-btn" onclick="removeFromWishlist(${item.id})">
+                                <i data-lucide="heart" fill="currentColor"></i>
+                            </button>
+                            <div class="wish-img" onclick="window.location.href='medicine-details.html?id=${item.id}'">
+                                <img src="${displayImg}" onerror="this.src='../assets/images/medicines/tablet_blister.png'">
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="color: var(--primary); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Medicine</div>
+                                <h3 style="font-weight: 800; font-size: 1.2rem; color: #1d1d1f; margin-bottom: 4px; cursor:pointer;" onclick="window.location.href='medicine-details.html?id=${item.id}'">${item.name}</h3>
+                                <p style="color: #6e6e73; font-weight: 600; font-size: 0.85rem; margin-bottom: 12px;">Pharma ID: #${item.id}</p>
+                                <div style="font-weight: 900; font-size: 1.4rem; color: #1d1d1f; margin-bottom: 20px;">₹${parseFloat(item.price).toFixed(2)}</div>
+                            </div>
+                            <button onclick="addToCartFromWish(${item.id})" id="btn-${item.id}" class="pill-button" style="width: 100%; justify-content: center; padding: 14px;">Add to Cart</button>
+                        </div>
+                    `; }).join('');
+                }
+                lucide.createIcons();
+            } catch (err) {
+                console.error(err);
+                components.showError("Failed to synchronize wishlist.");
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        window.removeFromWishlist = async (id) => {
+            try {
+                await api.post('/user/wishlist/toggle', { medicine_id: id });
+                renderWishlist();
+                components.showSuccess("Removed.");
+            } catch (err) { console.error(err); }
+        };
+
+        window.addToCartFromWish = async (id) => {
+            try {
+                await api.post('/cart/add', { medicine_id: id, qty: 1 });
+                const btn = document.getElementById(`btn-${id}`);
+                const oldText = btn.innerHTML;
+                btn.innerHTML = "✓ Added!";
+                btn.style.background = "#34c759";
+                setTimeout(() => {
+                    btn.innerHTML = oldText;
+                    btn.style.background = "";
+                }, 1000);
+            } catch (err) { console.error(err); }
+        };
+
+        renderWishlist();
+    </script>
+</body>
+</html>

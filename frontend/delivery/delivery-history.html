@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Archive Logs | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        
+        .h-entry {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: var(--l-card-r); padding: 24px 32px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .h-entry:hover { transform: scale(1.01); background: rgba(255, 255, 255, 0.6); }
+
+        .h-status-done { color: var(--success); font-weight: 800; font-size: 0.8rem; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+    
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        
+        <main class="liquid-main">
+            <header style="margin-bottom: 16px;">
+                <h1 class="vibrant-h1">Archive Logs</h1>
+                <p style="color: #6e6e73; font-size: 1.2rem; font-weight: 500;">History of all completed deliveries.</p>
+            </header>
+
+            <div style="display: flex; flex-direction: column; gap: 8px;" id="history-list">
+                <!-- Dynamic Entries -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        // Check Auth
+        const user = auth.getUser();
+        if (!user || user.role !== 'delivery') window.location.href = '../auth/login.html';
+
+        // Load Sidebar
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('delivery');
+        
+        async function loadHistory() {
+            try {
+                components.showLoader();
+                const res = await api.get('/delivery/history');
+                const list = res.data.history || [];
+                renderHistory(list);
+            } catch (err) {
+                console.error(err);
+                components.showError("History retrieval failed.");
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        function renderHistory(list) {
+            const container = document.getElementById('history-list');
+            if (!list || list.length === 0) {
+                container.innerHTML = '<div style="padding:60px; text-align:center; color:#8e8e93; font-weight:600;">No archived dispatches found.</div>';
+                return;
+            }
+
+            container.innerHTML = list.map(item => `
+                <div class="h-entry" onclick="window.location.href='delivery-order-details.html?id=${item.id}'">
+                    <div style="display: flex; gap: 24px; align-items: center;">
+                        <div style="width: 50px; height: 50px; background: white; border-radius: var(--l-card-r); display: flex; align-items: center; justify-content: center;"><i data-lucide="check-circle" style="color: var(--success);"></i></div>
+                        <div>
+                            <div style="font-weight: 800; font-size: 1.1rem;">#MM-${item.id}</div>
+                            <div style="color: #6e6e73; font-size: 0.85rem; font-weight: 600;">To: ${item.customer} • ${new Date(item.date).toLocaleDateString()}</div>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-weight: 900; color: #1d1d1f;">₹${item.earnings}</div>
+                        <span class="h-status-done">${item.status}</span>
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        loadHistory();
+    </script>
+</body>
+</html>

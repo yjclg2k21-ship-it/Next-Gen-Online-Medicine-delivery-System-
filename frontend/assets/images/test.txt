@@ -1,0 +1,1 @@
+Path test. Folder is reachable.

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Insights | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        body { background: #000; min-height: 100vh; margin: 0; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+
+        .medicine-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            padding: 20px 0 60px 0;
+        }
+
+        .med-card {
+            background: white;
+            border-radius: 18px;
+            border: 1px solid rgba(0,0,0,0.05);
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            min-height: 340px;
+        }
+
+        .med-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+            border-color: rgba(0, 122, 255, 0.1);
+        }
+
+        .med-image {
+            height: 180px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fbfbfd;
+            overflow: hidden;
+        }
+
+        .med-image img {
+            max-height: 100%;
+            max-width: 100%;
+            object-fit: contain;
+            transition: transform 0.5s ease;
+        }
+
+        .med-card:hover .med-image img {
+            transform: scale(1.1);
+        }
+
+        .med-info {
+            padding: 16px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .med-tag {
+            font-size: 0.6rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .med-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1d1d1f;
+            line-height: 1.3;
+            margin-bottom: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .med-salt {
+            font-size: 0.75rem;
+            color: #86868b;
+            margin-bottom: 12px;
+        }
+
+        .med-footer {
+            margin-top: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .med-price {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #1d1d1f;
+        }
+
+        .buy-btn {
+            background: #0071e3;
+            color: white;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .buy-btn:hover {
+            background: #005bb7;
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="squircle-card animate-scale-in" style="height: 100vh;">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+
+        <main class="liquid-main" style="overflow-y: auto; padding-bottom: 40px;">
+            <header class="vibrant-header">
+                <div>
+                    <h1 class="vibrant-h1">Health Recommendations</h1>
+                    <p class="vibrant-p">AI-driven insights based on your prescription history and health profile.</p>
+                </div>
+            </header>
+
+            <div class="liquid-card" style="margin-bottom: 24px; background: linear-gradient(135deg, rgba(88, 86, 214, 0.1), rgba(0, 122, 255, 0.1)); border: 1px solid rgba(0, 122, 255, 0.2);">
+                <div style="display: flex; gap: 24px; align-items: center;">
+                    <div style="width: 64px; height: 64px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">🧠</div>
+                    <div>
+                        <h3 style="font-weight: 800; margin-bottom: 4px;">Health Insights Active</h3>
+                        <p style="color: #6e6e73; font-size: 0.9rem;" id="insight-summary">Analyzing your health profile...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="recommendations-grid" class="medicine-grid">
+                <!-- Loaded via JS -->
+                <p class="muted-text">Processing health insights...</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        // Check Auth
+        if (!auth.getUser()) window.location.href = '../auth/login.html';
+
+        // Load Sidebar
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('user');
+        lucide.createIcons();
+
+        async function loadRecommendations() {
+            try {
+                components.showLoader();
+                const res = await api.get('/user/recommendations');
+                const grid = document.getElementById('recommendations-grid');
+                const insightEl = document.getElementById('insight-summary');
+                
+                if (res.success && res.data.recommendations.length > 0) {
+                    // Update Insight Banner
+                    if (res.data.insight_summary) {
+                        insightEl.innerHTML = res.data.insight_summary.replace(res.data.primary_focus, `<b>${res.data.primary_focus}</b>`);
+                    }
+
+                    grid.innerHTML = res.data.recommendations.map(med => {
+                        // Smart Image Logic synced from medicines-page.html
+                        let displayImg = '../assets/images/medicines/tablet_blister.png';
+                        const lowName = (med.name || '').toLowerCase();
+                        const lowCat = (med.category_name || '').toLowerCase();
+                        
+                        if (lowName.includes('paracetamol') || lowName.includes('dolo')) displayImg = '../assets/images/medicines/paracetamol-500mg.jpg';
+                        else if (lowName.includes('amoxicillin')) displayImg = '../assets/images/medicines/aspirin-150mg.jpg';
+                        else if (lowName.includes('ibuprofen')) displayImg = '../assets/images/medicines/tablet_blister.png';
+                        else if (lowName.includes('aspirin')) displayImg = '../assets/images/medicines/aspirin-150mg.jpg';
+                        else if (lowName.includes('syrup') || lowCat.includes('syrup')) displayImg = '../assets/images/medicines/cough-syrup-ex.jpg';
+                        else if (lowName.includes('cream') || lowName.includes('ointment') || lowCat.includes('topical')) displayImg = '../assets/images/medicines/clotrimazole-cream.jpg';
+                        else if (lowName.includes('gel')) displayImg = '../assets/images/medicines/pain-relief-gel.jpg';
+                        else if (lowName.includes('inhaler')) displayImg = '../assets/images/medicines/asthma-relief-inhaler.jpg';
+                        else if (lowName.includes('glucose') || lowName.includes('kit')) displayImg = '../assets/images/medicines/blood-glucose-kit.png';
+                        else if (lowName.includes('injection') || lowName.includes('insulin')) displayImg = '../assets/images/medicines/insulin-glargine.jpg';
+                        else if (lowName.includes('drops')) displayImg = '../assets/images/medicines/saline-nasal-drops.jpg';
+                        else if (lowName.includes('vitamin')) displayImg = '../assets/images/medicines/pediatric-vitamin-drops.jpg';
+                        else if (lowCat.includes('ayurvedic') || lowName.includes('extract')) displayImg = '../assets/images/medicines/ashwagandha-extract.png';
+
+                        return `
+                        <div class="med-card animate-scale-in" onclick="window.location.href='medicine-details.html?id=${med.id}'" style="cursor:pointer;">
+                            <div style="position: absolute; top: 12px; right: 12px; z-index: 5;">
+                                <div style="
+                                    font-size: 0.55rem; 
+                                    font-weight: 800; 
+                                    padding: 2px 8px; 
+                                    border-radius: 6px; 
+                                    text-transform: uppercase;
+                                    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+                                    ${med.brand_type === 'MNC' ? 'background: #e1f5fe; color: #0288d1;' : 
+                                      med.brand_type === 'Generic' ? 'background: #f3e5f5; color: #7b1fa2;' : 
+                                      med.brand_type === 'Ayurvedic' ? 'background: #e8f5e9; color: #2e7d32;' : 
+                                      'background: #f5f5f7; color: #1d1d1f;'}
+                                ">${med.brand_type || 'Local'}</div>
+                            </div>
+                            <div class="med-image">
+                                <img src="${displayImg}" alt="${med.name}">
+                            </div>
+                            <div class="med-info">
+                                <span class="med-tag">${med.category_name || 'Personalized'}</span>
+                                <h3 class="med-title">${med.name}</h3>
+                                <div style="font-size: 0.7rem; color: #86868b; font-weight: 600; margin-bottom: 8px;">🏥 Certified Vendor</div>
+                                <div class="med-footer">
+                                    <span class="med-price">₹${parseFloat(med.price).toFixed(2)}</span>
+                                    <button class="buy-btn" onclick="event.stopPropagation(); addToCart(${med.id})">
+                                        <i data-lucide="shopping-cart" style="width: 18px; height: 18px;"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        `;
+                    }).join('');
+                } else {
+                    grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 100px; color: #8e8e93; font-weight: 600;">No personalized insights available at this time. Start shopping to build your health profile.</div>';
+                }
+            } catch (err) {
+                console.error(err);
+                components.showError('Health insights update failed.');
+            } finally {
+                components.hideLoader();
+                lucide.createIcons();
+            }
+        }
+
+        async function addToCart(id) {
+            try {
+                components.showLoader();
+                const res = await api.post('/cart/add', { medicine_id: id, quantity: 1 });
+                if (res.success) {
+                    components.showSuccess('Item added to clinical care cart.');
+                } else {
+                    components.showError(res.message || 'Failed to update cart.');
+                }
+            } catch (err) {
+                components.showError('Failed to update cart.');
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        loadRecommendations();
+    </script>
+</body>
+
+</html>

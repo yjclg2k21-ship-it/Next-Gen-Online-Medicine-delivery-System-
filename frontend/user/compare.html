@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compare Medicines | MediMitra AI</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        
+        .search-area {
+            background: rgba(255, 255, 255, 0.4);
+            padding: 30px;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(20px);
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 16px 20px;
+            border-radius: 16px;
+            border: 2px solid rgba(0,0,0,0.05);
+            font-size: 1.1rem;
+            font-family: inherit;
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+        }
+        .search-input:focus { outline: none; border-color: var(--primary); background: white; }
+
+        .vs-badge {
+            background: var(--primary);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3);
+        }
+
+        .compare-results {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            display: none;
+            padding-bottom: 60px;
+        }
+
+        .type-badge {
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: inline-block;
+            margin-top: 4px;
+        }
+        .type-Generic { background: rgba(34, 197, 94, 0.12); color: #166534; border: 1px solid rgba(34, 197, 94, 0.2); }
+        .type-MNC { background: rgba(59, 130, 246, 0.12); color: #1e40af; border: 1px solid rgba(59, 130, 246, 0.2); }
+        .type-Ayurvedic { background: rgba(245, 158, 11, 0.12); color: #92400e; border: 1px solid rgba(245, 158, 11, 0.2); }
+        .type-Domestic { background: rgba(139, 92, 246, 0.12); color: #5b21b6; border: 1px solid rgba(139, 92, 246, 0.2); }
+        .type-Local { background: rgba(107, 114, 128, 0.12); color: #374151; border: 1px solid rgba(107, 114, 128, 0.2); }
+
+        .med-card {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 24px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(20px);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .med-card:hover { transform: translateY(-5px); background: rgba(255, 255, 255, 0.6); }
+
+        .med-card h2 { font-weight: 800; font-size: 1.8rem; margin-bottom: 5px; color: #1d1d1f; }
+        .med-card .brand { color: var(--primary); font-weight: 700; margin-bottom: 20px; }
+
+        .spec-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .spec-row:last-child { border-bottom: none; }
+        .spec-label { color: #6e6e73; font-weight: 600; font-size: 0.9rem; text-transform: uppercase; }
+        .spec-value { font-weight: 700; text-align: right; max-width: 60%; color: #1d1d1f; }
+
+        .price-tag {
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: var(--success);
+            margin: 20px 0;
+        }
+
+        .autocomplete-dropdown {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(25px);
+            width: 100%;
+            border-radius: 16px;
+            box-shadow: 0 12px 36px rgba(0,0,0,0.15);
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+            margin-top: 5px;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        .ac-item {
+            padding: 14px 20px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            transition: background 0.2s;
+        }
+        .ac-item:hover { background: rgba(0, 122, 255, 0.08); }
+        .ac-item strong { display: block; color: #1d1d1f; font-weight: 700; }
+        .ac-item small { color: #6e6e73; font-weight: 500; display: block; margin-top: 2px; }
+    </style>
+</head>
+<body>
+    
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        
+        <main class="liquid-main" style="overflow-y: auto;">
+            <header style="margin-bottom: 24px;">
+                <h1 class="vibrant-h1">Medicine Compare</h1>
+                <p style="color: #6e6e73; font-size: 1.2rem; font-weight: 500;">Analyze pricing and clinical composition side-by-side.</p>
+            </header>
+
+            <div class="search-area">
+                <div style="position: relative;">
+                    <input type="text" id="search1" class="search-input" placeholder="Search first medicine..." autocomplete="off">
+                    <input type="hidden" id="id1">
+                    <div id="dropdown1" class="autocomplete-dropdown"></div>
+                </div>
+                
+                <div class="vs-badge">VS</div>
+                
+                <div style="position: relative;">
+                    <input type="text" id="search2" class="search-input" placeholder="Search second medicine..." autocomplete="off">
+                    <input type="hidden" id="id2">
+                    <div id="dropdown2" class="autocomplete-dropdown"></div>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: center; margin-bottom: 40px;">
+                <button class="pill-button" onclick="runComparison()" style="padding: 16px 40px; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="git-compare"></i> Analyze & Compare
+                </button>
+            </div>
+
+            <div class="compare-results" id="resultsArea">
+                <!-- Results injected here -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        // Check Auth
+        const user = auth.getUser();
+        if (!user) { window.location.href = '../auth/login.html'; }
+
+        // Load Sidebar
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('user');
+        lucide.createIcons();
+
+        // Autocomplete Logic
+        async function setupAutocomplete(inputId, dropdownId, hiddenId) {
+            const input = document.getElementById(inputId);
+            const dropdown = document.getElementById(dropdownId);
+            const hidden = document.getElementById(hiddenId);
+
+            input.addEventListener('input', async (e) => {
+                const q = e.target.value;
+                if (q.length < 2) { dropdown.style.display = 'none'; return; }
+
+                try {
+                    const res = await api.get(`/search/suggestions?q=${q}`);
+                    const suggestions = res.data || res;
+                    
+                    if (suggestions && suggestions.length > 0) {
+                        dropdown.innerHTML = suggestions.map(m => `
+                            <div class="ac-item" onclick="selectMedicine('${inputId}', '${dropdownId}', '${hiddenId}', ${m.id}, '${m.name.replace(/'/g, "\\'")}')">
+                                <strong>${m.name}</strong>
+                                <small>${m.salt || 'Generic'}</small>
+                            </div>
+                        `).join('');
+                        dropdown.style.display = 'block';
+                    } else {
+                        dropdown.style.display = 'none';
+                    }
+                } catch (err) {
+                    console.error("Suggestions error:", err);
+                }
+            });
+
+            // Close on click outside
+            document.addEventListener('click', (e) => {
+                if(e.target !== input && e.target !== dropdown) {
+                    dropdown.style.display = 'none';
+                }
+            });
+        }
+
+        function selectMedicine(inputId, dropdownId, hiddenId, id, name) {
+            document.getElementById(inputId).value = name;
+            document.getElementById(hiddenId).value = id;
+            document.getElementById(dropdownId).style.display = 'none';
+        }
+
+        setupAutocomplete('search1', 'dropdown1', 'id1');
+        setupAutocomplete('search2', 'dropdown2', 'id2');
+
+        async function runComparison() {
+            const id1 = document.getElementById('id1').value;
+            const id2 = document.getElementById('id2').value;
+
+            if (!id1 || !id2) {
+                if (typeof components !== "undefined") {
+                    components.showError('Please select two valid medicines from the dropdown suggestions.');
+                } else {
+                    components.showError('Please select two valid medicines from the dropdown suggestions.');
+                }
+                return;
+            }
+
+            try {
+                components.showLoader();
+                const res = await api.get(`/ai/compare?id1=${id1}&id2=${id2}`);
+                const data = res.data.comparison || res.comparison;
+                
+                const med1 = data[id1];
+                const med2 = data[id2];
+
+                renderCard('resultsArea', med1, med2);
+
+            } catch (err) {
+                console.error(err);
+                if (typeof components !== "undefined") {
+                    components.showError('Failed to fetch comparison data.');
+                } else {
+                    components.showError('Failed to fetch comparison data.');
+                }
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        function renderCard(containerId, m1, m2) {
+            const container = document.getElementById(containerId);
+            container.style.display = 'grid';
+
+            const buildHTML = (m, other) => {
+                const priceDiff = parseFloat(other.price) - parseFloat(m.price);
+                let priceBadge = '';
+                if (priceDiff > 0) {
+                    priceBadge = `<span style="background: rgba(52, 199, 89, 0.15); color: var(--success); padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 800; vertical-align: middle; margin-left: 10px;">Save ₹${priceDiff.toFixed(2)}</span>`;
+                }
+
+                return `
+                <div class="med-card animate-scale-in">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 20px;">
+                        <div style="flex: 1;">
+                            <h2>${m.name}</h2>
+                            <div class="brand" style="margin-bottom: 0;">${m.brand_name || 'Generic Manufacturer'}</div>
+                        </div>
+                        ${m.brand_type ? `<span class="type-badge type-${m.brand_type}">${m.brand_type}</span>` : ''}
+                    </div>
+                    
+                    <div class="price-tag" style="margin-top: 10px;">
+                        ₹${parseFloat(m.price).toFixed(2)} ${priceBadge}
+                    </div>
+
+                    <div class="spec-row">
+                        <span class="spec-label">Clinical Composition</span>
+                        <span class="spec-value" style="color: ${m.salt === other.salt ? 'var(--primary)' : 'inherit'};">${m.salt || 'N/A'}</span>
+                    </div>
+                    <div class="spec-row">
+                        <span class="spec-label">Category</span>
+                        <span class="spec-value">${m.category_name || 'General'}</span>
+                    </div>
+                    <div class="spec-row">
+                        <span class="spec-label">Availability</span>
+                        <span class="spec-value" style="color: ${m.stock > 0 ? 'var(--success)' : 'var(--danger)'};">${m.stock > 0 ? 'In Stock ('+m.stock+')' : 'Out of Stock'}</span>
+                    </div>
+                    
+                    <button class="pill-button" style="width: 100%; margin-top: 30px; justify-content: center;" onclick="window.location.href='medicine-details.html?id=${m.id}'">View Full Details</button>
+                </div>
+                `;
+            };
+
+            container.innerHTML = buildHTML(m1, m2) + buildHTML(m2, m1);
+            lucide.createIcons();
+        }
+    </script>
+</body>
+</html>

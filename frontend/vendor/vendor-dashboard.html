@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendor Dashboard | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        
+        .vendor-hero {
+            background: linear-gradient(135deg, #0d9488, #34d399);
+            color: white;
+            padding: var(--l-card-p);
+            border-radius: var(--l-card-r);
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .alert-mini {
+            background: rgba(255, 59, 48, 0.1);
+            border: 1px solid rgba(255, 59, 48, 0.2);
+            padding: 24px 24px;
+            border-radius: var(--l-card-r);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #ff3b30;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .stat-group {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-bottom: 16px;
+        }
+        .stat-group .liquid-card { text-align: center; }
+        .stat-group .admin-stat-card:nth-child(1) { border-left: 3px solid #ff9500; }
+        .stat-group .admin-stat-card:nth-child(1) .value { color: #ff9500; }
+        .stat-group a:nth-child(1) .admin-stat-card { border-left: 3px solid #ff9500; }
+        .stat-group a:nth-child(1) .value { color: #ff9500; }
+        .stat-group a:nth-child(2) .admin-stat-card { border-left: 3px solid #34c759; }
+        .stat-group a:nth-child(2) .value { color: #34c759; }
+        .stat-group a:nth-child(3) .admin-stat-card { border-left: 3px solid #007aff; }
+        .stat-group a:nth-child(3) .value { color: #007aff; }
+    </style>
+</head>
+<body>
+    
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        
+        <main class="liquid-main">
+            <header style="margin-bottom: 16px;">
+                <h1 class="vibrant-h1">Pharmacy Hub</h1>
+                <p style="color: #6e6e73; font-size: 1.2rem; font-weight: 500;">Good morning, <b>Apex Pharma</b>. Manage your inventory and orders.</p>
+            </header>
+
+            <div class="vendor-hero">
+                <div>
+                    <h2 style="font-size: var(--l-h1); margin-bottom: 8px; font-weight: 800;">Real-time Sales</h2>
+                    <p style="opacity: 0.85; font-weight: 500;">Tracking your pharmacy performance across Phaltan.</p>
+                </div>
+                <div style="background: rgba(255,255,255,0.2); padding: 24px 32px; border-radius: var(--l-card-r); text-align: right; backdrop-filter: blur(10px);">
+                    <div style="font-size: 0.8rem; font-weight: 700; opacity: 0.8; margin-bottom: 4px;">TODAY'S TURNOVER</div>
+                    <div style="font-size: var(--l-h1); font-weight: 800;" id="daily-revenue">₹42,850</div>
+                </div>
+            </div>
+
+            <div class="alert-mini">
+                <i data-lucide="alert-triangle"></i>
+                <span>3 medicines are running low on stock. <a href="vendor-inventory.html" style="color: inherit; text-decoration: underline;">Restock Now</a></span>
+            </div>
+
+            <div class="stat-group">
+                <a href="vendor-orders.html" style="text-decoration:none; color:inherit;">
+                    <div class="admin-stat-card">
+                        <span class="label">New Orders</span>
+                        <span class="value" id="pending-orders">12</span>
+                        <span class="trend up">Action Required</span>
+                    </div>
+                </a>
+                <a href="vendor-orders.html" style="text-decoration:none; color:inherit;">
+                    <div class="admin-stat-card">
+                        <span class="label">Completed</span>
+                        <span class="value">148</span>
+                        <span class="trend up">↑ 5% Weekly</span>
+                    </div>
+                </a>
+                <a href="vendor-inventory.html" style="text-decoration:none; color:inherit;">
+                    <div class="admin-stat-card">
+                        <span class="label">Inventory Health</span>
+                        <span class="value">94%</span>
+                        <span class="trend up">Optimal</span>
+                    </div>
+                </a>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+                <div class="liquid-card" style="padding: var(--l-card-p);">
+                    <h3 class="vibrant-h2" style="margin-bottom: 16px;">Recent Dispatches</h3>
+                    <!-- Search, Filter & Sort Bar -->
+                    <div style="display:flex; gap:12px; align-items:center; margin-bottom:16px; flex-wrap:wrap;">
+                        <input type="text" id="dashOrderSearch" placeholder="Search order ID..." oninput="applyDashOrderFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; min-width:160px; outline:none;">
+                        <select id="dashOrderFilter" onchange="applyDashOrderFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; font-weight:600;">
+                            <option value="all">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="dispatched">Dispatched</option>
+                        </select>
+                        <select id="dashOrderSort" onchange="applyDashOrderFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; font-weight:600;">
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                        </select>
+                    </div>
+                    <table class="liquid-table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Item</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="font-weight: 800;">#ORD-942</td>
+                                <td>John Doe</td>
+                                <td>Aspirin 100mg</td>
+                                <td>
+                                    <span style="padding: 6px 12px; background: rgba(0, 122, 255, 0.1); color: var(--primary); border-radius: 100px; font-size: 0.75rem; font-weight: 700;">PREPARING</span>
+                                    <div style="font-size: 0.65rem; font-weight: 800; color: #6e6e73; margin-top: 4px;">🕒 STANDARD</div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 800;">#ORD-941</td>
+                                <td>Sarah Khan</td>
+                                <td>Metformin 500mg</td>
+                                <td>
+                                    <span style="padding: 6px 12px; background: rgba(255, 149, 0, 0.1); color: var(--warning); border-radius: 100px; font-size: 0.75rem; font-weight: 700;">PICKUP</span>
+                                    <div style="font-size: 0.65rem; font-weight: 800; color: #ff3b30; margin-top: 4px;">🚨 EMERGENCY</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 24px;">
+                    <div class="liquid-card" style="padding: var(--l-card-p);">
+                        <h3 style="font-weight: 800; margin-bottom: 20px;">Performance Summary</h3>
+                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 0.85rem; color: #6e6e73; font-weight: 600;">Monthly Sales</span>
+                                <span style="font-weight: 700; color: var(--success);">+12.5%</span>
+                            </div>
+                            <div style="height: 60px; background: rgba(0,0,0,0.03); border-radius: 8px; display: flex; align-items: flex-end; gap: 4px; padding: 10px;">
+                                <div style="flex: 1; height: 40%; background: var(--primary); opacity: 0.3; border-radius: 4px;"></div>
+                                <div style="flex: 1; height: 60%; background: var(--primary); opacity: 0.5; border-radius: 4px;"></div>
+                                <div style="flex: 1; height: 50%; background: var(--primary); opacity: 0.4; border-radius: 4px;"></div>
+                                <div style="flex: 1; height: 80%; background: var(--primary); opacity: 0.7; border-radius: 4px;"></div>
+                                <div style="flex: 1; height: 100%; background: var(--primary); border-radius: 4px;"></div>
+                            </div>
+                            <div style="font-size: 0.75rem; color: #6e6e73; font-weight: 500;">Highest performing category: <b>Antibiotics</b></div>
+                        </div>
+                    </div>
+
+                    <div class="liquid-card" style="padding: var(--l-card-p);">
+                        <h3 style="font-weight: 800; margin-bottom: 20px;">Quick Actions</h3>
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <button class="pill-button" onclick="window.location.href='vendor-medicine-form.html'" style="width: 100%; justify-content: center;"><i data-lucide="plus"></i> Add Medicine</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        // Check Vendor Auth
+        const user = auth.getUser();
+        if (!user || user.role !== 'vendor') {
+            window.location.href = '../auth/login.html';
+        }
+
+        // Load Sidebar
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('vendor');
+        lucide.createIcons();
+
+        async function loadDashboard() {
+            try {
+                components.showLoader();
+                const res = await api.get('/vendor/dashboard');
+                const stats = (res && res.data && res.data.stats) ? res.data.stats : { gross_revenue: 0, pending_orders: 0, total_orders: 0 };
+                const recent_orders = (res && res.data && res.data.recent_orders) ? res.data.recent_orders : [];
+                const low_stock = (res && res.data && res.data.low_stock) ? res.data.low_stock : [];
+
+                // Update Header
+                document.querySelector('header p').innerHTML = `Pharmacy Operational Status for <b>${user.name}</b>. Monitoring orders.`;
+
+                // Update Revenue & Stats
+                document.getElementById('daily-revenue').textContent = `₹${parseFloat(stats.gross_revenue || 0).toLocaleString()}`;
+                document.getElementById('pending-orders').textContent = stats.pending_orders;
+                
+                // Update Completed count (Assuming stats has it or calculate)
+                const completedCard = document.querySelectorAll('.admin-stat-card')[1];
+                completedCard.querySelector('.value').textContent = stats.total_orders;
+
+                // Update Stock Alert
+                const alertMini = document.querySelector('.alert-mini');
+                if (low_stock.length > 0) {
+                    alertMini.style.display = 'flex';
+                    alertMini.querySelector('span').innerHTML = `${low_stock.length} medicines are running low on stock. <a href="vendor-inventory.html" style="color: inherit; text-decoration: underline;">Restock Now</a>`;
+                } else {
+                    alertMini.style.display = 'none';
+                }
+
+                // KYC Status Check (non-critical - don't crash dashboard if this fails)
+                try {
+                    const kycRes = await api.get('/kyc/status/' + user.id);
+                    if (kycRes.data.status !== 'verified') {
+                        const kycAlert = document.createElement('div');
+                        kycAlert.className = 'alert-mini';
+                        kycAlert.style.background = 'rgba(255,149,0,0.1)';
+                        kycAlert.style.color = '#ff9500';
+                        kycAlert.style.borderColor = 'rgba(255,149,0,0.2)';
+                        kycAlert.innerHTML = `
+                            <i data-lucide="shield-alert"></i>
+                            <span>KYC Verification Pending: Your KYC is ${kycRes.data.status || 'missing'}. 
+                            <a href="vendor-kyc.html" style="color: inherit; text-decoration: underline;">Verify Account</a></span>
+                        `;
+                        alertMini.parentNode.insertBefore(kycAlert, alertMini.nextSibling);
+                    }
+                } catch (kycErr) {
+                    console.warn('KYC check skipped:', kycErr.message);
+                }
+
+                // Update Recent Dispatches
+                dashRecentOrders = recent_orders;
+                renderDashOrders(recent_orders);
+
+            } catch (err) {
+                console.error(err);
+                components.showError('Dashboard synchronization failed.');
+            } finally {
+                components.hideLoader();
+                lucide.createIcons();
+            }
+        }
+
+        let dashRecentOrders = [];
+
+        function applyDashOrderFilters() {
+            const search = (document.getElementById('dashOrderSearch').value || '').toLowerCase();
+            const filter = document.getElementById('dashOrderFilter').value;
+            const sort = document.getElementById('dashOrderSort').value;
+
+            let filtered = [...dashRecentOrders];
+
+            if (search) {
+                filtered = filtered.filter(o => String(o.id).toLowerCase().includes(search));
+            }
+            if (filter !== 'all') {
+                filtered = filtered.filter(o => o.status === filter);
+            }
+            if (sort === 'newest') filtered.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+            else if (sort === 'oldest') filtered.sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+
+            renderDashOrders(filtered);
+        }
+
+        function renderDashOrders(orders) {
+            const tbody = document.querySelector('.liquid-table tbody');
+            if (!orders || orders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:40px; color:#8e8e93;">No matching dispatches.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = orders.map(order => {
+                const isEmergency = order.delivery_type === 'Emergency';
+                const statusColor = order.status === 'delivered' ? 'var(--success)' : (order.status === 'cancelled' ? 'var(--danger)' : 'var(--primary)');
+                return `
+                    <tr>
+                        <td style="font-weight: 800;">#ORD-${order.id}</td>
+                        <td>${order.customer_name || 'Generic Patient'}</td>
+                        <td>${order.items_summary || 'Multi-SKU Order'}</td>
+                        <td>
+                            <span style="padding: 6px 12px; background: rgba(0, 122, 255, 0.1); color: ${statusColor}; border-radius: 100px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">${order.status}</span>
+                            <div style="font-size: 0.65rem; font-weight: 800; color: ${isEmergency ? '#ff3b30' : '#6e6e73'}; margin-top: 4px;">${isEmergency ? '🚨 EMERGENCY' : '🕒 STANDARD'}</div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        loadDashboard();
+    </script>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medicine Inventory | Admin | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <link rel="stylesheet" href="../assets/css/admin-dark.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .med-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; overflow-y: auto; max-height: calc(100vh - 250px); padding-bottom: 40px; }
+        .med-card { background: rgba(255, 255, 255, 0.4); border-radius: 16px; padding: 20px; border: 1px solid rgba(255, 255, 255, 0.5); transition: all 0.3s ease; position: relative; }
+        .med-card:hover { background: rgba(255, 255, 255, 0.6); transform: translateY(-3px); }
+        .med-status { position: absolute; top: 20px; right: 20px; font-size: 0.65rem; font-weight: 800; padding: 4px 10px; border-radius: 100px; }
+        .status-approved { background: rgba(52, 199, 89, 0.1); color: var(--success); }
+        .status-pending { background: rgba(255, 149, 0, 0.1); color: var(--warning); }
+        .status-rejected { background: rgba(255, 59, 48, 0.1); color: var(--danger); }
+        .med-info h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; color: #1d1d1f; }
+        .med-info .vendor { font-size: 0.8rem; color: #6e6e73; font-weight: 600; margin-bottom: 12px; }
+        .med-stats { display: flex; justify-content: space-between; padding-top: 15px; border-top: 1px solid rgba(0,0,0,0.05); }
+        .m-stat .val { font-weight: 800; font-size: 1rem; color: #1d1d1f; }
+        .m-stat .lbl { font-size: 0.65rem; color: #8e8e93; text-transform: uppercase; font-weight: 700; }
+    </style>
+</head>
+<body>
+    <div class="squircle-card">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        <main class="liquid-main">
+            <header style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px;">
+                <div>
+                    <h1 class="vibrant-h1">Medicine Inventory</h1>
+                    <p style="color: #6e6e73; font-size: 1.1rem; font-weight: 500;">Monitor all pharmaceutical nodes across the network.</p>
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    <div style="background: rgba(255,255,255,0.4); border-radius: 12px; padding: 8px 16px; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,0.3);">
+                        <i data-lucide="search" size="16" style="color: #6e6e73;"></i>
+                        <input type="text" id="med-search" placeholder="Search medicines..." style="background: transparent; border: none; outline: none; font-size: 0.9rem; font-weight: 600;">
+                    </div>
+                    <button class="pill-button" onclick="loadMedicines()"><i data-lucide="refresh-cw"></i></button>
+                </div>
+            </header>
+
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
+                <div class="liquid-card" style="padding:16px;text-align:center;border-left:3px solid #007aff;"><div id="stat-total" style="font-size:1.5rem;font-weight:800;color:#007aff;">0</div><div style="font-size:0.7rem;color:#8e8e93;font-weight:700;text-transform:uppercase;">Total Medicines</div></div>
+                <div class="liquid-card" style="padding:16px;text-align:center;border-left:3px solid #34c759;"><div id="stat-approved" style="font-size:1.5rem;font-weight:800;color:#34c759;">0</div><div style="font-size:0.7rem;color:#8e8e93;font-weight:700;text-transform:uppercase;">Approved</div></div>
+                <div class="liquid-card" style="padding:16px;text-align:center;border-left:3px solid #ff9500;"><div id="stat-pending" style="font-size:1.5rem;font-weight:800;color:#ff9500;">0</div><div style="font-size:0.7rem;color:#8e8e93;font-weight:700;text-transform:uppercase;">Pending</div></div>
+                <div class="liquid-card" style="padding:16px;text-align:center;border-left:3px solid #ff3b30;"><div id="stat-low" style="font-size:1.5rem;font-weight:800;color:#ff3b30;">0</div><div style="font-size:0.7rem;color:#8e8e93;font-weight:700;text-transform:uppercase;">Low Stock</div></div>
+            </div>
+
+            <div style="display:flex; gap:12px; align-items:center; margin-bottom:20px; flex-wrap:wrap;">
+                <input type="text" id="medSearchInput" placeholder="Search medicine, salt..." oninput="applyMedFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; min-width:200px; outline:none;">
+                <select id="medFilterSelect" onchange="applyMedFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; font-weight:600;">
+                    <option value="all">All Status</option>
+                    <option value="approved">Approved</option>
+                    <option value="pending">Pending</option>
+                    <option value="rejected">Rejected</option>
+                </select>
+                <select id="medSortSelect" onchange="applyMedFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; font-weight:600;">
+                    <option value="name_az">Name A-Z</option>
+                    <option value="price_low">Price: Low to High</option>
+                    <option value="price_high">Price: High to Low</option>
+                    <option value="newest">Newest First</option>
+                </select>
+            </div>
+
+            <div class="med-grid" id="med-list">
+                <!-- Dynamic Content -->
+            </div>
+        </main>
+    </div>
+
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        const user = auth.getUser();
+        if (!user || user.role !== 'admin') window.location.href = '../auth/login.html';
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('admin');
+        lucide.createIcons();
+
+        let allMedicines = [];
+
+        async function loadMedicines() {
+            try {
+                components.showLoader();
+                const res = await api.get('/admin/medicines');
+                allMedicines = res.data.medicines;
+                const stats = res.data.stats;
+
+                document.getElementById('stat-total').textContent = stats.total;
+                document.getElementById('stat-approved').textContent = stats.approved;
+                document.getElementById('stat-pending').textContent = stats.pending;
+                document.getElementById('stat-low').textContent = stats.out_of_stock;
+
+                renderMedicines(allMedicines);
+            } catch (err) {
+                console.error(err);
+                components.showError('Inventory synchronization failure.');
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        function renderMedicines(meds) {
+            const container = document.getElementById('med-list');
+            if (!meds || meds.length === 0) {
+                container.innerHTML = '<div style="padding:60px; text-align:center; color:#8e8e93; font-weight:600; grid-column: 1 / -1;">No pharmaceutical nodes detected.</div>';
+                return;
+            }
+            container.innerHTML = meds.map(m => {
+                const statusClass = m.approval_status === 'approved' ? 'status-approved' : (m.approval_status === 'pending' ? 'status-pending' : 'status-rejected');
+                return `
+                    <div class="med-card">
+                        <span class="med-status ${statusClass}">${m.approval_status.toUpperCase()}</span>
+                        <div class="med-info">
+                            <h3>${m.name}</h3>
+                            <div class="vendor">🏪 ${m.vendor_name}</div>
+                        </div>
+                        <div class="med-stats">
+                            <div class="m-stat">
+                                <span class="val">₹${m.price}</span>
+                                <span class="lbl">Price</span>
+                            </div>
+                            <div class="m-stat">
+                                <span class="val">${m.stock}</span>
+                                <span class="lbl">Stock</span>
+                            </div>
+                            <div class="m-stat">
+                                <span class="val">#${m.id}</span>
+                                <span class="lbl">Node ID</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        document.getElementById('med-search').addEventListener('input', () => applyMedFilters());
+
+        function applyMedFilters() {
+            const q = (document.getElementById('medSearchInput').value || document.getElementById('med-search').value || '').toLowerCase();
+            const status = document.getElementById('medFilterSelect').value;
+            const sort = document.getElementById('medSortSelect').value;
+
+            let filtered = allMedicines.filter(m => {
+                const matchSearch = m.name.toLowerCase().includes(q) || (m.salt_composition || '').toLowerCase().includes(q) || m.vendor_name.toLowerCase().includes(q);
+                const matchStatus = status === 'all' || m.approval_status === status;
+                return matchSearch && matchStatus;
+            });
+
+            if (sort === 'name_az') filtered.sort((a, b) => a.name.localeCompare(b.name));
+            else if (sort === 'price_low') filtered.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+            else if (sort === 'price_high') filtered.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
+            else if (sort === 'newest') filtered.sort((a, b) => (b.id || 0) - (a.id || 0));
+
+            renderMedicines(filtered);
+        }
+
+        loadMedicines();
+    </script>
+</body>
+</html>

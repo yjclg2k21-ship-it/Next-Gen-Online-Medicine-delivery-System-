@@ -1,0 +1,2 @@
+-- Prescription Alter Script
+-- Archived: Schema changes merged into main schema.sql during unification.

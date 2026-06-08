@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medicine Specification | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        body { background: #f4f7fa; margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; font-family: 'Plus Jakarta Sans', sans-serif; }
+        .squircle-card { width: 100%; height: 100%; border-radius: 0; display: flex; overflow: hidden; }
+        .details-container { display: grid; grid-template-columns: 450px 1fr; gap: 30px; padding: 20px; height: calc(100vh - 80px); overflow-y: auto; scrollbar-width: thin; }
+        .image-hero { background: white; border-radius: 24px; height: 450px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.02); position: sticky; top: 0; overflow: hidden; }
+        .image-hero img { width: 85%; height: 85%; object-fit: contain; }
+        .info-card { background: white; border-radius: 24px; padding: 30px; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.02); }
+        .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 100px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; }
+        .badge-success { background: #f0fdf4; color: #166534; }
+        .badge-warning { background: #fffbeb; color: #92400e; }
+        .price-tag { font-size: 2.2rem; font-weight: 900; color: #0f172a; margin: 15px 0; }
+        .attr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px; padding-top: 30px; border-top: 1px dashed rgba(0,0,0,0.1); }
+        .attr-item label { display: block; font-size: 0.65rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; }
+        .attr-item span { font-size: 0.9rem; font-weight: 700; color: #1e293b; }
+        .section-title { font-size: 1.1rem; font-weight: 800; color: #0f172a; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .sub-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; margin-top: 20px; }
+        .sub-card { background: white; border-radius: 16px; padding: 12px; border: 1px solid rgba(0,0,0,0.05); cursor: pointer; transition: 0.2s; }
+        .sub-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .back-btn { width: 40px; height: 40px; border-radius: 50%; background: white; border: 1px solid rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
+        .back-btn:hover { background: #f8fafc; transform: translateX(-3px); }
+        .btn-large-action { height: 52px; border-radius: 14px; background: var(--primary-grad); color: white; border: none; font-weight: 800; font-size: 1rem; cursor: pointer; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 25px rgba(0, 122, 255, 0.25); }
+        .btn-wish-circle { width: 52px; height: 52px; border-radius: 14px; background: white; border: 1.5px solid #f1f5f9; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; color: #94a3b8; }
+        .btn-wish-circle.active { color: #ef4444; border-color: #fee2e2; background: #fffefb; }
+
+        /* Heart Pop Animation */
+        @keyframes heartPop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.4); }
+            100% { transform: scale(1); }
+        }
+        .btn-wish-circle.pop { animation: heartPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+        /* Brand Type Styling */
+        .type-Generic { background-color: #f0fdf4 !important; color: #166534 !important; border-color: #bbf7d0 !important; }
+        .type-MNC { background-color: #eff6ff !important; color: #1e40af !important; border-color: #bfdbfe !important; }
+        .type-Local { background-color: #fef3c7 !important; color: #b45309 !important; border-color: #fde68a !important; }
+        .type-Ayurvedic { background-color: #dcfce7 !important; color: #15803d !important; border-color: #bbf7d0 !important; }
+
+    </style>
+</head>
+<body>
+    <div class="squircle-card">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        <main class="liquid-main" style="background: #f8fafc; flex: 1; overflow: hidden;">
+            <header style="padding: 15px 30px; display: flex; align-items: center; gap: 20px; background: white; border-bottom: 1px solid rgba(0,0,0,0.05);">
+                <div class="back-btn" onclick="window.location.href='medicines-page.html'"><i data-lucide="arrow-left" style="width: 20px;"></i></div>
+                <div>
+                    <h1 class="vibrant-h1" style="font-size: 1.2rem; margin: 0;">Medicine Specification</h1>
+                    <p style="margin: 0; font-size: 0.75rem; color: #94a3b8; font-weight: 600;">Full clinical analysis and procurement status</p>
+                </div>
+            </header>
+            <div class="details-container">
+                <div class="image-hero animate-scale-in">
+                    <img id="det-img" src="../assets/images/medicines/tablet_blister.png" alt="Medicine Image">
+                </div>
+                <div class="info-content">
+                    <div class="info-card animate-scale-in">
+                        <div style="display: flex; gap: 10px;">
+                            <span class="status-badge badge-success"><i data-lucide="check-circle" style="width: 12px;"></i> In Stock (<span id="det-stock">0</span> units)</span>
+                            <span id="prescription-badge" class="status-badge badge-warning"><i data-lucide="alert-circle" style="width: 12px;"></i> Schedule-H</span>
+                        </div>
+                        <h1 id="det-name" style="font-size: 2.2rem; font-weight: 800; color: #1e293b; margin: 10px 0 5px 0;">Clinical Product</h1>
+                        <div id="det-salt-title" style="font-size: 1.1rem; color: #64748b; font-weight: 600; margin-bottom: 15px;">Molecular Structure Pending</div>
+                        
+                        <!-- Variant Selection Dropdown -->
+                        <div id="variant-section" style="margin-bottom: 20px; display: none;">
+                            <label style="display: block; font-size: 0.65rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">Select Variant / Option</label>
+                            <select id="det-variant-select" class="liquid-select" style="width: 100%; max-width: 350px; padding: 12px 16px; border-radius: 14px; border: 1.5px solid rgba(0,0,0,0.1); font-weight: 700; font-size: 0.9rem; outline: none; background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M5%207.5L10%2012.5L15%207.5%22%20stroke%3D%22%231e293b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E'); background-repeat: no-repeat; background-position: right 16px center; background-size: 16px; -webkit-appearance: none; -moz-appearance: none; appearance: none; cursor: pointer; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02); transition: all 0.2s; text-align: center; text-align-last: center;">
+                            </select>
+                        </div>
+
+                        <div class="price-tag" id="det-price">₹0.00</div>
+                        <p id="det-desc" style="color: #475569; line-height: 1.6; font-size: 0.95rem; font-weight: 500; margin: 20px 0;">Synchronizing pharmaceutical artifacts...</p>
+                        <div style="display: flex; gap: 16px; margin: 30px 0;">
+                            <button id="btn-add" class="btn-large-action" style="flex: 1;">Add to Cart <i data-lucide="shopping-bag" style="width: 20px;"></i></button>
+                            <button id="btn-wish" class="btn-wish-circle"><i data-lucide="heart" style="width: 24px;"></i></button>
+                        </div>
+                        <div class="attr-grid">
+                            <div class="attr-item">
+                                <label>Vendor / Pharmacy</label>
+                                <span id="det-vendor" style="color: var(--primary);">Authorized Medical Node</span>
+                            </div>
+                            <div class="attr-item">
+                                <label>Salt Composition</label>
+                                <span id="det-salt">N/A</span>
+                            </div>
+                            <div class="attr-item">
+                                <label>Clinical Rating</label>
+                                <span id="det-rating-val" style="display: flex; align-items: center; gap: 4px; color: #f59e0b;"><i data-lucide="star" style="width: 14px; fill: currentColor;"></i> 4.5 / 5.0</span>
+                            </div>
+                            <div class="attr-item">
+                                <label>Proximity</label>
+                                <span id="det-dist">1.2 km away</span>
+                            </div>
+                        </div>
+                    </div>
+                    <section style="margin-top: 40px;">
+                        <h3 class="section-title"><i data-lucide="sparkles" style="width: 20px; color: var(--primary);"></i> AI Suggestions: Cheaper Alternatives</h3>
+                        <div id="alternatives-grid" class="sub-grid"><p class="muted-text">Optimizing for cost-efficiency...</p></div>
+                    </section>
+                    <section style="margin-top: 40px;">
+                        <h3 class="section-title"><i data-lucide="layers" style="width: 20px; color: var(--primary);"></i> Clinical Substitutes</h3>
+                        <div id="substitutes-grid" class="sub-grid"><p class="muted-text">Analyzing chemical similarity...</p></div>
+                    </section>
+                    <section style="margin-top: 40px; padding-bottom: 50px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 class="section-title"><i data-lucide="message-square" style="width: 20px; color: var(--primary);"></i> Patient Testimonials</h3>
+                            <button class="pill-button btn-outline" style="height: 36px; font-size: 0.75rem;" onclick="openReviewModal()">Write a Review</button>
+                        </div>
+                        <div id="reviews-list" style="display: flex; flex-direction: column; gap: 15px;"><p class="muted-text">Synchronizing testimonials...</p></div>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const medId = urlParams.get('id');
+        const user = auth.getUser();
+        if (!user) window.location.href = '../auth/login.html';
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('user');
+        lucide.createIcons();
+
+        async function loadDetails() {
+            if (!medId) return;
+            try {
+                console.log("Fetching details for ID:", medId);
+                const res = await api.get(`/medicines/${medId}`);
+                console.log("API Full Response:", res);
+                const med = res.data.medicine;
+                if (!med) throw new Error("Medicine data empty");
+
+                document.getElementById('det-name').innerText = med.name || 'Clinical Product';
+                
+                // Clean up duplicate salt names (e.g. if salt contains name, or is redundant)
+                let saltText = med.salt || 'Molecular Structure Pending';
+                const cleanName = (med.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+                const cleanSalt = saltText.toLowerCase().replace(/[^a-z0-9]/g, '');
+                if (cleanSalt.includes(cleanName) || cleanName.includes(cleanSalt)) {
+                    // Extract the core chemical if it contains parenthesis, or fallback to clean generic text
+                    if (saltText.includes('(')) {
+                        saltText = saltText.split('(')[0].trim();
+                    } else if (saltText.toLowerCase().includes('generic')) {
+                        saltText = saltText.replace(/generic/ig, '').replace(/[^a-zA-Z\s]/g, '').trim();
+                    }
+                }
+                document.getElementById('det-salt-title').innerText = saltText;
+                
+                document.getElementById('det-price').innerText = `₹${parseFloat(med.price || 0).toFixed(2)}`;
+                document.getElementById('det-salt').innerText = med.salt || 'N/A';
+                document.getElementById('det-stock').innerText = med.stock || '0';
+                document.getElementById('det-vendor').innerHTML = '<i data-lucide="shield-check" style="width: 14px; margin-right: 4px; vertical-align: middle;"></i> Verified Partner';
+                document.getElementById('det-rating-val').innerHTML = `<i data-lucide="star" style="width: 14px; fill: currentColor;"></i> ${med.rating || '4.5'} / 5.0`;
+                document.getElementById('det-dist').innerText = `${med.distance || '1.2'} km away`;
+                
+                // Dynamic Prescription / Schedule-H Badge
+                const rxBadge = document.getElementById('prescription-badge');
+                if (med.requires_prescription == 1 || med.requires_prescription === true) {
+                    rxBadge.className = 'status-badge badge-warning';
+                    rxBadge.innerHTML = '<i data-lucide="alert-circle" style="width: 12px;"></i> Schedule-H';
+                } else {
+                    rxBadge.className = 'status-badge badge-success';
+                    rxBadge.innerHTML = '<i data-lucide="shield-check" style="width: 12px;"></i> Over-The-Counter (OTC)';
+                }
+                
+                lucide.createIcons();
+                
+                let desc = med.description;
+                if (!desc || desc.trim() === '') {
+                    desc = `${med.name} is a high-efficacy clinical solution. Specially formulated for rapid relief and targeted pharmaceutical action. Part of the Medical collection.`;
+                }
+                document.getElementById('det-desc').innerText = desc;
+
+                let displayImg = '../assets/images/medicines/tablet_blister.png';
+                if (med.image) {
+                    if (med.image.startsWith('assets/')) {
+                        displayImg = `../${med.image}`;
+                    } else {
+                        displayImg = `../assets/images/medicines/${med.image}`;
+                    }
+                }
+                document.getElementById('det-img').src = displayImg;
+
+                // Dynamic Variant fetching
+                if (med.salt) {
+                    try {
+                        const allMedRes = await api.get('/medicines');
+                        const matchingVariants = (allMedRes.data.medicines || []).filter(m => m.salt === med.salt);
+                        if (matchingVariants.length > 1) {
+                            const variantSec = document.getElementById('variant-section');
+                            const variantSelect = document.getElementById('det-variant-select');
+                            
+                            variantSelect.innerHTML = matchingVariants.map(v => {
+                                const isCurrent = v.id == med.id ? 'selected' : '';
+                                const type = v.brand_type || 'MNC';
+                                return `<option value="${v.id}" data-type="${type}" ${isCurrent}>${type}</option>`;
+                            }).join('');
+                            
+                            // Apply initial type color style class
+                            const currentType = med.brand_type || 'MNC';
+                            variantSelect.className = `liquid-select type-${currentType}`;
+                            
+                            variantSec.style.display = 'block';
+                            variantSelect.onchange = (e) => {
+                                window.location.href = `medicine-details.html?id=${e.target.value}`;
+                            };
+                        }
+                    } catch (varErr) {
+                        console.error("Error loading variants:", varErr);
+                    }
+                }
+
+                document.getElementById('btn-add').onclick = async () => {
+                    await api.post('/cart/add', { medicine_id: med.id, qty: 1 });
+                    components.showSuccess('Added to cart successfully.');
+                };
+                document.getElementById('btn-wish').onclick = async () => {
+                    const btn = document.getElementById('btn-wish');
+                    btn.classList.add('pop');
+                    setTimeout(() => btn.classList.remove('pop'), 400);
+
+                    await api.post('/user/wishlist/toggle', { medicine_id: med.id });
+                    btn.classList.toggle('active');
+                    const icon = btn.querySelector('i');
+                    if (btn.classList.contains('active')) {
+                        icon.setAttribute('fill', '#ef4444');
+                        icon.style.color = '#ef4444';
+                    } else {
+                        icon.removeAttribute('fill');
+                        icon.style.color = '';
+                    }
+                };
+            } catch (err) { 
+                console.error("LoadDetails Error:", err); 
+            }
+        }
+
+        async function loadSubstitutes() {
+            try {
+                const res = await api.get(`/medicines/${medId}/substitutes`);
+                const grid = document.getElementById('substitutes-grid');
+                const subs = res.data.substitutes || [];
+                if (subs.length === 0) {
+                    grid.innerHTML = '<p class="muted-text">No chemical substitutes found.</p>';
+                    return;
+                }
+                grid.innerHTML = subs.map(s => {
+                    const subImg = s.image ? `../${s.image}` : '../assets/images/medicines/tablet_blister.png';
+                    return `
+                    <div class="sub-card" onclick="window.location.href='medicine-details.html?id=${s.substitute_id}'">
+                        <div style="height: 100px; background: #f8fafc; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
+                            <img src="${subImg}" style="width: 70%; height: 70%; object-fit: contain;">
+                        </div>
+                        <div style="font-weight: 800; font-size: 0.85rem; color: #1e293b;">${s.name}</div>
+                        <div style="font-size: 0.75rem; font-weight: 700; color: var(--primary);">₹${parseFloat(s.price).toFixed(2)}</div>
+                    </div>
+                    `;
+                }).join('');
+            } catch (err) { console.error(err); }
+        }
+
+        async function loadAlternatives() {
+            try {
+                const res = await api.get(`/ai/alternatives?medicine_id=${medId}`);
+                const grid = document.getElementById('alternatives-grid');
+                const alts = res.data.alternatives || [];
+                if (alts.length === 0) {
+                    grid.innerHTML = '<p class="muted-text">This product is already cost-optimized.</p>';
+                    return;
+                }
+                grid.innerHTML = alts.map(a => {
+                    const altImg = a.image ? `../${a.image}` : '../assets/images/medicines/tablet_blister.png';
+                    return `
+                    <div class="sub-card" onclick="window.location.href='medicine-details.html?id=${a.id}'" style="border: 1.5px solid rgba(52,199,89,0.2);">
+                        <div style="height: 100px; background: rgba(52,199,89,0.05); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
+                            <img src="${altImg}" style="width: 70%; height: 70%; object-fit: contain;">
+                        </div>
+                        <div style="font-weight: 800; font-size: 0.85rem; color: #1e293b;">${a.name}</div>
+                        <div style="font-size: 0.85rem; font-weight: 900; color: #34c759;">₹${parseFloat(a.price).toFixed(2)}</div>
+                        <div style="font-size: 0.65rem; color: #8e8e93; font-weight: 700; margin-top: 4px;">SAVE ${Math.round((1 - (a.price / document.getElementById('det-price').innerText.replace('₹',''))) * 100)}%</div>
+                    </div>
+                    `;
+                }).join('');
+            } catch (err) { console.error(err); }
+        }
+
+        async function loadReviews() {
+            try {
+                const res = await api.get(`/medicines/${medId}/reviews`);
+                const list = document.getElementById('reviews-list');
+                const reviews = res.reviews || [];
+                if (reviews.length === 0) {
+                    list.innerHTML = '<p class="muted-text">No peer testimonials yet.</p>';
+                    return;
+                }
+                list.innerHTML = reviews.map(r => `
+                    <div class="info-card" style="padding: 20px;">
+                        <div style="display: flex; gap: 5px; color: #f59e0b; margin-bottom: 10px;">
+                            ${Array(r.rating).fill('<i data-lucide="star" style="width: 14px; fill: currentColor;"></i>').join('')}
+                        </div>
+                        <p style="margin: 0; color: #475569; font-weight: 500; font-size: 0.9rem;">"${r.review_text}"</p>
+                        <div style="margin-top: 10px; font-size: 0.7rem; font-weight: 800; color: #94a3b8;">Patient Node ID: ${r.user_id}</div>
+                    </div>
+                `).join('');
+                lucide.createIcons();
+            } catch (err) { console.error(err); }
+        }
+
+        function openReviewModal() {
+            components.showModal('Share Experience', `
+                <div style="display: flex; flex-direction: column; gap: 15px; padding: 10px;">
+                    <div><label style="display: block; font-size: 0.7rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 5px;">Efficacy Rating</label>
+                        <select id="m-rating" class="liquid-select" style="width: 100%;">
+                            <option value="5">5 Stars - Excellent Result</option><option value="4">4 Stars - Good Efficacy</option><option value="3">3 Stars - Neutral</option><option value="2">2 Stars - Poor</option><option value="1">1 Star - Not Recommended</option>
+                        </select></div>
+                    <div><label style="display: block; font-size: 0.7rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 5px;">Clinical Observation</label>
+                        <textarea id="m-review" style="width: 100%; border: 1.5px solid #f1f5f9; border-radius: 12px; padding: 12px; font-family: inherit; min-height: 100px; outline: none; transition: 0.2s;" placeholder="Describe how this medicine worked..."></textarea></div>
+                </div>
+            `, [{ label: 'Cancel', type: 'outline', onClick: () => {} }, { label: 'Submit Report', type: 'primary', onClick: submitReview }]);
+        }
+
+        async function submitReview() {
+            const rating = document.getElementById('m-rating').value;
+            const text = document.getElementById('m-review').value;
+            if (!text) return;
+            try {
+                await api.post(`/medicines/${medId}/reviews`, { rating, review_text: text });
+                components.showSuccess('Testimonial submitted.');
+                loadReviews();
+            } catch (err) { console.error(err); }
+        }
+
+        loadDetails();
+        loadSubstitutes();
+        loadAlternatives();
+        loadReviews();
+    </script>
+</body>
+</html>

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Settings | Admin | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <link rel="stylesheet" href="../assets/css/admin-dark.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid rgba(0,0,0,0.06); }
+        .setting-row:last-child { border-bottom: none; }
+        .toggle-switch { position: relative; width: 44px; height: 24px; }
+        .toggle-switch input { display: none; }
+        .toggle-slider { position: absolute; inset: 0; background: rgba(0,0,0,0.12); border-radius: 24px; cursor: pointer; transition: background 0.2s; }
+        .toggle-slider::after { content: ''; position: absolute; width: 18px; height: 18px; top: 3px; left: 3px; background: #fff; border-radius: 50%; transition: transform 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        input:checked + .toggle-slider { background: #34c759; }
+        input:checked + .toggle-slider::after { transform: translateX(20px); }
+        .form-input { width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.1); font-family: Inter,sans-serif; font-size: 0.88rem; outline: none; box-sizing: border-box; }
+        .form-input:focus { border-color: #007aff; }
+        .form-label { display: block; font-size: 0.8rem; font-weight: 600; color: #6e6e73; margin-bottom: 6px; }
+    </style>
+</head>
+<body>
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        <main class="liquid-main" style="overflow-y:auto;">
+            <header style="margin-bottom:20px;display:flex;justify-content:space-between;align-items:flex-start;">
+                <div>
+                    <h1 class="vibrant-h1">Security Settings</h1>
+                    <p style="color:#6e6e73;font-size:1rem;font-weight:500;">Platform-wide security and access configuration.</p>
+                </div>
+                <button onclick="saveSettings()" style="padding:10px 24px;border-radius:12px;background:#007aff;color:#fff;border:none;font-weight:700;font-size:0.9rem;cursor:pointer;font-family:Inter,sans-serif;">Save All Changes</button>
+            </header>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+                <!-- Auth & Access -->
+                <div class="liquid-card" style="padding:24px;">
+                    <h3 style="font-weight:800;margin-bottom:4px;display:flex;align-items:center;gap:8px;"><i data-lucide="lock" style="color:#ff3b30;width:18px;height:18px;"></i> Auth & Access</h3>
+                    <p style="color:#8e8e93;font-size:0.8rem;margin-bottom:20px;">Control who can access the platform and how.</p>
+                    <div class="setting-row">
+                        <div><div style="font-weight:600;">Two-Factor Auth (Admin)</div><div style="font-size:0.78rem;color:#8e8e93;">Require 2FA for all admin logins</div></div>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-2fa" checked><span class="toggle-slider"></span></label>
+                    </div>
+                    <div class="setting-row">
+                        <div><div style="font-weight:600;">Force HTTPS</div><div style="font-size:0.78rem;color:#8e8e93;">Redirect all HTTP traffic to HTTPS</div></div>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-https" checked><span class="toggle-slider"></span></label>
+                    </div>
+                    <div class="setting-row">
+                        <div><div style="font-weight:600;">Email Verification</div><div style="font-size:0.78rem;color:#8e8e93;">Require email verify on new accounts</div></div>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-email-verify" checked><span class="toggle-slider"></span></label>
+                    </div>
+                    <div class="setting-row">
+                        <div><div style="font-weight:600;">New User Registration</div><div style="font-size:0.78rem;color:#8e8e93;">Allow public to register new accounts</div></div>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-register" checked><span class="toggle-slider"></span></label>
+                    </div>
+                    <div class="setting-row">
+                        <div><div style="font-weight:600;">Maintenance Mode</div><div style="font-size:0.78rem;color:#8e8e93;">Take platform offline for maintenance</div></div>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-maintenance"><span class="toggle-slider"></span></label>
+                    </div>
+                </div>
+
+                <!-- Rate Limiting -->
+                <div class="liquid-card" style="padding:24px;">
+                    <h3 style="font-weight:800;margin-bottom:4px;display:flex;align-items:center;gap:8px;"><i data-lucide="shield-alert" style="color:#ff9500;width:18px;height:18px;"></i> Rate Limiting</h3>
+                    <p style="color:#8e8e93;font-size:0.8rem;margin-bottom:20px;">Protect APIs from abuse and brute-force attacks.</p>
+                    <div style="display:grid;gap:14px;">
+                        <div>
+                            <label class="form-label">Max API Requests / minute</label>
+                            <input type="number" class="form-input" id="rate-api" value="100">
+                        </div>
+                        <div>
+                            <label class="form-label">Max Login Attempts (before lockout)</label>
+                            <input type="number" class="form-input" id="rate-login" value="5">
+                        </div>
+                        <div>
+                            <label class="form-label">Account Lockout Duration (minutes)</label>
+                            <input type="number" class="form-input" id="lockout-duration" value="30">
+                        </div>
+                        <div>
+                            <label class="form-label">JWT Token Expiry (hours)</label>
+                            <input type="number" class="form-input" id="jwt-expiry" value="24">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CORS & API -->
+                <div class="liquid-card" style="padding:24px;">
+                    <h3 style="font-weight:800;margin-bottom:4px;display:flex;align-items:center;gap:8px;"><i data-lucide="globe" style="color:#5856d6;width:18px;height:18px;"></i> CORS & API Access</h3>
+                    <p style="color:#8e8e93;font-size:0.8rem;margin-bottom:20px;">Manage allowed origins and IP restrictions.</p>
+                    <div style="display:grid;gap:14px;">
+                        <div>
+                            <label class="form-label">Allowed Origins (comma-separated)</label>
+                            <input type="text" class="form-input" id="cors-origins" value=", https://medimitra.in">
+                        </div>
+                        <div>
+                            <label class="form-label">Admin IP Whitelist (leave empty to disable)</label>
+                            <input type="text" class="form-input" id="ip-whitelist" placeholder="e.g. 192.168.1.0/24, 10.0.0.1">
+                        </div>
+                    </div>
+                    <div class="setting-row" style="margin-top:14px;">
+                        <div><div style="font-weight:600;">API Debug Mode</div><div style="font-size:0.78rem;color:#8e8e93;">Show detailed errors in API responses</div></div>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-debug"><span class="toggle-slider"></span></label>
+                    </div>
+                </div>
+
+                <!-- Audit -->
+                <div class="liquid-card" style="padding:24px;">
+                    <h3 style="font-weight:800;margin-bottom:4px;display:flex;align-items:center;gap:8px;"><i data-lucide="clipboard-list" style="color:#34c759;width:18px;height:18px;"></i> Audit & Compliance</h3>
+                    <p style="color:#8e8e93;font-size:0.8rem;margin-bottom:20px;">Control logging and data retention policies.</p>
+                    <div class="setting-row">
+                        <div><div style="font-weight:600;">Audit All Admin Actions</div><div style="font-size:0.78rem;color:#8e8e93;">Log every admin operation to audit table</div></div>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-audit" checked><span class="toggle-slider"></span></label>
+                    </div>
+                    <div class="setting-row">
+                        <div><div style="font-weight:600;">Log Failed Logins</div><div style="font-size:0.78rem;color:#8e8e93;">Record all failed authentication attempts</div></div>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-faillog" checked><span class="toggle-slider"></span></label>
+                    </div>
+                    <div style="margin-top:14px;">
+                        <label class="form-label">Log Retention Period (days)</label>
+                        <input type="number" class="form-input" id="log-retention" value="90">
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        const user = auth.getUser();
+        if (!user || user.role !== 'admin') window.location.href = '../auth/login.html';
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('admin');
+        lucide.createIcons();
+
+        async function loadSettings() {
+            try {
+                components.showLoader();
+                const res = await api.get('/admin/settings');
+                const settings = res.data.settings || {};
+                
+                // Map DB keys to UI IDs
+                if (settings.two_fa !== undefined) document.getElementById('toggle-2fa').checked = settings.two_fa == '1';
+                if (settings.force_https !== undefined) document.getElementById('toggle-https').checked = settings.force_https == '1';
+                if (settings.email_verification !== undefined) document.getElementById('toggle-email-verify').checked = settings.email_verification == '1';
+                if (settings.allow_registration !== undefined) document.getElementById('toggle-register').checked = settings.allow_registration == '1';
+                if (settings.maintenance_mode !== undefined) document.getElementById('toggle-maintenance').checked = settings.maintenance_mode == '1';
+                
+                if (settings.rate_limit_api) document.getElementById('rate-api').value = settings.rate_limit_api;
+                if (settings.rate_limit_login) document.getElementById('rate-login').value = settings.rate_limit_login;
+                if (settings.lockout_duration) document.getElementById('lockout-duration').value = settings.lockout_duration;
+                if (settings.jwt_expiry) document.getElementById('jwt-expiry').value = settings.jwt_expiry;
+                if (settings.cors_origins) document.getElementById('cors-origins').value = settings.cors_origins;
+                if (settings.ip_whitelist) document.getElementById('ip-whitelist').value = settings.ip_whitelist;
+                
+                if (settings.debug_mode !== undefined) document.getElementById('toggle-debug').checked = settings.debug_mode == '1';
+                if (settings.audit_admin !== undefined) document.getElementById('toggle-audit').checked = settings.audit_admin == '1';
+                if (settings.log_failed_logins !== undefined) document.getElementById('toggle-faillog').checked = settings.log_failed_logins == '1';
+                if (settings.log_retention) document.getElementById('log-retention').value = settings.log_retention;
+
+            } catch (e) {
+                console.error('Failed to load settings:', e);
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        async function saveSettings() {
+            const btn = document.querySelector('header button');
+            const originalText = btn.innerText;
+            btn.innerText = "Saving...";
+            btn.disabled = true;
+
+            const settings = {
+                two_fa: document.getElementById('toggle-2fa').checked ? '1' : '0',
+                force_https: document.getElementById('toggle-https').checked ? '1' : '0',
+                email_verification: document.getElementById('toggle-email-verify').checked ? '1' : '0',
+                allow_registration: document.getElementById('toggle-register').checked ? '1' : '0',
+                maintenance_mode: document.getElementById('toggle-maintenance').checked ? '1' : '0',
+                rate_limit_api: document.getElementById('rate-api').value,
+                rate_limit_login: document.getElementById('rate-login').value,
+                lockout_duration: document.getElementById('lockout-duration').value,
+                jwt_expiry: document.getElementById('jwt-expiry').value,
+                cors_origins: document.getElementById('cors-origins').value,
+                ip_whitelist: document.getElementById('ip-whitelist').value,
+                debug_mode: document.getElementById('toggle-debug').checked ? '1' : '0',
+                audit_admin: document.getElementById('toggle-audit').checked ? '1' : '0',
+                log_failed_logins: document.getElementById('toggle-faillog').checked ? '1' : '0',
+                log_retention: document.getElementById('log-retention').value,
+            };
+            try { 
+                await api.post('/admin/settings/update', settings); 
+                components.showSuccess('Security protocol updated across all nodes.');
+            } catch(e) { 
+                console.error(e); 
+                components.showError("Update failed: Network exception."); 
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        loadSettings();
+    </script>
+</body>
+</html>

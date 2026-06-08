@@ -1,0 +1,4 @@
+medicine_id,stock_adjustment,reason
+1,50,"Monthly stock reconciliation"
+5,-10,"Damaged batch clinical disposal"
+8,100,"Inventory top-up from vendor"

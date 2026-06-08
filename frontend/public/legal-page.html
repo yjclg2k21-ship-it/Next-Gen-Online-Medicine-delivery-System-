@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal & Compliance | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        .legal-sidebar { border-right: 1px solid rgba(0,0,0,0.05); padding-right: 40px; position: sticky; top: 40px; }
+        .legal-nav-item { display: block; padding: 12px 16px; border-radius: 12px; font-weight: 700; color: #8e8e93; text-decoration: none; margin-bottom: 4px; transition: all 0.2s; }
+        .legal-nav-item.active { background: #f1f5f9; color: #1d1d1f; }
+        .legal-content h2 { font-weight: 800; font-size: 1.5rem; margin-top: 40px; margin-bottom: 16px; }
+        .legal-content p { color: #6e6e73; line-height: 1.7; margin-bottom: 20px; }
+        .compliance-badge { display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: rgba(0,122,255,0.05); border-radius: 12px; color: #007aff; font-weight: 700; font-size: 0.9rem; margin-bottom: 40px; }
+    </style>
+</head>
+<body style="background:#fff;">
+    <div id="header-root"></div>
+
+    <main class="container" style="padding: 60px 20px;">
+        <div style="display:grid; grid-template-columns: 280px 1fr; gap: 60px;">
+            <aside class="legal-sidebar">
+                <h1 style="font-weight: 800; font-size: 2rem; margin-bottom: 32px;">Legal Center</h1>
+                <nav>
+                    <a href="#privacy" class="legal-nav-item active">Privacy Policy</a>
+                    <a href="#terms" class="legal-nav-item">Terms of Service</a>
+                    <a href="#delivery" class="legal-nav-item">Delivery Policies</a>
+                    <a href="#refund" class="legal-nav-item">Refund & Returns</a>
+                    <a href="#compliance" class="legal-nav-item">Compliance Standards</a>
+                </nav>
+            </aside>
+
+            <article class="legal-content animate-fade-in">
+                <div class="compliance-badge"><i data-lucide="shield-check"></i> Compliant with Clinical Data Protection Act 2026</div>
+                
+                <section id="privacy">
+                    <p style="font-size: 0.8rem; font-weight: 800; color: #8e8e93; text-transform: uppercase;">Updated 14 April 2026</p>
+                    <h2>Privacy & Data Protection</h2>
+                    <p>At MediMitra, we prioritize your clinical data privacy. This policy outlines how we collect, process, and protect your health records and personal information.</p>
+                    <p>We do not sell your clinical data to third-party advertisers. All prescription uploads are stored in an encrypted environment (AES-256) and are only visible to authorized pharmacists and clinical reviewers.</p>
+                </section>
+
+                <section id="terms" style="margin-top: 60px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 40px;">
+                    <h2>Terms of Service</h2>
+                    <p>By using MediMitra, you agree to provide accurate clinical information. Fraudulent prescription uploads or misuse of emergency delivery services will result in immediate account termination and potential legal action.</p>
+                    <p>All medicines must be sold via verified clinical partners holding Form 20 or 21 drug licenses in India. MediMitra acts as a platform facilitating these transactions.</p>
+                </section>
+
+                <section id="refund" style="margin-top: 60px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 40px;">
+                    <h2>Refund & Cancellation</h2>
+                    <p>Orders can only be cancelled before they are "Accepted" by a pharmacy. Once accepted, cancellations are subject to a processing fee. Refunds for damaged clinical goods are processed within 3-5 business days.</p>
+                </section>
+            </article>
+        </div>
+    </main>
+
+    <div id="footer-root"></div>
+
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script>
+        const user = auth.getUser();
+        document.getElementById('header-root').innerHTML = components.header(user, false);
+        document.getElementById('footer-root').innerHTML = components.footer();
+        lucide.createIcons();
+    </script>
+</body>
+</html>

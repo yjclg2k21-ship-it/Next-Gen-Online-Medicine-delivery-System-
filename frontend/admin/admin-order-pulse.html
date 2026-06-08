@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Pulse | Admin | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <link rel="stylesheet" href="../assets/css/admin-dark.css">
+    <link rel="stylesheet" href="../assets/css/emergency-alerts.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .liquid-main { overflow-y: auto !important; }
+        .squircle-card { margin-top: 68px !important; height: calc(100vh - 68px) !important; }
+        .order-pulse-row { display: grid; grid-template-columns: 100px 1.5fr 120px 130px 160px 140px 110px; gap: 12px; align-items: center; padding: 14px 18px; border-radius: 12px; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 0.84rem; transition: background 0.15s; }
+        .order-pulse-row:hover { background: rgba(0,122,255,0.03); }
+        .order-pulse-header { display: grid; grid-template-columns: 100px 1.5fr 120px 130px 160px 140px 110px; gap: 12px; padding: 8px 18px; font-size: 0.72rem; font-weight: 700; color: #8e8e93; text-transform: uppercase; }
+        .status-badge { padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; text-transform: capitalize; }
+        .incident-tag { background: rgba(255,59,48,0.1); color: #ff3b30; padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; margin-left: 6px; }
+        .live-dot { width: 8px; height: 8px; background: #34c759; border-radius: 50%; display: inline-block; animation: blink 1.5s infinite; }
+        @keyframes blink { 0%,100%{opacity:1}50%{opacity:0.3} }
+
+        /* Emergency Order Styles */
+        .order-pulse-row.emergency-row {
+            background: rgba(255, 59, 48, 0.04);
+            border: 2px solid rgba(255, 59, 48, 0.6);
+            border-radius: 12px;
+            animation: emergencyPulse 2s infinite;
+            position: relative;
+        }
+        @keyframes emergencyPulse {
+            0%, 100% { border-color: rgba(255, 59, 48, 0.6); box-shadow: 0 0 8px rgba(255, 59, 48, 0.2); }
+            50% { border-color: rgba(255, 59, 48, 1); box-shadow: 0 0 16px rgba(255, 59, 48, 0.4); }
+        }
+        .emergency-countdown {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(255, 59, 48, 0.12);
+            color: #ff3b30;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            animation: countdownBlink 1s infinite;
+        }
+        @keyframes countdownBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .emergency-countdown.expired {
+            background: rgba(255, 59, 48, 0.25);
+            color: #ff0000;
+        }
+
+        /* Emergency Monitor Panel */
+        .emergency-monitor-panel {
+            background: rgba(255, 59, 48, 0.03);
+            border: 1px solid rgba(255, 59, 48, 0.2);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+        }
+        .emergency-monitor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .emergency-monitor-header h2 {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: #ff3b30;
+            margin: 0;
+        }
+        .emergency-monitor-header .sync-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: #8e8e93;
+        }
+        .emergency-stats-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .emergency-stat-item {
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 8px;
+            padding: 6px 10px;
+            text-align: center;
+            border: 1px solid rgba(255, 59, 48, 0.1);
+        }
+        .emergency-stat-item .stat-value {
+            font-size: 1.1rem;
+            font-weight: 800;
+        }
+        .emergency-stat-item .stat-label {
+            font-size: 0.6rem;
+            font-weight: 600;
+            color: #8e8e93;
+            text-transform: uppercase;
+            margin-top: 1px;
+        }
+        .emergency-stat-item.total .stat-value { color: #ff3b30; }
+        .emergency-stat-item.breached .stat-value { color: #ff0000; }
+        .emergency-stat-item.warning .stat-value { color: #ff9500; }
+        .emergency-stat-item.unassigned .stat-value { color: #af52de; }
+
+        .emergency-orders-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 6px;
+        }
+        .emergency-orders-table thead th {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #8e8e93;
+            text-transform: uppercase;
+            padding: 4px 8px;
+            text-align: left;
+        }
+        .emergency-orders-table tbody tr {
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 8px;
+            transition: background 0.15s;
+        }
+        .emergency-orders-table tbody tr:hover {
+            background: rgba(255, 59, 48, 0.06);
+        }
+        .emergency-orders-table tbody tr.breached-row {
+            background: rgba(255, 59, 48, 0.08);
+            border: 1px solid rgba(255, 59, 48, 0.4);
+        }
+        .emergency-orders-table tbody tr.warning-row {
+            background: rgba(255, 149, 0, 0.06);
+            border: 1px solid rgba(255, 149, 0, 0.3);
+        }
+        .emergency-orders-table tbody td {
+            padding: 10px 12px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            vertical-align: middle;
+        }
+        .emergency-orders-table tbody td:first-child {
+            border-radius: 10px 0 0 10px;
+        }
+        .emergency-orders-table tbody td:last-child {
+            border-radius: 0 10px 10px 0;
+        }
+        .sla-timer {
+            font-family: "SF Mono", "Fira Code", monospace;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+        .sla-timer.normal { color: #34c759; }
+        .sla-timer.warning { color: #ff9500; }
+        .sla-timer.breached { color: #ff3b30; animation: countdownBlink 1s infinite; }
+        .breach-elapsed {
+            font-family: "SF Mono", "Fira Code", monospace;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #ff3b30;
+            background: rgba(255, 59, 48, 0.12);
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+        .reassign-btn {
+            padding: 5px 12px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            background: rgba(0, 122, 255, 0.1);
+            color: #007aff;
+            border: 1px solid rgba(0, 122, 255, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .reassign-btn:hover {
+            background: rgba(0, 122, 255, 0.2);
+            transform: scale(1.02);
+        }
+        .rider-unassigned {
+            color: #af52de;
+            font-weight: 700;
+            font-style: italic;
+        }
+        .warning-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ff9500;
+            margin-right: 6px;
+            animation: blink 1.5s infinite;
+        }
+        .breach-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ff3b30;
+            margin-right: 6px;
+            animation: blink 0.5s infinite;
+        }
+        .emergency-empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #34c759;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        <main class="liquid-main">
+            <!-- Emergency Orders Live Monitor Panel -->
+            <div class="emergency-monitor-panel" id="emergency-monitor-panel">
+                <div class="emergency-monitor-header">
+                    <h2>🚨 Emergency Orders - Live Monitor</h2>
+                    <span class="sync-label"><span class="live-dot"></span> Polling every 30s</span>
+                </div>
+                <div class="emergency-stats-bar">
+                    <div class="emergency-stat-item total">
+                        <div class="stat-value" id="em-stat-total">0</div>
+                        <div class="stat-label">Total Active</div>
+                    </div>
+                    <div class="emergency-stat-item breached">
+                        <div class="stat-value" id="em-stat-breached">0</div>
+                        <div class="stat-label">Breached</div>
+                    </div>
+                    <div class="emergency-stat-item warning">
+                        <div class="stat-value" id="em-stat-warning">0</div>
+                        <div class="stat-label">Warning (&lt;10m)</div>
+                    </div>
+                    <div class="emergency-stat-item unassigned">
+                        <div class="stat-value" id="em-stat-unassigned">0</div>
+                        <div class="stat-label">Unassigned</div>
+                    </div>
+                </div>
+                <div id="emergency-orders-container">
+                    <table class="emergency-orders-table" id="emergency-orders-table">
+                        <thead>
+                            <tr>
+                                <th>Order</th>
+                                <th>Rider</th>
+                                <th>Distance</th>
+                                <th>SLA Remaining</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="emergency-orders-body">
+                            <tr><td colspan="6" class="emergency-empty-state">✓ No active emergency orders</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <header style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1 class="vibrant-h1">Order Pulse</h1>
+                    <p style="color: #6e6e73; font-size: 1rem; font-weight: 500;">Real-time logistics and order activity feed.</p>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span class="live-dot"></span>
+                    <span style="font-size:0.82rem;font-weight:700;color:#34c759;">Live Tracking — Auto-sync</span>
+                </div>
+            </header>
+
+            <div style="display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 20px;">
+                <div class="liquid-card" style="padding:16px;text-align:center;border-left:3px solid #007aff;"><div style="font-size:1.8rem;font-weight:800;color:#007aff" id="cnt-active">0</div><div style="font-size:0.72rem;color:#8e8e93;font-weight:600;margin-top:4px;">Active Today</div></div>
+                <div class="liquid-card" style="padding:16px;text-align:center;border-left:3px solid #ff9500;"><div style="font-size:1.8rem;font-weight:800;color:#ff9500" id="cnt-transit">0</div><div style="font-size:0.72rem;color:#8e8e93;font-weight:600;margin-top:4px;">In Transit</div></div>
+                <div class="liquid-card" style="padding:16px;text-align:center;border-left:3px solid #ff3b30;"><div style="font-size:1.8rem;font-weight:800;color:#ff3b30" id="cnt-incident">0</div><div style="font-size:0.72rem;color:#8e8e93;font-weight:600;margin-top:4px;">Incidents</div></div>
+                <div class="liquid-card" style="padding:16px;text-align:center;border-left:3px solid #34c759;"><div style="font-size:1.8rem;font-weight:800;color:#34c759" id="cnt-delivered">0</div><div style="font-size:0.72rem;color:#8e8e93;font-weight:600;margin-top:4px;">Delivered Today</div></div>
+            </div>
+
+            <div class="liquid-card" style="padding: 20px; overflow-y: auto; flex: 1; min-height: 400px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                    <div class="order-pulse-header" style="flex:1"><span>Order ID</span><span>Pharmacy → Customer</span><span>Type</span><span>Status</span><span>Agent</span><span>Time</span><span>Incident</span></div>
+                    <button class="pill-button" style="padding:8px 16px; font-size:0.78rem; background:#34c759; color:white; border-radius:10px; font-weight:700; white-space:nowrap;" onclick="autoAssignAll()">⚡ Auto-Assign All</button>
+                </div>
+                <!-- Search, Filter & Sort Bar -->
+                <div style="display:flex; gap:12px; align-items:center; margin-bottom:14px; flex-wrap:wrap;">
+                    <input type="text" id="pulseSearchInput" placeholder="Search order ID or name..." oninput="applyPulseFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; min-width:180px; outline:none;">
+                    <select id="pulseFilterSelect" onchange="applyPulseFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; font-weight:600;">
+                        <option value="all">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="dispatched">Dispatched</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                    <select id="pulseSortSelect" onchange="applyPulseFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; font-weight:600;">
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="amount_high">Amount: High → Low</option>
+                        <option value="amount_low">Amount: Low → High</option>
+                    </select>
+                </div>
+                <div id="pulse-feed">
+                    <p style="text-align:center;padding:40px;color:#8e8e93;font-weight:600;">Synchronizing logistics nodes...</p>
+                </div>
+            </div>
+
+            <!-- Partner Selection Modal -->
+            <div id="partner-modal" class="liquid-modal-overlay">
+                <div class="liquid-modal-card">
+                    <div class="modal-header">
+                        <h2 class="vibrant-h2" style="font-size: 1.5rem;">Select Logistics Dispenser</h2>
+                        <button class="modal-close" onclick="hidePartnerModal()">&times;</button>
+                    </div>
+                    <p style="color: #6e6e73; margin-top: 8px; font-weight: 500;">Assigning dispatch <strong id="assigning-order-id">ORD-0000</strong> to a verified delivery node.</p>
+                    <div id="partner-list" style="margin-top: 24px; display: grid; gap: 12px; max-height: 400px; overflow-y: auto;">
+                        <!-- Dynamic Partner List -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script src="../assets/js/emergency-alerts.js"></script>
+    <script>
+        const user = auth.getUser();
+        if (!user || user.role !== 'admin') window.location.href = '../auth/login.html';
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('admin');
+        lucide.createIcons();
+
+        // =====================================================================
+        // EMERGENCY ORDERS MONITOR - 30s Polling via EmergencyAlerts module
+        // =====================================================================
+
+        let emergencyOrdersData = [];
+        let emergencyPollId = null;
+
+        /**
+         * Fetch and render emergency orders from GET /admin/emergency-orders
+         */
+        function handleEmergencyOrdersResponse(response, error) {
+            if (error || !response) {
+                console.error('Emergency orders fetch failed:', error);
+                return;
+            }
+
+            const data = response.data || response;
+            emergencyOrdersData = data.orders || [];
+
+            // Update stats bar
+            const total = emergencyOrdersData.length;
+            const breached = emergencyOrdersData.filter(o => o.sla_status === 'breached').length;
+            const warning = emergencyOrdersData.filter(o => o.sla_status === 'warning').length;
+            const unassigned = emergencyOrdersData.filter(o => !o.rider_name || o.rider_name === 'Unassigned').length;
+
+            document.getElementById('em-stat-total').textContent = total;
+            document.getElementById('em-stat-breached').textContent = breached;
+            document.getElementById('em-stat-warning').textContent = warning;
+            document.getElementById('em-stat-unassigned').textContent = unassigned;
+
+            renderEmergencyOrders();
+        }
+
+        /**
+         * Sort and render emergency orders table.
+         * Sort: breached first (elapsed desc), then by remaining time asc
+         */
+        function renderEmergencyOrders() {
+            const tbody = document.getElementById('emergency-orders-body');
+
+            if (emergencyOrdersData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="emergency-empty-state">✓ No active emergency orders</td></tr>';
+                return;
+            }
+
+            // Sort: breached first (elapsed desc), then by remaining time asc
+            const sorted = [...emergencyOrdersData].sort((a, b) => {
+                const aBreached = a.sla_status === 'breached';
+                const bBreached = b.sla_status === 'breached';
+
+                if (aBreached && !bBreached) return -1;
+                if (!aBreached && bBreached) return 1;
+
+                if (aBreached && bBreached) {
+                    // Both breached: sort by elapsed breach time descending
+                    return (b.breach_elapsed_seconds || 0) - (a.breach_elapsed_seconds || 0);
+                }
+
+                // Both non-breached: sort by remaining time ascending
+                return (a.remaining_seconds || 0) - (b.remaining_seconds || 0);
+            });
+
+            tbody.innerHTML = sorted.map(order => {
+                const isBreached = order.sla_status === 'breached';
+                const isWarning = order.sla_status === 'warning';
+                const rowClass = isBreached ? 'breached-row' : (isWarning ? 'warning-row' : '');
+
+                // Rider display
+                const riderDisplay = order.rider_name && order.rider_name !== 'Unassigned'
+                    ? `<span style="font-weight:700;">${order.rider_name}</span>`
+                    : `<span class="rider-unassigned">Unassigned</span>`;
+
+                // Distance display
+                const distanceDisplay = order.distance_km != null
+                    ? `${parseFloat(order.distance_km).toFixed(1)} km`
+                    : '—';
+
+                // SLA timer display
+                let slaDisplay = '';
+                if (isBreached) {
+                    const elapsedSec = order.breach_elapsed_seconds || 0;
+                    const formatted = EmergencyAlerts.formatElapsedBreach(elapsedSec);
+                    slaDisplay = `<span class="breach-indicator"></span><span class="breach-elapsed" data-breach-start="${order.sla_deadline}">+${formatted}</span>`;
+                } else if (isWarning) {
+                    const remaining = order.remaining_seconds || 0;
+                    const formatted = EmergencyAlerts.formatCountdown(remaining);
+                    slaDisplay = `<span class="warning-indicator"></span><span class="sla-timer warning" data-deadline="${order.sla_deadline}">${formatted}</span>`;
+                } else {
+                    const remaining = order.remaining_seconds || 0;
+                    const formatted = EmergencyAlerts.formatCountdown(remaining);
+                    slaDisplay = `<span class="sla-timer normal" data-deadline="${order.sla_deadline}">${formatted}</span>`;
+                }
+
+                // Status indicator
+                let statusDisplay = '';
+                if (isBreached) {
+                    statusDisplay = '<span style="color:#ff3b30;font-weight:700;font-size:0.78rem;">🔴 BREACHED</span>';
+                } else if (isWarning) {
+                    statusDisplay = '<span style="color:#ff9500;font-weight:700;font-size:0.78rem;">🟡 WARNING</span>';
+                } else {
+                    statusDisplay = '<span style="color:#34c759;font-weight:700;font-size:0.78rem;">🟢 On Track</span>';
+                }
+
+                // Reassign button
+                const reassignBtn = `<button class="reassign-btn" onclick="reassignEmergencyOrder(${order.order_id})">↻ Reassign</button>`;
+
+                return `
+                    <tr class="${rowClass}">
+                        <td style="font-weight:800;color:#007aff;">ORD-${order.order_id}</td>
+                        <td>${riderDisplay}</td>
+                        <td>${distanceDisplay}</td>
+                        <td>${slaDisplay}</td>
+                        <td>${statusDisplay}</td>
+                        <td>${reassignBtn}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        /**
+         * Manual reassign button handler - POST /admin/emergency-orders/{id}/reassign
+         */
+        async function reassignEmergencyOrder(orderId) {
+            const confirmed = await components.confirm(
+                'Reassign Emergency Order',
+                `Reassign ORD-${orderId} to the next nearest available rider? The current rider will be unlocked.`,
+                'Yes, Reassign'
+            );
+            if (!confirmed) return;
+
+            try {
+                components.showLoader();
+                const result = await api.post(`/admin/emergency-orders/${orderId}/reassign`);
+                components.showSuccess(result.message || `Emergency order ORD-${orderId} reassigned successfully.`);
+                // Refresh emergency orders immediately
+                EmergencyAlerts._fetchEndpoint('/admin/emergency-orders', handleEmergencyOrdersResponse);
+            } catch (err) {
+                components.showError(err.message || 'Reassignment failed. No eligible riders available.');
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        /**
+         * Client-side 1-second countdown timer refresh for emergency orders
+         */
+        setInterval(() => {
+            // Update SLA timers (non-breached orders)
+            document.querySelectorAll('.sla-timer[data-deadline]').forEach(el => {
+                const deadline = new Date(el.dataset.deadline).getTime();
+                const now = Date.now();
+                const remainingSec = Math.max(0, Math.floor((deadline - now) / 1000));
+
+                if (remainingSec <= 0) {
+                    // Transitioned to breached
+                    el.className = 'sla-timer breached';
+                    el.textContent = '00:00:00';
+                } else if (remainingSec < 600) {
+                    // Warning state (<10 min)
+                    el.className = 'sla-timer warning';
+                    el.textContent = EmergencyAlerts.formatCountdown(remainingSec);
+                } else {
+                    el.className = 'sla-timer normal';
+                    el.textContent = EmergencyAlerts.formatCountdown(remainingSec);
+                }
+            });
+
+            // Update breach elapsed timers
+            document.querySelectorAll('.breach-elapsed[data-breach-start]').forEach(el => {
+                const deadline = new Date(el.dataset.breachStart).getTime();
+                const now = Date.now();
+                const elapsedSec = Math.max(0, Math.floor((now - deadline) / 1000));
+                el.textContent = '+' + EmergencyAlerts.formatElapsedBreach(elapsedSec);
+            });
+        }, 1000);
+
+        // Start 30-second polling for emergency orders using EmergencyAlerts module
+        emergencyPollId = EmergencyAlerts.startPolling('/admin/emergency-orders', 30000, handleEmergencyOrdersResponse);
+
+        // =====================================================================
+        // STANDARD ORDER PULSE FEED
+        // =====================================================================
+
+        let allPulseOrders = [];
+
+        async function loadPulse() {
+            try { 
+                const r = await api.get('/admin/order/pulse'); 
+                allPulseOrders = r.data.recent_orders || [];
+                const s = r.data.stats || {}; 
+                
+                document.getElementById('cnt-active').textContent = s.active_today || 0; 
+                document.getElementById('cnt-transit').textContent = s.in_transit || 0; 
+                document.getElementById('cnt-incident').textContent = s.incidents || 0; 
+                document.getElementById('cnt-delivered').textContent = s.delivered || 0;
+
+                applyPulseFilters();
+            }
+            catch(e) { 
+                console.error('Pulse sync failure:', e);
+            }
+        }
+
+        function applyPulseFilters() {
+            const search = (document.getElementById('pulseSearchInput').value || '').toLowerCase();
+            const filter = document.getElementById('pulseFilterSelect').value;
+            const sort = document.getElementById('pulseSortSelect').value;
+
+            let orders = [...allPulseOrders];
+
+            if (search) {
+                orders = orders.filter(o => 
+                    String(o.id).toLowerCase().includes(search) ||
+                    (o.customer || '').toLowerCase().includes(search) ||
+                    (o.pharmacy || '').toLowerCase().includes(search)
+                );
+            }
+            if (filter !== 'all') {
+                orders = orders.filter(o => o.status === filter);
+            }
+
+            // Sort: Emergency orders ALWAYS at top first
+            orders.sort((a, b) => {
+                const aEmergency = a.is_emergency == 1 || (a.delivery_type && a.delivery_type.toLowerCase().includes('emergency'));
+                const bEmergency = b.is_emergency == 1 || (b.delivery_type && b.delivery_type.toLowerCase().includes('emergency'));
+                if (aEmergency && !bEmergency) return -1;
+                if (!aEmergency && bEmergency) return 1;
+                return 0;
+            });
+
+            if (sort === 'newest') orders.sort((a, b) => { const ae = a.is_emergency == 1; const be = b.is_emergency == 1; if (ae !== be) return ae ? -1 : 1; return new Date(b.created_at || 0) - new Date(a.created_at || 0); });
+            else if (sort === 'oldest') orders.sort((a, b) => { const ae = a.is_emergency == 1; const be = b.is_emergency == 1; if (ae !== be) return ae ? -1 : 1; return new Date(a.created_at || 0) - new Date(b.created_at || 0); });
+            else if (sort === 'amount_high') orders.sort((a, b) => { const ae = a.is_emergency == 1; const be = b.is_emergency == 1; if (ae !== be) return ae ? -1 : 1; return parseFloat(b.amount || 0) - parseFloat(a.amount || 0); });
+            else if (sort === 'amount_low') orders.sort((a, b) => { const ae = a.is_emergency == 1; const be = b.is_emergency == 1; if (ae !== be) return ae ? -1 : 1; return parseFloat(a.amount || 0) - parseFloat(b.amount || 0); });
+
+            renderPulseFeed(orders);
+        }
+
+        function renderPulseFeed(orders) {
+                const feed = document.getElementById('pulse-feed');
+                const sc = { 
+                    pending: 'rgba(255,149,0,0.1);color:#ff9500',
+                    processing: 'rgba(0,122,255,0.1);color:#007aff',
+                    dispatched: 'rgba(175,82,222,0.1);color:#af52de',
+                    delivered: 'rgba(52,199,89,0.1);color:#34c759',
+                    cancelled: 'rgba(255,59,48,0.1);color:#ff3b30'
+                };
+
+                if (orders.length === 0) {
+                    feed.innerHTML = '<p style="text-align:center;padding:40px;color:#8e8e93;font-weight:600;">No matching orders found.</p>';
+                    return;
+                }
+
+                feed.innerHTML = orders.map(o => {
+                    const isEmergency = o.is_emergency == 1 || (o.delivery_type && o.delivery_type.toLowerCase().includes('emergency'));
+                    const typeLabel = isEmergency ? '🚨 EMERGENCY' : 'Standard';
+                    const typeStyle = isEmergency 
+                        ? 'background:rgba(255,59,48,0.1); color:#ff3b30; padding:4px 10px; border-radius:8px; font-size:0.72rem; font-weight:800;' 
+                        : 'background:rgba(52,199,89,0.08); color:#34c759; padding:4px 10px; border-radius:8px; font-size:0.72rem; font-weight:700;';
+                    
+                    // Emergency countdown timer
+                    let countdownHtml = '';
+                    if (isEmergency && o.created_at && o.status !== 'delivered' && o.status !== 'cancelled') {
+                        const createdTime = new Date(o.created_at).getTime();
+                        const deadline = createdTime + (40 * 60 * 1000); // 40 minutes
+                        const now = Date.now();
+                        const remaining = Math.max(0, deadline - now);
+                        const minsLeft = Math.floor(remaining / 60000);
+                        const secsLeft = Math.floor((remaining % 60000) / 1000);
+                        const isExpired = remaining <= 0;
+                        
+                        countdownHtml = `<span class="emergency-countdown ${isExpired ? 'expired' : ''}" data-deadline="${deadline}">
+                            ⏱ ${isExpired ? 'SLA BREACHED' : minsLeft + ':' + String(secsLeft).padStart(2, '0') + ' remaining'}
+                        </span>`;
+                    }
+
+                    const rowClass = isEmergency ? 'order-pulse-row emergency-row' : 'order-pulse-row';
+                    
+                    return `
+                    <div class="${rowClass}">
+                        <span style="font-weight:800;color:#007aff">ORD-${o.id}</span>
+                        <span>${o.pharmacy} → <strong>${o.customer}</strong></span>
+                        <span><span style="${typeStyle}">${typeLabel}</span></span>
+                        <span><span class="status-badge" style="background:${(sc[o.status]||'rgba(0,0,0,0.06);color:#1d1d1f').split(';')[0]};${(sc[o.status]||';color:#1d1d1f').split(';')[1]}">${o.status}</span></span>
+                        <span>
+                            ${o.agent === 'Unassigned' 
+                                ? `<button class="pill-button" style="padding: 5px 10px; font-size: 0.7rem; background: rgba(0,122,255,0.1); color: #007aff; border-radius:8px; border:1px solid rgba(0,122,255,0.2);" onclick="showPartnerModal(${o.id})" title="Manual override">↻ Override</button>` 
+                                : `<span style="color:#6e6e73; font-weight: 700;">${o.agent}</span>`}
+                        </span>
+                        <span style="display: flex; flex-direction: column; gap: 3px;">
+                            <span style="font-size: 0.82rem; font-weight: 700; color: #1d1d1f;">${o.formatted_time}</span>
+                            <span style="color:#8e8e93; font-size:0.72rem; font-weight:600;">${o.time}</span>
+                            ${countdownHtml}
+                        </span>
+                        <span>${o.incident ? `<span class="incident-tag">⚠️ ${o.incidentType}</span>` : '<span style="color:#34c759;font-size:0.78rem;font-weight:600;">✓ CLEAR</span>'}</span>
+                    </div>
+                `}).join('');
+        }
+
+        // Live countdown updater for pulse feed emergency orders
+        setInterval(() => {
+            document.querySelectorAll('#pulse-feed .emergency-countdown[data-deadline]').forEach(el => {
+                const deadline = parseInt(el.dataset.deadline);
+                const now = Date.now();
+                const remaining = Math.max(0, deadline - now);
+                const minsLeft = Math.floor(remaining / 60000);
+                const secsLeft = Math.floor((remaining % 60000) / 1000);
+                
+                if (remaining <= 0) {
+                    el.classList.add('expired');
+                    el.innerHTML = '⏱ SLA BREACHED';
+                } else {
+                    el.innerHTML = `⏱ ${minsLeft}:${String(secsLeft).padStart(2, '0')} remaining`;
+                }
+            });
+        }, 1000);
+
+        let selectedOrderId = null;
+
+        function showPartnerModal(orderId) {
+            selectedOrderId = orderId;
+            document.getElementById('assigning-order-id').textContent = 'ORD-' + orderId;
+            document.getElementById('partner-modal').classList.add('show');
+            loadPartners();
+        }
+
+        function hidePartnerModal() {
+            document.getElementById('partner-modal').classList.remove('show');
+        }
+
+        async function loadPartners() {
+            try {
+                const data = await api.get('/admin/users');
+                const partners = data.data.users.filter(u => u.role === 'delivery');
+                const container = document.getElementById('partner-list');
+                
+                if (partners.length === 0) {
+                    container.innerHTML = '<p style="text-align:center;padding:20px;color:#8e8e93;">No active delivery nodes in network.</p>';
+                    return;
+                }
+
+                container.innerHTML = partners.map(p => `
+                    <div class="liquid-card" style="padding: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: transform 0.2s;" onclick="assignPartner(${p.id})">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 32px; height: 32px; background: rgba(0,122,255,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #007aff;">${p.name[0]}</div>
+                            <div>
+                                <div style="font-weight: 700; font-size: 0.9rem;">${p.name}</div>
+                                <div style="font-size: 0.72rem; color: #8e8e93;">Active Driver Node</div>
+                            </div>
+                        </div>
+                        <i data-lucide="chevron-right" size="16" style="color: #6e6e73;"></i>
+                    </div>
+                `).join('');
+                lucide.createIcons();
+            } catch (err) { console.error(err); }
+        }
+
+        async function autoAssignAll() {
+            const confirmed = await components.confirm(
+                'Auto-Assign All Orders',
+                'System will assign nearest available rider to all unassigned orders. Continue?',
+                'Yes, Auto-Assign'
+            );
+            if (!confirmed) return;
+            
+            try {
+                components.showLoader();
+                const result = await api.post('/admin/dispatch/auto-assign');
+                components.showSuccess(result.message || 'Orders auto-assigned to nearest riders.');
+                loadPulse();
+            } catch (err) {
+                components.showError(err.message || 'Auto-assign failed. No active riders available.');
+            } finally { components.hideLoader(); }
+        }
+
+        async function assignPartner(partnerId) {
+            try {
+                components.showLoader();
+                await api.post(`/admin/orders/${selectedOrderId}/assign`, { delivery_partner_id: partnerId });
+                components.showSuccess('Logistics partner assigned.');
+                hidePartnerModal();
+                loadPulse();
+            } catch (err) { console.error(err); } finally { components.hideLoader(); }
+        }
+
+        loadPulse();
+        setInterval(loadPulse, 10000); // Live telemetry sync
+    </script>
+</body>
+</html>

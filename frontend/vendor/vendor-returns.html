@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Returns | Vendor | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+
+        .return-tabs-pill {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            background: rgba(255, 255, 255, 0.3);
+            padding: 8px;
+            border-radius: var(--l-card-r);
+            width: fit-content;
+        }
+        .return-pill {
+            padding: 10px 24px;
+            border-radius: 18px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #6e6e73;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .return-pill.active { background: white; color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+
+        .return-strip-card {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: var(--l-card-r);
+            padding: 20px 28px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .return-strip-card:hover { transform: scale(1.01); background: rgba(255, 255, 255, 0.6); }
+
+        .r-avatar {
+            width: 44px; height: 44px; border-radius: var(--l-card-r); background: white;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 1rem; color: var(--primary);
+            border: 2px solid rgba(13,148,136,0.15); flex-shrink: 0;
+        }
+
+        .status-pill {
+            padding: 6px 14px; border-radius: 100px;
+            font-size: 0.72rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
+        }
+        .status-pill.pending  { background: rgba(255,149,0,0.12); color: #cc7700; }
+        .status-pill.approved { background: rgba(52,199,89,0.12);  color: #248f43; }
+        .status-pill.rejected { background: rgba(255,59,48,0.12);  color: #cc2a22; }
+
+        .action-btn {
+            padding: 10px 20px; border-radius: 100px; border: none;
+            font-size: 0.85rem; font-weight: 700; cursor: pointer;
+            transition: all 0.3s; display: flex; align-items: center; gap: 6px; white-space: nowrap;
+        }
+        .btn-approve { background: rgba(52,199,89,0.15); color: #248f43; }
+        .btn-approve:hover { background: #34c759; color: white; transform: scale(1.05); }
+        .btn-reject  { background: rgba(255,59,48,0.12); color: #ff3b30; }
+        .btn-reject:hover  { background: #ff3b30; color: white; transform: scale(1.05); }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: #6e6e73; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+
+        <main class="liquid-main">
+            <header style="margin-bottom: 16px;">
+                <h1 class="vibrant-h1">Product Returns</h1>
+                <p style="color: #6e6e73; font-size: 1.2rem; font-weight: 500;">Review and process customer return &amp; refund requests.</p>
+            </header>
+
+            <!-- Filter Tabs -->
+            <div class="return-tabs-pill" id="return-tabs">
+                <div class="return-pill active" onclick="switchTab(this, 'pending')">Pending <span id="tab-count-pending">(0)</span></div>
+                <div class="return-pill" onclick="switchTab(this, 'approved')">Approved <span id="tab-count-approved">(0)</span></div>
+                <div class="return-pill" onclick="switchTab(this, 'rejected')">Rejected <span id="tab-count-rejected">(0)</span></div>
+                <div class="return-pill" onclick="switchTab(this, 'all')">All <span id="tab-count-all">(0)</span></div>
+            </div>
+
+            <!-- Returns List -->
+            <div style="display: grid; gap: 4px; overflow-y: auto; flex: 1; align-content: start;" id="returns-list">
+                <div class="empty-state">
+                    <i data-lucide="refresh-ccw" style="width:48px;height:48px;margin-bottom:12px;opacity:0.3;display:block;margin-left:auto;margin-right:auto;"></i>
+                    Loading return requests...
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts — same order as every other vendor page -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        // Auth check — same as vendor-dashboard.html
+        const user = auth.getUser();
+        if (!user || user.role !== 'vendor') { window.location.href = '../auth/login.html'; }
+
+        // Sidebar — exact same call as every other vendor page
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('vendor');
+        lucide.createIcons();
+
+        /* ─── Data ─────────────────────────────────────────── */
+        let allReturns  = [];
+        let currentTab  = 'pending';
+
+        async function loadReturns() {
+            try {
+                components.showLoader();
+                const res = await api.get('/vendor/returns');
+                allReturns = (res.success && res.data && res.data.returns) ? res.data.returns : [];
+                updateTabCounts();
+                renderTab(currentTab);
+            } catch (err) {
+                console.error('Returns load error:', err);
+                document.getElementById('returns-list').innerHTML = `
+                    <div class="empty-state" style="color:#ff3b30;">
+                        <i data-lucide="wifi-off" style="width:48px;height:48px;margin-bottom:12px;display:block;margin-left:auto;margin-right:auto;"></i>
+                        Failed to load returns. Check API connection.
+                    </div>`;
+                lucide.createIcons();
+                components.showError('Failed to load return requests.');
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        function updateTabCounts() {
+            document.getElementById('tab-count-pending').textContent  = `(${allReturns.filter(r => r.status === 'pending').length})`;
+            document.getElementById('tab-count-approved').textContent = `(${allReturns.filter(r => r.status === 'approved').length})`;
+            document.getElementById('tab-count-rejected').textContent = `(${allReturns.filter(r => r.status === 'rejected').length})`;
+            document.getElementById('tab-count-all').textContent      = `(${allReturns.length})`;
+        }
+
+        function switchTab(el, tab) {
+            document.querySelectorAll('.return-pill').forEach(p => p.classList.remove('active'));
+            el.classList.add('active');
+            currentTab = tab;
+            renderTab(tab);
+        }
+
+        function renderTab(tab) {
+            const list      = tab === 'all' ? allReturns : allReturns.filter(r => r.status === tab);
+            const container = document.getElementById('returns-list');
+
+            if (list.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i data-lucide="inbox" style="width:48px;height:48px;margin-bottom:12px;opacity:0.3;display:block;margin-left:auto;margin-right:auto;"></i>
+                        No ${tab === 'all' ? '' : tab} return requests found.
+                    </div>`;
+                lucide.createIcons();
+                return;
+            }
+
+            container.innerHTML = list.map(r => {
+                const initial = (r.customer_name || 'C').charAt(0).toUpperCase();
+                const actions = r.status === 'pending'
+                    ? `<div style="display:flex;gap:8px;">
+                            <button class="action-btn btn-approve" onclick="updateReturn(${r.id},'approved')">
+                                <i data-lucide="check-circle" style="width:14px;height:14px;"></i> Approve
+                            </button>
+                            <button class="action-btn btn-reject" onclick="updateReturn(${r.id},'rejected')">
+                                <i data-lucide="x-circle" style="width:14px;height:14px;"></i> Reject
+                            </button>
+                       </div>`
+                    : `<span style="color:#8e8e93;font-size:0.8rem;font-weight:700;padding:10px 0;">PROCESSED</span>`;
+
+                return `
+                    <div class="return-strip-card">
+                        <div style="width:110px;flex-shrink:0;">
+                            <div style="font-family:monospace;font-weight:800;color:#1d1d1f;font-size:0.85rem;">#ORD-${r.order_id}</div>
+                            <div style="font-size:0.72rem;color:#8e8e93;font-weight:700;margin-top:4px;">Return #${r.id}</div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:16px;flex:1;">
+                            <div class="r-avatar">${initial}</div>
+                            <div>
+                                <div style="font-weight:800;color:#1d1d1f;">${r.customer_name || 'Customer'}</div>
+                                <div style="font-size:0.8rem;color:#6e6e73;margin-top:2px;max-width:260px;">${r.reason || 'No reason provided'}</div>
+                            </div>
+                        </div>
+                        <div style="width:100px;text-align:right;flex-shrink:0;">
+                            <div style="font-weight:800;font-size:1.05rem;color:#1d1d1f;">₹${parseFloat(r.grand_total || 0).toLocaleString()}</div>
+                            <div style="font-size:0.72rem;color:#8e8e93;margin-top:2px;">Order Total</div>
+                        </div>
+                        <div style="width:100px;text-align:center;flex-shrink:0;">
+                            <span class="status-pill ${r.status}">${r.status}</span>
+                        </div>
+                        ${actions}
+                    </div>`;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        async function updateReturn(id, status) {
+            try {
+                components.showLoader();
+                const res = await api.post(`/vendor/returns/${id}/status`, { status });
+                if (res.success) {
+                    components.showSuccess(`Return #${id} marked as ${status}.`);
+                    loadReturns();
+                } else {
+                    components.showError(res.message || 'Update failed.');
+                }
+            } catch (err) {
+                components.showError('Failed to update return status.');
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        loadReturns();
+    </script>
+</body>
+</html>

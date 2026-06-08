@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commission Summary | Vendor | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .comm-row { display: grid; grid-template-columns: 100px 1fr 120px 100px 120px; gap: 12px; align-items: center; padding: 13px 18px; border-radius: 12px; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 0.84rem; }
+        .comm-row:hover { background: rgba(0,0,0,0.02); }
+        .comm-header { display: grid; grid-template-columns: 100px 1fr 120px 100px 120px; gap: 12px; padding: 8px 18px; font-size: 0.72rem; font-weight: 700; color: #8e8e93; text-transform: uppercase; }
+        .b-pending { background:rgba(255,149,0,0.1);color:#ff9500;padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700; }
+        .b-cleared { background:rgba(52,199,89,0.1);color:#34c759;padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700; }
+        .payout-box { background:linear-gradient(135deg,#1d1d1f,#434345);border-radius:20px;padding:24px;color:#fff;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center; }
+    </style>
+</head>
+<body>
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        <main class="liquid-main" style="overflow-y:auto;">
+            <header style="margin-bottom:20px;"><h1 class="vibrant-h1">Commission Summary</h1><p style="color:#6e6e73;font-size:1rem;font-weight:500;">Your earnings, fee breakdown, and payout requests.</p></header>
+
+            <div class="payout-box">
+                <div>
+                    <div style="font-size:0.82rem;opacity:0.7;font-weight:600;margin-bottom:6px;">PENDING PAYOUT</div>
+                    <div style="font-size:2.2rem;font-weight:800;" id="pending-payout">—</div>
+                    <div style="font-size:0.78rem;opacity:0.7;margin-top:4px;">Platform commission (15%) already deducted</div>
+                </div>
+                <button onclick="requestPayout()" style="padding:14px 28px;border-radius:14px;background:#fff;color:#1d1d1f;border:none;font-weight:800;font-size:0.95rem;cursor:pointer;font-family:Inter,sans-serif;">Request Payout</button>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;">
+                <div class="liquid-card" style="padding:16px;text-align:center;border-left:3px solid #34c759;"><div style="font-size:1.5rem;font-weight:800;color:#34c759" id="kpi-net">—</div><div style="font-size:0.72rem;color:#8e8e93;font-weight:600;margin-top:3px;">Net Earnings</div></div>
+                <div class="liquid-card" style="padding:16px;text-align:center;border-left:3px solid #007aff;"><div style="font-size:1.5rem;font-weight:800;color:#007aff" id="kpi-gmv">—</div><div style="font-size:0.72rem;color:#8e8e93;font-weight:600;margin-top:3px;">Gross Revenue</div></div>
+                <div class="liquid-card" style="padding:16px;text-align:center;border-left:3px solid #ff9500;"><div style="font-size:1.5rem;font-weight:800;color:#ff9500" id="kpi-comm">—</div><div style="font-size:0.72rem;color:#8e8e93;font-weight:600;margin-top:3px;">Platform Fee</div></div>
+                <div class="liquid-card" style="padding:16px;text-align:center;border-left:3px solid #5856d6;"><div style="font-size:1.5rem;font-weight:800;color:#5856d6" id="kpi-cleared">—</div><div style="font-size:0.72rem;color:#8e8e93;font-weight:600;margin-top:3px;">Cleared This Month</div></div>
+            </div>
+
+            <div class="liquid-card" style="padding:20px;">
+                <h3 style="font-weight:800;margin-bottom:16px;">Commission History</h3>
+                <div class="comm-header"><span>Order ID</span><span>Period</span><span>Gross</span><span>Fee (15%)</span><span>Status</span></div>
+                <div id="comm-list"></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        const user = auth.getUser();
+        if (!user || user.role !== 'vendor') window.location.href = '../auth/login.html';
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('vendor');
+        lucide.createIcons();
+
+        async function loadCommissions() {
+            let commissions = [];
+            try { 
+                const r = await api.get('/vendor/commissions'); 
+                const raw = (r.data && r.data.commissions) ? r.data.commissions : [];
+                // Map API fields to expected format
+                commissions = raw.map(c => {
+                    const fee = parseFloat(c.commission_amount) || 0;
+                    const gross = parseFloat(c.gross_amount) || (fee / 0.15); // derive gross from 15% fee
+                    const net = gross - fee;
+                    return {
+                        order_id: c.order_id,
+                        period: c.created_at ? new Date(c.created_at).toLocaleDateString() : '—',
+                        gross: gross,
+                        fee: fee,
+                        net: net,
+                        status: c.status === 'settled' ? 'cleared' : c.status
+                    };
+                });
+            } catch(e) { 
+                components.showError('Failed to load commission data from server.');
+                document.getElementById('comm-list').innerHTML = '<p style="text-align:center;padding:40px;color:#ff3b30;font-weight:600;">Failed to load commission history.</p>';
+                return;
+            }
+            const pending = commissions.filter(c=>c.status==='pending').reduce((s,c)=>s+c.net,0);
+            const gross   = commissions.reduce((s,c)=>s+c.gross,0);
+            const fees    = commissions.reduce((s,c)=>s+c.fee,0);
+            const cleared = commissions.filter(c=>c.status==='cleared').reduce((s,c)=>s+c.net,0);
+            document.getElementById('pending-payout').textContent = '₹'+pending.toFixed(2);
+            document.getElementById('kpi-net').textContent   = '₹'+(gross-fees).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+            document.getElementById('kpi-gmv').textContent   = '₹'+gross.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+            document.getElementById('kpi-comm').textContent  = '₹'+fees.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+            document.getElementById('kpi-cleared').textContent = '₹'+cleared.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+
+            document.getElementById('comm-list').innerHTML = commissions.length === 0
+                ? '<p style="text-align:center;padding:40px;color:#8e8e93;">No commission records found.</p>'
+                : commissions.map(c => `
+                <div class="comm-row">
+                    <span style="font-weight:700;color:#007aff">${c.order_id}</span>
+                    <span style="color:#6e6e73">${c.period}</span>
+                    <span style="font-weight:700;">₹${c.gross.toFixed(2)}</span>
+                    <span style="color:#ff9500;font-weight:600;">−₹${c.fee.toFixed(2)}</span>
+                    <span><span class="${c.status==='pending'?'b-pending':'b-cleared'}">${c.status}</span></span>
+                </div>
+            `).join('');
+        }
+
+        async function requestPayout() {
+            const pendingEl = document.getElementById('pending-payout').textContent;
+            if (pendingEl === '₹0.00' || pendingEl === '—') { 
+                components.showError('No pending payout available to request.'); 
+                return; 
+            }
+            const numericAmount = parseFloat(pendingEl.replace(/[₹,]/g, '')) || 0;
+            if (numericAmount <= 0) { 
+                components.showError('No pending payout available.'); 
+                return; 
+            }
+            try { 
+                await api.post('/vendor/payout/request', { amount: numericAmount }); 
+                components.showSuccess('Payout request submitted. Funds will be transferred within 3-5 business days.');
+                loadCommissions(); // Refresh data
+            } catch(e) { 
+                console.error(e); 
+                components.showError(e.message || "Failed to submit payout request."); 
+            }
+        }
+
+        loadCommissions();
+    </script>
+</body>
+</html>

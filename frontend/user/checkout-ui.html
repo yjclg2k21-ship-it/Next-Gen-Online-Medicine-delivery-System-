@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Checkout | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .c-grid { display: grid; grid-template-columns: 1fr 360px; gap: 16px; height: 100%; }
+        .c-section { background: rgba(255, 255, 255, 0.4); border-radius: var(--l-card-r); padding: 20px; border: 1px solid rgba(255, 255, 255, 0.5); margin-bottom: 12px; }
+        .c-label { display: block; font-size: 0.75rem; font-weight: 800; color: #6e6e73; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.05em; }
+        .c-input { width: 100%; padding: 12px 16px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.05); background: white; font-weight: 600; font-size: 0.95rem; color: #1d1d1f; transition: all 0.3s; }
+        .p-option { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: rgba(255,255,255,0.3); border-radius: 12px; border: 1px solid transparent; cursor: pointer; transition: all 0.3s; margin-bottom: 6px; }
+        .p-option.active { background: white; border-color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .summary-glass { background: rgba(255, 255, 255, 0.4); border-radius: var(--l-card-r); padding: 24px; border: 1px solid rgba(255, 255, 255, 0.5); display: flex; flex-direction: column; height: fit-content; }
+    </style>
+</head>
+<body>
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        <main class="liquid-main">
+            <header style="margin-bottom: 8px; display: flex; justify-content: space-between; align-items: flex-end;">
+                <div>
+                    <h1 class="vibrant-h1" style="font-size: 1.8rem;">Secure Gateway</h1>
+                    <p style="color: #6e6e73; font-size: 0.95rem; font-weight: 500;">Authorized pharmaceutical transaction terminal.</p>
+                </div>
+            </header>
+
+            <div class="c-grid">
+                <div style="overflow-y: auto; padding-right: 12px;" id="checkout-form">
+                    <!-- Shipping -->
+                    <div class="c-section">
+                        <h2 class="vibrant-h2" style="margin-bottom: 12px; display: flex; align-items: center; gap: 10px; font-size: 1.3rem;">
+                            <span style="width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.8rem;">1</span>
+                            Dispatch Metadata
+                        </h2>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div style="grid-column: span 2;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                    <label class="c-label" style="margin-bottom: 0;">Delivery Address</label>
+                                    <a href="user-addresses.html" style="font-size: 0.75rem; font-weight: 800; color: var(--primary); text-decoration: none; display: flex; align-items: center; gap: 4px;">
+                                        <i data-lucide="plus-circle" size="14"></i> Add New Address
+                                    </a>
+                                </div>
+                                <select id="address-select" class="c-input" onchange="onAddressChange()">
+                                    <!-- Dynamic Addresses -->
+                                </select>
+                            </div>
+                        </div>
+                        <!-- 🗺️ DELIVERY MAP PINPOINT -->
+                        <div style="margin-top: 12px;">
+                            <label class="c-label" style="display: flex; align-items: center; gap: 6px;">📍 Delivery Location</label>
+                            <div id="delivery-map" style="height: 160px; border-radius: 12px; border: 2px solid rgba(0,122,255,0.15); overflow: hidden; margin-bottom: 8px; z-index: 0;"></div>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <button type="button" onclick="useDeliveryGPS()" style="padding: 8px 16px; border-radius: 100px; border: none; background: linear-gradient(135deg, #007aff, #00c6ff); color: white; font-weight: 800; font-size: 0.8rem; cursor: pointer;">📍 Use My Location</button>
+                                <span id="delivery-coords" style="font-size: 0.75rem; color: #8e8e93; font-weight: 600;">Click map to pin exact location</span>
+                            </div>
+                            <input type="hidden" id="delivery_lat" value="">
+                            <input type="hidden" id="delivery_lng" value="">
+                        </div>
+                    </div>
+
+                    <!-- Payment -->
+                    <div class="c-section">
+                        <h2 class="vibrant-h2" style="margin-bottom: 12px; display: flex; align-items: center; gap: 10px; font-size: 1.3rem;">
+                            <span style="width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.8rem;">2</span>
+                            Financial Modality
+                        </h2>
+                        <div class="p-option active" onclick="selectPayment(this, 'card')">
+                            <input type="radio" name="pay" checked>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 800; color: #1d1d1f;">Card Authorization</div>
+                                <div style="font-size: 0.85rem; color: #6e6e73; font-weight: 600;">Secure processing via VISA/Mastercard</div>
+                            </div>
+                            <i data-lucide="credit-card" style="color: var(--primary);"></i>
+                        </div>
+                        <div class="p-option" onclick="selectPayment(this, 'cod')">
+                            <input type="radio" name="pay">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 800; color: #1d1d1f;">Cash on Delivery (COD)</div>
+                                <div style="font-size: 0.85rem; color: #6e6e73; font-weight: 600;">Pay on delivery (+₹7 fee)</div>
+                            </div>
+                            <i data-lucide="banknote" style="color: #6e6e73;"></i>
+                        </div>
+                        <div class="p-option" onclick="selectPayment(this, 'wallet')">
+                            <input type="radio" name="pay">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 800; color: #1d1d1f;">MediMitra Wallet</div>
+                                <div style="font-size: 0.85rem; color: #6e6e73; font-weight: 600;">Balance: <span id="wallet-bal-display">₹0.00</span></div>
+                            </div>
+                            <i data-lucide="wallet" style="color: #0d9488;"></i>
+                        </div>
+                    </div>
+
+                    <!-- Prescription Linkage (Dynamic) -->
+                    <div class="c-section" id="prescription-section" style="display: none;">
+                        <h2 class="vibrant-h2" style="margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
+                            <span style="width: 32px; height: 32px; border-radius: 50%; background: #ff9500; color: white; display: flex; align-items: center; justify-content: center; font-size: 0.9rem;">3</span>
+                            Medical Authorization
+                        </h2>
+                        <div style="background: rgba(255,149,0,0.05); border: 1px solid rgba(255,149,0,0.1); padding: 16px; border-radius: 12px; margin-bottom: 16px;">
+                            <p style="font-size: 0.85rem; color: #ff9500; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                                <i data-lucide="info" size="16"></i> Prescription Required for certain items.
+                            </p>
+                        </div>
+                        <label class="c-label">Select Validated Record</label>
+                        <select id="prescription-select" class="c-input" style="margin-bottom: 12px;">
+                            <option value="">-- Select Approved Prescription --</option>
+                        </select>
+                        <p style="font-size: 0.8rem; color: #6e6e73; font-weight: 600;">Missing record? <a href="user-prescriptions.html" style="color: var(--primary); text-decoration: underline;">Upload new document</a></p>
+                    </div>
+                </div>
+
+                <div class="summary-glass">
+                    <h2 style="font-weight: 800; margin-bottom: 12px; font-size: 1.2rem;">Audit Summary</h2>
+                    <div id="checkout-items-list" style="flex: 1; max-height: 200px; overflow-y: auto; margin-bottom: 16px;">
+                        <!-- Items injected here -->
+                    </div>
+                    <div id="checkout-calc-area" style="border-top: 1px solid rgba(0,0,0,0.05); padding-top: 16px;">
+                        <!-- Calculations injected here -->
+                    </div>
+                    <button class="pill-button" style="width: 100%; justify-content: center; padding: 18px; font-size: 1.1rem;" onclick="processOrder(event)">
+                        Authorize & Ship <i data-lucide="shield-check"></i>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        const user = auth.getUser();
+        if (!user || user.role !== 'user') window.location.href = '../auth/login.html';
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('user');
+        lucide.createIcons();
+
+        let cartData = [];
+        let userAddresses = [];
+        let selectedMethod = 'card';
+        let walletBalance = 0;
+        const urlParams = new URLSearchParams(window.location.search);
+        let selectedTier = urlParams.get('tier') || 'standard';
+        let badWeatherActive = false;
+
+        // Fetch wallet balance for wallet payment option
+        async function loadWalletBalance() {
+            try {
+                const res = await api.get('/user/wallet');
+                walletBalance = parseFloat(res.data ? (res.data.balance || res.data.wallet_balance || 0) : 0);
+                const el = document.getElementById('wallet-bal-display');
+                if (el) el.textContent = '₹' + walletBalance.toFixed(2);
+            } catch (e) { console.warn('Wallet balance fetch failed'); }
+        }
+        loadWalletBalance();
+
+        async function initPage() {
+            try {
+                components.showLoader();
+                const [cartRes, addrRes, rxRes, weatherRes] = await Promise.all([
+                    api.get('/cart'),
+                    api.get('/user/addresses'),
+                    api.get('/prescriptions'),
+                    api.get('/settings/bad-weather').catch(() => ({ bad_weather: 0 }))
+                ]);
+                
+                badWeatherActive = (weatherRes.bad_weather === 1 || weatherRes.data?.bad_weather === 1);
+                
+                cartData = cartRes.data.items || [];
+                userAddresses = addrRes.data.addresses || [];
+                const prescriptions = (rxRes.data.prescriptions || []).filter(r => r.status === 'approved');
+                
+                if (cartData.length === 0) {
+                    window.location.href = 'cart-page.html';
+                    return;
+                }
+
+                // Check for Rx items (requires_prescription flag OR items added via prescription flow)
+                const rxRequired = cartData.some(item => item.requires_prescription == 1 || item.prescription_id);
+                if (rxRequired) {
+                    document.getElementById('prescription-section').style.display = 'block';
+                    const rxSelect = document.getElementById('prescription-select');
+                    
+                    // Filter: only show non-expired, reusable prescriptions
+                    const validRx = prescriptions.filter(r => !r.is_expired && r.is_reusable);
+                    const expiredRx = prescriptions.filter(r => r.is_expired || !r.is_reusable);
+                    
+                    rxSelect.innerHTML = '<option value="">-- Select Approved Prescription --</option>';
+                    rxSelect.innerHTML += validRx.map(r => {
+                        const expiryInfo = r.expiry_date ? ` · Expires: ${new Date(r.expiry_date).toLocaleDateString()}` : '';
+                        const usageInfo = (r.max_uses > 1) ? ` · Uses: ${r.times_used}/${r.max_uses}` : '';
+                        return `<option value="${r.id}">✓ Rx #${r.id} - ${r.doctor_name} (${new Date(r.created_at).toLocaleDateString()}${expiryInfo}${usageInfo})</option>`;
+                    }).join('');
+                    
+                    // Show expired ones as disabled
+                    if (expiredRx.length > 0) {
+                        rxSelect.innerHTML += expiredRx.map(r => {
+                            const reason = r.is_expired ? 'EXPIRED' : 'FULLY USED';
+                            return `<option value="${r.id}" disabled style="color:#999;">✗ Rx #${r.id} - ${r.doctor_name} [${reason}]</option>`;
+                        }).join('');
+                    }
+
+                    if (validRx.length === 0) {
+                        const warningDiv = document.createElement('div');
+                        warningDiv.style.cssText = 'background:rgba(255,59,48,0.05); border:1px solid rgba(255,59,48,0.15); padding:12px; border-radius:10px; margin-top:12px;';
+                        warningDiv.innerHTML = '<p style="font-size:0.85rem; color:var(--danger); font-weight:700;">⚠ No valid prescriptions available. All are expired or fully used. <a href="user-prescription-flow.html" style="color:var(--primary); text-decoration:underline;">Upload a new prescription</a></p>';
+                        rxSelect.parentElement.appendChild(warningDiv);
+                    }
+                }
+
+                const addrSelect = document.getElementById('address-select');
+                if (userAddresses.length === 0) {
+                    addrSelect.innerHTML = '<option value="">Add New Address...</option>';
+                } else {
+                    addrSelect.innerHTML = userAddresses.map(a => `<option value="${a.id}">${(a.label || 'Home').toUpperCase()}: ${a.address_line1}, ${a.city || 'Phaltan'}</option>`).join('');
+                }
+
+                renderSummary();
+                initDeliveryMap();
+                onAddressChange();
+            } catch (err) {
+                console.error(err);
+                components.showError("Security handshake failure. Re-authenticating terminal...");
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        // ========== LEAFLET MAP LOGIC ==========
+        let deliveryMap = null;
+        let deliveryMarker = null;
+
+        function initDeliveryMap() {
+            if (deliveryMap) return;
+            deliveryMap = L.map('delivery-map').setView([17.9868, 74.4379], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap', maxZoom: 19
+            }).addTo(deliveryMap);
+
+            deliveryMap.on('click', function(e) {
+                placeDeliveryPin(e.latlng.lat, e.latlng.lng);
+            });
+        }
+
+        function placeDeliveryPin(lat, lng) {
+            if (deliveryMarker) deliveryMap.removeLayer(deliveryMarker);
+            deliveryMarker = L.marker([lat, lng], { draggable: true }).addTo(deliveryMap);
+            deliveryMap.setView([lat, lng], 16);
+
+            document.getElementById('delivery_lat').value = lat.toFixed(8);
+            document.getElementById('delivery_lng').value = lng.toFixed(8);
+            document.getElementById('delivery-coords').textContent = `Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`;
+            document.getElementById('delivery-coords').style.color = '#34c759';
+
+            deliveryMarker.on('dragend', function(e) {
+                const pos = e.target.getLatLng();
+                document.getElementById('delivery_lat').value = pos.lat.toFixed(8);
+                document.getElementById('delivery_lng').value = pos.lng.toFixed(8);
+                document.getElementById('delivery-coords').textContent = `Lat: ${pos.lat.toFixed(6)}, Lng: ${pos.lng.toFixed(6)}`;
+            });
+        }
+
+        function onAddressChange() {
+            const addressId = document.getElementById('address-select').value;
+            const addr = userAddresses.find(a => a.id == addressId);
+            if (addr && addr.latitude && addr.longitude) {
+                const lat = parseFloat(addr.latitude);
+                const lng = parseFloat(addr.longitude);
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    placeDeliveryPin(lat, lng);
+                }
+            }
+            if (deliveryMap) deliveryMap.invalidateSize();
+        }
+
+        function useDeliveryGPS() {
+            if (!navigator.geolocation) { components.showError('GPS not supported.'); return; }
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    if (!deliveryMap) initDeliveryMap();
+                    placeDeliveryPin(pos.coords.latitude, pos.coords.longitude);
+                },
+                () => components.showError('Location access denied. Pin manually on map.'),
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        }
+
+        function selectPayment(el, method) {
+            console.log("Selected modality:", method);
+            selectedMethod = method;
+            document.querySelectorAll('.p-option').forEach(opt => opt.classList.remove('active'));
+            el.classList.add('active');
+            
+            const radio = el.querySelector('input[type="radio"]');
+            if (radio) radio.checked = true;
+            
+            renderSummary();
+        }
+
+        function renderSummary() {
+            const container = document.getElementById('checkout-items-list');
+            let subtotal = 0;
+            container.innerHTML = cartData.map(item => {
+                const itemTotal = parseFloat(item.price) * item.quantity;
+                subtotal += itemTotal;
+                return `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size:0.9rem;">
+                        <div style="font-weight: 700; color: #1d1d1f; width:70%;">
+                            ${item.name} <span style="color: #6e6e73;">x ${item.quantity}</span>
+                            <div style="font-size: 0.65rem; color: #007aff; font-weight: 800; text-transform: uppercase; margin-top: 2px;">Variant: ${item.brand_type || 'Standard'}</div>
+                        </div>
+                        <div style="font-weight: 800;">₹${itemTotal.toFixed(2)}</div>
+                    </div>
+                `;
+            }).join('');
+
+            const tax = subtotal * 0.12;
+            
+            // Logic Parity with cart-page.html
+            let standardPrice = subtotal > 1000 ? 0 : 35;
+            let emergencyPrice = subtotal > 1000 ? 32.50 : 65;
+            
+            let delivery = selectedTier === 'emergency' ? emergencyPrice : standardPrice;
+            
+            // Night Charge Check (9 PM to 6 AM)
+            const hour = new Date().getHours();
+            const nightCharge = (hour >= 21 || hour < 6) ? 15.00 : 0.00;
+            
+            // Weather Charge
+            const weatherCharge = badWeatherActive ? 12.00 : 0.00;
+
+            const totalDelivery = delivery + nightCharge + weatherCharge;
+            const codFee = selectedMethod === 'cod' ? 7 : 0;
+            const total = subtotal + tax + totalDelivery + codFee;
+
+            document.getElementById('checkout-calc-area').innerHTML = `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; color: #6e6e73; font-size: 0.85rem;">
+                    <span>Subtotal</span><span>₹${subtotal.toFixed(2)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; color: #6e6e73; font-size: 0.85rem;">
+                    <span>Clinical Tax (12%)</span><span>₹${tax.toFixed(2)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; color: #6e6e73; font-size: 0.85rem;">
+                    <span>Delivery (Base)</span><span>${(delivery === 0 && subtotal > 0) ? 'FREE' : '₹'+delivery.toFixed(2)}</span>
+                </div>
+                ${nightCharge > 0 ? `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; color: #ff9500; font-size: 0.85rem;">
+                    <span>🌙 Night Surcharge</span><span>₹${nightCharge.toFixed(2)}</span>
+                </div>` : ''}
+                ${weatherCharge > 0 ? `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; color: #ff3b30; font-size: 0.85rem;">
+                    <span>🌧️ Weather Surcharge</span><span>₹${weatherCharge.toFixed(2)}</span>
+                </div>` : ''}
+                ${codFee > 0 ? `<div style="display: flex; justify-content: space-between; margin-bottom: 12px; color: var(--warning); font-weight: 700; font-size: 0.85rem;"><span>COD Conv. Fee</span><span>₹${codFee.toFixed(2)}</span></div>` : ''}
+                <div style="display: flex; justify-content: space-between; color: var(--success); font-weight: 900; font-size: 1.6rem; margin-top: 12px; margin-bottom: 20px;">
+                    <span>Total</span><span>₹${total.toFixed(2)}</span>
+                </div>
+            `;
+        }
+
+        async function processOrder(e) {
+            const addressId = document.getElementById('address-select').value;
+            if (!addressId) { components.showError("Select a dispatch destination."); return; }
+
+            const btn = e.target;
+            const originalText = btn.innerHTML;
+
+            try {
+                components.showLoader();
+                btn.innerHTML = 'Securing Session...';
+                btn.disabled = true;
+
+                const rxRequired = cartData.some(item => item.requires_prescription === 1 || item.requires_prescription === true || item.prescription_id);
+                const rxId = document.getElementById('prescription-select').value;
+                
+                if (rxRequired && !rxId) {
+                    components.showError("Medical authorization required for prescription items.");
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    components.hideLoader();
+                    return;
+                }
+
+                // Check if selected prescription is approved (not just pending)
+                if (rxRequired && rxId) {
+                    try {
+                        const rxStatus = await api.get(`/prescriptions/${rxId}/status`);
+                        const rxData = rxStatus.data || rxStatus;
+                        
+                        if (!rxData.can_use) {
+                            let reason = '';
+                            if (rxData.status === 'pending') {
+                                reason = 'Prescription अजून pharmacist ने approve केलेली नाही. Approve झाल्यावर payment करता येईल.';
+                            } else if (rxData.is_expired) {
+                                reason = 'Prescription expired आहे. नवीन upload करा.';
+                            } else if (!rxData.is_reusable) {
+                                reason = 'Prescription reuse limit reached. नवीन upload करा.';
+                            } else {
+                                reason = rxData.reason || 'Prescription valid नाही.';
+                            }
+                            components.showError(reason);
+                            btn.innerHTML = originalText;
+                            btn.disabled = false;
+                            components.hideLoader();
+                            return;
+                        }
+                    } catch (rxErr) {
+                        // If status check fails, allow checkout (backward compat)
+                        console.warn('Prescription status check failed:', rxErr);
+                    }
+                }
+
+                // GPS Pin Validation - Mandatory
+                const lat = document.getElementById('delivery_lat').value;
+                const lng = document.getElementById('delivery_lng').value;
+                if (!lat || !lng) {
+                    components.showError("Please pin your exact delivery location on the map first.");
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    components.hideLoader();
+                    return;
+                }
+
+                const payload = {
+                    address_id: addressId,
+                    payment_method: selectedMethod,
+                    prescription_id: rxId || null,
+                    delivery_lat: document.getElementById('delivery_lat').value || null,
+                    delivery_lng: document.getElementById('delivery_lng').value || null,
+                    delivery_method_id: selectedTier === 'emergency' ? 3 : 1
+                };
+
+                const subtotalVal = cartData.reduce((s,i) => s+(parseFloat(i.price)*i.quantity), 0);
+                const computedStd = subtotalVal > 1000 ? 0 : 35;
+                const computedEm = subtotalVal > 1000 ? 32.50 : 65;
+                const computedDel = payload.delivery_method_id == 3 ? computedEm : computedStd;
+
+                // Night Charge Check (9 PM to 6 AM)
+                const hour = new Date().getHours();
+                const nightCharge = (hour >= 21 || hour < 6) ? 15.00 : 0.00;
+                
+                // Weather Charge
+                const weatherCharge = badWeatherActive ? 12.00 : 0.00;
+
+                const totalDelivery = computedDel + nightCharge + weatherCharge;
+                const total = subtotalVal * 1.12 + totalDelivery + (selectedMethod == 'cod' ? 7 : 0);
+                
+                // Wallet balance check
+                if (selectedMethod === 'wallet' && walletBalance < total) {
+                    components.showError(`Insufficient wallet balance. You have ₹${walletBalance.toFixed(2)} but need ₹${total.toFixed(2)}. Please recharge your wallet first.`);
+                    btn.disabled = false; btn.innerHTML = originalText;
+                    components.hideLoader();
+                    return;
+                }
+
+                // ─── PAYMENT FLOW ───────────────────────────────────────────
+                // COD / Wallet / Card → place order immediately
+                // ────────────────────────────────────────────────────────────
+                const res = await api.post('/orders', payload);
+                console.log("API Response:", res);
+
+                const splitCount = res.data.split_count || 1;
+                const orderId = res.data.order_id;
+                const orderIds = res.data.order_ids || [orderId];
+
+                if (selectedMethod === 'card') {
+                    // Redirect to payment gateway with mode=order and pass all order IDs to pay
+                    const encodedIds = encodeURIComponent(JSON.stringify(orderIds));
+                    window.location.href = `user-payment-gateway.html?mode=order&ids=${encodedIds}&amount=${total.toFixed(2)}`;
+                    return;
+                }
+
+                if (splitCount > 1) {
+                    components.showSuccess(`${splitCount} orders created (split by pharmacy). Redirecting to order history.`);
+                } else {
+                    components.showSuccess('Order placed successfully!');
+                }
+
+                setTimeout(() => {
+                    if (splitCount > 1) {
+                        window.location.href = 'orders-page.html';
+                    } else {
+                        window.location.href = 'order-details.html?id=' + orderId;
+                    }
+                }, 1500);
+
+
+            } catch (err) {
+                console.error(err);
+                components.showError("Checkout Protocol Breach: " + (err.message || "Unknown clinical node failure"));
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        initPage();
+    </script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us | MediMitra</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        body { min-height: 100vh; background: transparent; display: block; overflow-x: hidden; }
+        .about-hero {
+            padding: 120px 0 80px;
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(20px);
+            text-align: center;
+        }
+        .mission-section {
+            padding: 100px 0;
+            background: var(--light);
+        }
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 4rem;
+        }
+        .team-card {
+            text-align: center;
+            padding: 2rem;
+        }
+        .team-avatar {
+            width: 120px;
+            height: 120px;
+            background: #e2e8f0;
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--l-h1);
+        }
+    </style>
+</head>
+<body>
+    <!-- App Loader -->
+    <div id="loader" class="loader-overlay">
+        <div class="loader-spinner"></div>
+    </div>
+
+    <!-- Layout Roots -->
+    <div id="header-root"></div>
+    
+    <main>
+        <section class="about-hero">
+            <div class="container">
+                <span class="badge" style="margin-bottom: 1.5rem;">OUR MISSION</span>
+                <h1 style="font-size: var(--l-h1); margin-bottom: 1.5rem; font-weight: 800; letter-spacing: -0.03em;">Healing through <span style="color: var(--primary);">Technology.</span></h1>
+                <p style="color: var(--grey); max-width: 700px; margin: 0 auto; font-size: 1.25rem;">MediMitra was founded with a singular vision: to bridge the gap between clinical pharmacy and patient care through seamless AI integration.</p>
+            </div>
+        </section>
+
+        <section class="mission-section">
+            <div class="container grid-stats" style="grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;">
+                <div class="glass-card animate-scale-in">
+                    <h2 style="margin-bottom: 1.5rem;">The MediMitra Story</h2>
+                    <p style="margin-bottom: 1.5rem; color: var(--grey);">In 2023, a group of healthcare workers and engineers saw the inefficiencies in the traditional pharmacy model—manual prescription checks, slow deliveries, and fragmented communication.</p>
+                    <p style="color: var(--grey);">We built a unified clinical ecosystem that empowers pharmacists with AI diagnostics while ensuring patients get their life-saving medicines in record time.</p>
+                </div>
+                <div style="position: relative;">
+                    <div class="glass-panel" style="padding: var(--l-card-p); text-align: center; transform: rotate(3deg); border-left: 5px solid var(--primary);">
+                        <span style="font-size: 4rem;">🌍</span>
+                        <h3 style="margin: 1rem 0;">100+ Cities</h3>
+                        <p style="color: var(--grey);">Expanding our clinical network across the globe.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section style="padding: 100px 0;">
+            <div class="container">
+                <div style="text-align: center;">
+                    <h2>Meet the <span style="color: var(--primary);">Visionaries</span></h2>
+                    <p style="color: var(--grey);">The expert team driving healthcare innovation.</p>
+                </div>
+                <div class="team-grid">
+                    <div class="team-card hover-lift">
+                        <div class="team-avatar">👨‍⚕️</div>
+                        <h4>Dr. Arjun Mehta</h4>
+                        <span style="color: var(--grey); font-size: 0.9rem;">Chief Medical Officer</span>
+                    </div>
+                    <div class="team-card hover-lift">
+                        <div class="team-avatar">👩‍💻</div>
+                        <h4>Sarah Jenkins</h4>
+                        <span style="color: var(--grey); font-size: 0.9rem;">Head of AI Engineering</span>
+                    </div>
+                    <div class="team-card hover-lift">
+                        <div class="team-avatar">🚚</div>
+                        <h4>Robert Chen</h4>
+                        <span style="color: var(--grey); font-size: 0.9rem;">Logistics Director</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="footer-root"></div>
+
+    <!-- Scripts -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script src="../assets/js/ui-loader.js"></script>
+</body>
+</html>

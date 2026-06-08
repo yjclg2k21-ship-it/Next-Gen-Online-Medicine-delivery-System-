@@ -1,0 +1,2 @@
+<?php
+// Probe cleaned up

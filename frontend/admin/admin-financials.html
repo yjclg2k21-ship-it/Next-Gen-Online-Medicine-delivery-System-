@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Control | MediMitra Admin</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <link rel="stylesheet" href="../assets/css/admin-dark.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .trend.up { color: #34c759; }
+        .trend.down { color: #ff3b30; }
+        .liquid-main { overflow-y: auto !important; }
+    </style>
+</head>
+<body>
+    
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        
+        <main class="liquid-main">
+            <header style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1 class="vibrant-h1">Financial Ledger</h1>
+                    <p style="color: #6e6e73; font-size: 1.2rem; font-weight: 500;">Monitor platform-wide GTV and nodal commissions.</p>
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <a href="admin-payouts.html" class="pill-button" style="text-decoration:none;">💰 Manage Payouts</a>
+                    <button class="pill-button" onclick="loadFinancials()"><i data-lucide="refresh-cw"></i> Refresh Audit</button>
+                </div>
+            </header>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 18px;">
+                <div class="admin-stat-card" style="padding: 14px 18px; text-align:center;">
+                    <span class="label" style="font-size:0.68rem;">Total Platform GTV</span>
+                    <span class="value" id="stat-revenue" style="font-size:1.4rem;">₹0.00</span>
+                    <span class="trend up" style="font-size:0.65rem;">Live Analytics</span>
+                </div>
+                <div class="admin-stat-card" style="padding: 14px 18px; text-align:center;">
+                    <span class="label" id="commission-label" style="font-size:0.68rem;">Net Commission</span>
+                    <span class="value" id="stat-commission" style="font-size:1.4rem;">₹0.00</span>
+                    <span class="trend up" style="font-size:0.65rem;">Calculated Net</span>
+                </div>
+                <div class="admin-stat-card" style="padding: 14px 18px; text-align:center;">
+                    <span class="label" style="font-size:0.68rem;">Payouts Status</span>
+                    <span class="value" id="stat-payouts" style="font-size:1.4rem;">₹0.00</span>
+                    <span class="trend" id="payout-trend" style="color: var(--success); font-size:0.65rem;">Processed</span>
+                </div>
+            </div>
+
+            <div class="liquid-card" style="padding: 0; overflow: hidden; max-height: calc(100vh - 500px); overflow-y: auto;">
+                <table class="liquid-table">
+                    <thead>
+                        <tr>
+                            <th>Pharma Node (Vendor)</th>
+                            <th>Order Value</th>
+                            <th>Commission Earned</th>
+                            <th>Status</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transaction-list">
+                        <tr><td colspan="5" style="padding: 60px; text-align: center; color: #8e8e93; font-weight: 600;">Synchronizing clinical ledger...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pending Payouts Section -->
+            <div style="margin-top: 24px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <h2 style="font-weight:800; font-size:1.2rem;">Pending Payout Requests</h2>
+                    <div style="display:flex; gap:8px;">
+                        <button class="pill-button" style="padding:6px 14px; font-size:0.78rem; background:#34c759; color:white;" onclick="runWeeklyPayout()"><i data-lucide="zap" style="width:14px;height:14px;"></i> Run Weekly Payout</button>
+                        <button class="pill-button" style="padding:6px 14px; font-size:0.78rem;" onclick="loadPayouts()"><i data-lucide="refresh-cw" style="width:14px;height:14px;"></i> Refresh</button>
+                    </div>
+                </div>
+                <div class="liquid-card" style="padding:0; overflow:hidden; max-height:250px; overflow-y:auto;">
+                    <table class="liquid-table">
+                        <thead>
+                            <tr>
+                                <th>Vendor</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Requested</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="payout-list">
+                            <tr><td colspan="5" style="padding:30px; text-align:center; color:#8e8e93; font-weight:600;">Loading payout requests...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Delivery Boy Payouts Section -->
+            <div style="margin-top: 24px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <h2 style="font-weight:800; font-size:1.2rem;">🚴 Delivery Partner Payouts</h2>
+                    <button class="pill-button" style="padding:6px 14px; font-size:0.78rem;" onclick="loadDeliveryPayouts()"><i data-lucide="refresh-cw" style="width:14px;height:14px;"></i> Refresh</button>
+                </div>
+                <div class="liquid-card" style="padding:0; overflow:hidden; max-height:250px; overflow-y:auto;">
+                    <table class="liquid-table">
+                        <thead>
+                            <tr>
+                                <th>Rider</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Requested</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="delivery-payout-list">
+                            <tr><td colspan="5" style="padding:30px; text-align:center; color:#8e8e93; font-weight:600;">Loading delivery payouts...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        const user = auth.getUser();
+        if (!user || user.role !== 'admin') { window.location.href = '../auth/login.html'; }
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('admin');
+        lucide.createIcons();
+
+        async function loadFinancials() {
+            try {
+                components.showLoader();
+                const res = await api.get('/admin/financials');
+                if (res.success) {
+                    updateStats(res.data);
+                    renderTransactions(res.data.transactions || []);
+                }
+            } catch (err) {
+                console.error('Financial sync failure:', err);
+                components.showError('Platform ledger synchronization failure.');
+            } finally {
+                components.hideLoader();
+                lucide.createIcons();
+            }
+        }
+
+        function updateStats(data) {
+            document.getElementById('stat-revenue').textContent = `₹${parseFloat(data.revenue).toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+            document.getElementById('stat-commission').textContent = `₹${parseFloat(data.commission).toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+            document.getElementById('stat-payouts').textContent = `₹${parseFloat(data.payouts).toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+            
+            // Fetch commission rate from settings
+            api.get('/admin/settings').then(res => {
+                const settings = (res.data && res.data.settings) || {};
+                const rate = settings.vendor_commission_percent || settings.ecosystem_commission || '15';
+                document.getElementById('commission-label').textContent = `Net Commission (${rate}%)`;
+            }).catch(() => {
+                document.getElementById('commission-label').textContent = 'Net Commission';
+            });
+        }
+
+        function renderTransactions(list) {
+            const container = document.getElementById('transaction-list');
+            if (list.length === 0) {
+                container.innerHTML = '<tr><td colspan="5" style="padding: 60px; text-align: center; color: #8e8e93; font-weight: 600;">No nodal transactions recorded in current period.</td></tr>';
+                return;
+            }
+
+            container.innerHTML = list.map(tx => `
+                <tr>
+                    <td style="font-weight: 800;">${tx.vendor_name}</td>
+                    <td style="font-weight: 600;">₹${parseFloat(tx.order_amount).toFixed(2)}</td>
+                    <td style="font-weight: 800; color: var(--success);">+₹${parseFloat(tx.commission_amount).toFixed(2)}</td>
+                    <td>
+                        <span style="padding: 4px 10px; background: ${tx.status === 'settled' ? 'rgba(52, 199, 89, 0.1)' : 'rgba(255, 149, 0, 0.1)'}; color: ${tx.status === 'settled' ? 'var(--success)' : 'var(--warning)'}; border-radius: 100px; font-size: 0.75rem; font-weight: 800;">
+                            ${tx.status.toUpperCase()}
+                        </span>
+                    </td>
+                    <td style="color: #8e8e93; font-size: 0.8rem; font-weight: 600;">${new Date(tx.created_at).toLocaleString()}</td>
+                </tr>
+            `).join('');
+        }
+
+        loadFinancials();
+        loadPayouts();
+        loadDeliveryPayouts();
+
+        async function loadPayouts() {
+            try {
+                const res = await api.get('/admin/payouts/pending');
+                const payouts = (res.data && res.data.payouts) ? res.data.payouts : [];
+                const container = document.getElementById('payout-list');
+
+                if (payouts.length === 0) {
+                    container.innerHTML = '<tr><td colspan="5" style="padding:30px; text-align:center; color:#8e8e93; font-weight:600;">No payout requests.</td></tr>';
+                    return;
+                }
+
+                container.innerHTML = payouts.map(p => {
+                    const statusColors = {
+                        pending: 'background:rgba(255,149,0,0.1);color:#ff9500',
+                        processed: 'background:rgba(52,199,89,0.1);color:#34c759',
+                        rejected: 'background:rgba(255,59,48,0.1);color:#ff3b30',
+                        failed: 'background:rgba(255,59,48,0.1);color:#ff3b30'
+                    };
+                    const sc = statusColors[p.status] || 'background:rgba(0,0,0,0.05);color:#6e6e73';
+
+                    const actionBtns = p.status === 'pending' 
+                        ? `<button onclick="approvePayout(${p.id})" style="padding:5px 12px; background:#34c759; color:white; border:none; border-radius:8px; font-size:0.72rem; font-weight:700; cursor:pointer; margin-right:6px;">✓ Approve</button>
+                           <button onclick="rejectPayout(${p.id})" style="padding:5px 12px; background:#ff3b30; color:white; border:none; border-radius:8px; font-size:0.72rem; font-weight:700; cursor:pointer;">✗ Reject</button>`
+                        : `<span style="font-size:0.75rem; color:#8e8e93;">—</span>`;
+
+                    return `<tr>
+                        <td style="font-weight:700;">${p.vendor_name || 'Vendor #' + p.vendor_id}</td>
+                        <td style="font-weight:800;">₹${parseFloat(p.amount).toFixed(2)}</td>
+                        <td><span style="padding:4px 10px; border-radius:100px; font-size:0.72rem; font-weight:800; ${sc}">${p.status.toUpperCase()}</span></td>
+                        <td style="color:#8e8e93; font-size:0.8rem;">${new Date(p.created_at).toLocaleString()}</td>
+                        <td>${actionBtns}</td>
+                    </tr>`;
+                }).join('');
+            } catch (err) {
+                console.error('Payout load error:', err);
+            }
+        }
+
+        async function approvePayout(id) {
+            const confirmed = await components.confirm('Approve Payout', 'Process this vendor payout? Amount will be marked as settled.', 'Yes, Approve');
+            if (!confirmed) return;
+            try {
+                components.showLoader();
+                await api.post('/admin/payouts/' + id + '/approve');
+                components.showSuccess('Payout approved and processed.');
+                loadPayouts();
+                loadFinancials();
+            } catch (err) { components.showError(err.message || 'Failed to approve.'); }
+            finally { components.hideLoader(); }
+        }
+
+        async function rejectPayout(id) {
+            const confirmed = await components.confirm('Reject Payout', 'Reject this payout request? Vendor will be notified.', 'Yes, Reject');
+            if (!confirmed) return;
+            try {
+                components.showLoader();
+                await api.post('/admin/payouts/' + id + '/reject');
+                components.showSuccess('Payout rejected.');
+                loadPayouts();
+            } catch (err) { components.showError(err.message || 'Failed to reject.'); }
+            finally { components.hideLoader(); }
+        }
+
+        async function runWeeklyPayout() {
+            const confirmed = await components.confirm('Run Weekly Payout', 'This will settle ALL pending vendor commissions. Proceed?', 'Yes, Settle All');
+            if (!confirmed) return;
+            try {
+                components.showLoader();
+                const res = await api.post('/worker/weekly-payout');
+                components.showSuccess(res.message || 'Weekly payout completed.');
+                loadPayouts();
+                loadFinancials();
+            } catch (err) { components.showError(err.message || 'Weekly payout failed.'); }
+            finally { components.hideLoader(); }
+        }
+
+        // --- Delivery Payouts ---
+        async function loadDeliveryPayouts() {
+            try {
+                const res = await api.get('/admin/payouts/delivery');
+                const payouts = (res.data && res.data.payouts) ? res.data.payouts : [];
+                const container = document.getElementById('delivery-payout-list');
+
+                if (payouts.length === 0) {
+                    container.innerHTML = '<tr><td colspan="5" style="padding:30px; text-align:center; color:#8e8e93; font-weight:600;">No delivery payout requests.</td></tr>';
+                    return;
+                }
+
+                container.innerHTML = payouts.map(p => {
+                    const statusColors = {
+                        pending: 'background:rgba(255,149,0,0.1);color:#ff9500',
+                        processed: 'background:rgba(52,199,89,0.1);color:#34c759',
+                        failed: 'background:rgba(255,59,48,0.1);color:#ff3b30'
+                    };
+                    const sc = statusColors[p.status] || 'background:rgba(0,0,0,0.05);color:#6e6e73';
+
+                    const actionBtns = p.status === 'pending'
+                        ? `<button onclick="approveDeliveryPayout(${p.id})" style="padding:5px 12px; background:#34c759; color:white; border:none; border-radius:8px; font-size:0.72rem; font-weight:700; cursor:pointer; margin-right:6px;">✓ Approve</button>
+                           <button onclick="rejectDeliveryPayout(${p.id})" style="padding:5px 12px; background:#ff3b30; color:white; border:none; border-radius:8px; font-size:0.72rem; font-weight:700; cursor:pointer;">✗ Reject</button>`
+                        : `<span style="font-size:0.75rem; color:#8e8e93;">—</span>`;
+
+                    return `<tr>
+                        <td style="font-weight:700;">${p.rider_name || 'Rider #' + p.rider_id}</td>
+                        <td style="font-weight:800;">₹${parseFloat(p.amount).toFixed(2)}</td>
+                        <td><span style="padding:4px 10px; border-radius:100px; font-size:0.72rem; font-weight:800; ${sc}">${p.status.toUpperCase()}</span></td>
+                        <td style="color:#8e8e93; font-size:0.8rem;">${new Date(p.created_at).toLocaleString()}</td>
+                        <td>${actionBtns}</td>
+                    </tr>`;
+                }).join('');
+            } catch (err) { console.error('Delivery payout load error:', err); }
+        }
+
+        async function approveDeliveryPayout(id) {
+            const confirmed = await components.confirm('Approve Delivery Payout', 'Process this rider payout?', 'Yes, Approve');
+            if (!confirmed) return;
+            try {
+                components.showLoader();
+                await api.post('/admin/payouts/delivery/' + id + '/approve');
+                components.showSuccess('Delivery payout approved.');
+                loadDeliveryPayouts();
+            } catch (err) { components.showError(err.message || 'Failed.'); }
+            finally { components.hideLoader(); }
+        }
+
+        async function rejectDeliveryPayout(id) {
+            const confirmed = await components.confirm('Reject Delivery Payout', 'Reject this rider payout?', 'Yes, Reject');
+            if (!confirmed) return;
+            try {
+                components.showLoader();
+                await api.post('/admin/payouts/delivery/' + id + '/reject');
+                components.showSuccess('Delivery payout rejected.');
+                loadDeliveryPayouts();
+            } catch (err) { components.showError(err.message || 'Failed.'); }
+            finally { components.hideLoader(); }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,220 @@
+    liquidSidebar: (role, isSlim = false) => {
+        const roleDashboards = { admin: 'admin-dashboard.html', vendor: 'vendor-dashboard.html', user: 'user-dashboard.html', delivery: 'delivery-dashboard.html' };
+        const homeLink = roleDashboards[role] || '../index.html';
+        const currentPath = window.location.pathname.split('/').pop() || 'admin-dashboard.html';
+
+        if (role === 'admin') {
+            const adminModules = [
+                {
+                    id: 'dashboard', label: 'Dashboard', link: 'admin-dashboard.html',
+                    items: [ { icon: 'grid', label: 'Home Dashboard', link: 'admin-dashboard.html' } ]
+                },
+                {
+                    id: 'network', label: 'Network', link: 'admin-users.html',
+                    items: [
+                        { icon: 'users', label: 'User Directory', link: 'admin-users.html' },
+                        { icon: 'hospital', label: 'Pharmacy Network', link: 'admin-vendors.html' },
+                        { icon: 'truck', label: 'Delivery Fleet', link: 'admin-delivery-agents.html' },
+                        { icon: 'check-square', label: 'Partner Approvals', link: 'admin-pharmacy-approvals.html' },
+                        { icon: 'clipboard-list', label: 'KYC Verification', link: 'admin-kyc-verification.html' }
+                    ]
+                },
+                {
+                    id: 'catalog', label: 'Catalog', link: 'admin-medicines.html',
+                    items: [
+                        { icon: 'package', label: 'Medicine Inventory', link: 'admin-medicines.html' },
+                        { icon: 'file-text', label: 'Prescription Hub', link: 'admin-prescriptions.html' },
+                        { icon: 'award', label: 'Brand Mgmt', link: 'admin-brand-management.html' },
+                        { icon: 'layers', label: 'Categorization', link: 'admin-medicine-categorization.html' },
+                        { icon: 'upload-cloud', label: 'Bulk Operations', link: 'admin-bulk-operations.html' }
+                    ]
+                },
+                {
+                    id: 'system', label: 'System & Analytics', link: 'admin-system-pulse.html',
+                    items: [
+                        { icon: 'activity', label: 'System Pulse', link: 'admin-system-pulse.html' },
+                        { icon: 'zap', label: 'Order Pulse', link: 'admin-order-pulse.html' },
+                        { icon: 'bar-chart-2', label: 'Financials', link: 'admin-financials.html' },
+                        { icon: 'pie-chart', label: 'Analytical Reports', link: 'admin-reports.html' },
+                        { icon: 'ticket', label: 'Support Desk', link: 'admin-support-tickets.html' },
+                        { icon: 'mail', label: 'Clinical Newsletter', link: 'admin-newsletter.html' }
+                    ]
+                },
+                {
+                    id: 'settings', label: 'Settings & Security', link: 'admin-system-settings.html',
+                    items: [
+                        { icon: 'settings', label: 'General Settings', link: 'admin-system-settings.html' },
+                        { icon: 'lock', label: 'Roles & Security', link: 'admin-roles-permissions.html' },
+                        { icon: 'shield-check', label: 'Security Config', link: 'admin-security-settings.html' },
+                        { icon: 'database', label: 'Backup & Recovery', link: 'admin-backup.html' },
+                        { icon: 'file-text', label: 'System Logs', link: 'admin-system-logs.html' },
+                        { icon: 'history', label: 'Activity Logs', link: 'admin-activity-logs.html' }
+                    ]
+                }
+            ];
+
+            let activeModule = adminModules[0];
+            for (let mod of adminModules) {
+                if (mod.items.some(i => i.link === currentPath) || currentPath === mod.link) {
+                    activeModule = mod;
+                    break;
+                }
+            }
+
+            if (typeof window !== 'undefined' && document) {
+                setTimeout(() => {
+                    if (!document.getElementById('admin-top-nav')) {
+                        const style = document.createElement('style');
+                        style.innerHTML = `
+                            #admin-top-nav {
+                                position: fixed; top: 0; left: 0; width: 100%; height: 68px;
+                                background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+                                border-bottom: 1px solid rgba(0,0,0,0.06); z-index: 10000;
+                                display: flex; align-items: center; justify-content: space-between; padding: 0 32px;
+                                box-shadow: 0 4px 24px rgba(0,0,0,0.02); box-sizing: border-box;
+                            }
+                            .admin-top-brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 1.3rem; letter-spacing: -0.04em; color: #1d1d1f; text-decoration: none; }
+                            .admin-top-brand span { color: #007aff; }
+                            .admin-top-tabs { display: flex; gap: 8px; }
+                            .admin-top-tab {
+                                padding: 10px 18px; border-radius: 12px; color: #6e6e73; font-weight: 700; font-size: 0.9rem;
+                                text-decoration: none; transition: all 0.2s ease;
+                            }
+                            .admin-top-tab:hover { background: rgba(0,0,0,0.04); color: #1d1d1f; }
+                            .admin-top-tab.active { background: #1d1d1f; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+                            .squircle-card { height: calc(100vh - 68px) !important; margin-top: 68px !important; border-top-left-radius: 0; border-top-right-radius: 0; }
+                            .liquid-sidebar { padding-top: 20px !important; padding-bottom: 20px !important; min-height: auto !important; height: 100%; }
+                            .admin-user-profile { display: flex; align-items: center; gap: 12px; background: rgba(0,0,0,0.03); padding: 6px 16px 6px 6px; border-radius: 100px; cursor:pointer; }
+                            .admin-user-profile:hover { background: rgba(0,0,0,0.06); }
+                        `;
+                        document.head.appendChild(style);
+
+                        const topNav = document.createElement('div');
+                        topNav.id = 'admin-top-nav';
+                        topNav.innerHTML = `
+                            <a href="${homeLink}" class="admin-top-brand">➕ Medi<span>Mitra</span> <span style="font-size:0.7rem; background:#007aff; color:white; padding:2px 6px; border-radius:6px; letter-spacing:0; margin-left:8px;">OS</span></a>
+                            <div class="admin-top-tabs">
+                                ${adminModules.map(m => `<a href="${m.link}" class="admin-top-tab ${m.id === activeModule.id ? 'active' : ''}">${m.label}</a>`).join('')}
+                            </div>
+                            <div class="admin-user-profile" onclick="auth.logout()">
+                                <div style="width:32px; height:32px; border-radius:50%; background:#1d1d1f; color:white; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.8rem;">AD</div>
+                                <div style="font-size:0.85rem; font-weight:700; color:#1d1d1f;">System Admin</div>
+                            </div>
+                        `;
+                        document.body.prepend(topNav);
+                    }
+                }, 0);
+            }
+
+            return `
+                <div class="sidebar-header" style="padding: 0 10px 12px 10px; margin-bottom: 12px; border-bottom: 1px solid rgba(0,0,0,0.06);">
+                    <h3 style="font-weight: 800; font-size: 0.7rem; color: #8e8e93; text-transform: uppercase; letter-spacing: 0.08em; margin: 0;">${activeModule.label} Options</h3>
+                </div>
+                <nav style="display: flex; flex-direction: column; gap: 6px; flex: 1; overflow-y: auto;">
+                    ${activeModule.items.map(item => `
+                        <a href="${item.link}" class="liquid-nav-item ${currentPath === item.link ? 'active' : ''}">
+                            <i data-lucide="${item.icon}"></i> ${item.label}
+                        </a>
+                    `).join('')}
+                    <div style="flex: 1; min-height: 20px;"></div>
+                    <a href="#" onclick="auth.logout()" class="liquid-nav-item" style="margin-top: auto; color: #ff3b30; background: rgba(255,59,48,0.05);">
+                        <i data-lucide="log-out"></i> Logout Session
+                    </a>
+                </nav>
+            `;
+        }
+
+        const menus = {
+            vendor: [
+                { section: 'PHARMACY OPS', items: [
+                    { icon: 'grid', label: 'Dashboard', link: 'vendor-dashboard.html' },
+                    { icon: 'shopping-bag', label: 'Recent Orders', link: 'vendor-orders.html' },
+                    { icon: 'tablet', label: 'POS Terminal', link: 'vendor-pos.html' }
+                ]},
+                { section: 'ACCOUNT', items: [
+                    { icon: 'user', label: 'Pharmacy Profile', link: 'vendor-profile.html' },
+                    { icon: 'settings', label: 'Settings', link: 'vendor-settings.html' }
+                ]}
+            ],
+            user: [
+                { section: 'SHOP', items: [
+                    { icon: 'home', label: 'Storefront Home', link: '../index.html' },
+                    { icon: 'grid', label: 'Patient Dashboard', link: 'user-dashboard.html' },
+                    { icon: 'pill', label: 'Browse Medicines', link: 'medicines-page.html' },
+                    { icon: 'sparkles', label: 'Health Insights', link: 'user-recommendations.html' },
+                    { icon: 'file-text', label: 'Upload Rx', link: 'user-prescriptions.html' }
+                ]},
+                { section: 'ORDERS', items: [
+                    { icon: 'shopping-cart', label: 'My Cart', link: 'cart-page.html' },
+                    { icon: 'clipboard', label: 'Order History', link: 'orders-page.html' },
+                    { icon: 'refresh-ccw', label: 'My Returns', link: 'user-returns.html' },
+                    { icon: 'heart', label: 'Wishlist', link: 'user-wishlist.html' }
+                ]},
+                { section: 'PROFILE', items: [
+                    { icon: 'user', label: 'My Account', link: 'user-profile.html' },
+                    { icon: 'wallet', label: 'Payments & Address', link: 'user-addresses.html' },
+                    { icon: 'help-circle', label: 'Help & Support', link: 'user-support-tickets.html' },
+                    { icon: 'bell', label: 'Notifications', link: 'user-notifications.html' }
+                ]}
+            ]
+        };
+
+        const currentMenu = menus[role] || [];
+        
+        if (isSlim) {
+            let slimHTML = `
+                <div style="margin-bottom: 30px;">
+                    <a href="${homeLink}" style="text-decoration: none;">
+                        <div style="width:40px; height:40px; background:var(--primary); color:white; border-radius:12px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.2rem;">M</div>
+                    </a>
+                </div>
+                <nav style="display: flex; flex-direction: column; gap: 16px; align-items: center; width: 100%;">
+            `;
+            currentMenu.forEach(group => {
+                group.items.forEach(item => {
+                    const isActive = currentPath === item.link;
+                    slimHTML += `
+                        <a href="${item.link}" class="nav-item-slim ${isActive ? 'active' : ''}" title="${item.label}">
+                            <i data-lucide="${item.icon}"></i>
+                        </a>
+                    `;
+                });
+            });
+            slimHTML += `
+                <a href="#" onclick="auth.logout()" class="nav-item-slim" title="Logout" style="margin-top: auto; color: #ff3b30;">
+                    <i data-lucide="log-out"></i>
+                </a>
+            </nav>`;
+            return slimHTML;
+        }
+
+        let sidebarHTML = `
+            <div class="sidebar-header" style="padding: 0 10px 30px 10px;">
+                <a href="${homeLink}" style="text-decoration: none; color: inherit;">
+                    <h2 style="font-weight: 800; font-size: 1.5rem; letter-spacing: -0.05em; color: #1d1d1f;">MediMitra</h2>
+                </a>
+            </div>
+            <nav style="display: flex; flex-direction: column; gap: 20px;">
+        `;
+        currentMenu.forEach(group => {
+            sidebarHTML += `
+                <div class="nav-group">
+                    <div style="font-size: 0.65rem; font-weight: 800; color: #8e8e93; letter-spacing: 0.08em; padding: 0 14px 8px 14px;">${group.section}</div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        ${group.items.map(item => `
+                            <a href="${item.link}" class="liquid-nav-item ${currentPath === item.link ? 'active' : ''}">
+                                <i data-lucide="${item.icon}"></i> ${item.label}
+                            </a>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        });
+        sidebarHTML += `
+                <a href="#" onclick="auth.logout()" class="liquid-nav-item" style="margin-top: 20px; color: #ff3b30;">
+                    <i data-lucide="log-out"></i> Logout
+                </a>
+            </nav>
+        `;
+        return sidebarHTML;
+    }

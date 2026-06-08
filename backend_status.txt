@@ -1,0 +1,43 @@
+[Wed Apr  8 20:16:28 2026] PHP 8.2.12 Development Server (http://localhost:8000) started
+[Wed Apr  8 20:37:36 2026] [::1]:56257 Accepted
+[Wed Apr  8 20:37:37 2026] [::1]:56257 [200]: OPTIONS /api/login
+[Wed Apr  8 20:37:37 2026] [::1]:56257 Closing
+[Wed Apr  8 20:37:37 2026] [::1]:64307 Accepted
+[Wed Apr  8 20:37:38 2026] [::1]:64307 [404]: POST /api/login
+[Wed Apr  8 20:37:38 2026] [::1]:64307 Closing
+[Wed Apr  8 20:37:41 2026] [::1]:56789 Accepted
+[Wed Apr  8 20:37:41 2026] [::1]:56789 [404]: POST /api/login
+[Wed Apr  8 20:37:41 2026] [::1]:56789 Closing
+[Wed Apr  8 20:37:42 2026] [::1]:64499 Accepted
+[Wed Apr  8 20:37:42 2026] [::1]:64499 [404]: POST /api/login
+[Wed Apr  8 20:37:42 2026] [::1]:64499 Closing
+[Wed Apr  8 20:37:42 2026] [::1]:62228 Accepted
+[Wed Apr  8 20:37:42 2026] [::1]:62228 [404]: POST /api/login
+[Wed Apr  8 20:37:42 2026] [::1]:62228 Closing
+[Wed Apr  8 20:37:42 2026] [::1]:61256 Accepted
+[Wed Apr  8 20:37:42 2026] [::1]:61256 [404]: POST /api/login
+[Wed Apr  8 20:37:42 2026] [::1]:61256 Closing
+[Wed Apr  8 20:37:43 2026] [::1]:54908 Accepted
+[Wed Apr  8 20:37:43 2026] [::1]:54908 [200]: OPTIONS /api/login
+[Wed Apr  8 20:37:43 2026] [::1]:54908 Closing
+[Wed Apr  8 20:37:43 2026] [::1]:55411 Accepted
+[Wed Apr  8 20:37:43 2026] [::1]:55411 [404]: POST /api/login
+[Wed Apr  8 20:37:43 2026] [::1]:55411 Closing
+[Wed Apr  8 20:37:43 2026] [::1]:57766 Accepted
+[Wed Apr  8 20:37:43 2026] [::1]:57766 [404]: POST /api/login
+[Wed Apr  8 20:37:43 2026] [::1]:57766 Closing
+[Wed Apr  8 20:37:54 2026] [::1]:49282 Accepted
+[Wed Apr  8 20:37:54 2026] [::1]:49282 [200]: OPTIONS /api/login
+[Wed Apr  8 20:37:54 2026] [::1]:49282 Closing
+[Wed Apr  8 20:37:54 2026] [::1]:54698 Accepted
+[Wed Apr  8 20:37:54 2026] [::1]:54698 [404]: POST /api/login
+[Wed Apr  8 20:37:54 2026] [::1]:54698 Closing
+[Wed Apr  8 20:37:58 2026] [::1]:64006 Accepted
+[Wed Apr  8 20:37:58 2026] [::1]:64006 [404]: POST /api/login
+[Wed Apr  8 20:37:58 2026] [::1]:64006 Closing
+[Wed Apr  8 20:38:10 2026] [::1]:50437 Accepted
+[Wed Apr  8 20:38:10 2026] [::1]:50437 [200]: OPTIONS /api/login
+[Wed Apr  8 20:38:10 2026] [::1]:50437 Closing
+[Wed Apr  8 20:38:10 2026] [::1]:49670 Accepted
+[Wed Apr  8 20:38:10 2026] [::1]:49670 [404]: POST /api/login
+[Wed Apr  8 20:38:10 2026] [::1]:49670 Closing

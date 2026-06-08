@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Returns & Refunds | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: visible; }
+        
+        .liquid-main { overflow-y: auto; height: 100%; padding-bottom: 40px; }
+        
+        .return-card {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: var(--l-card-r);
+            padding: var(--l-card-p);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            margin-bottom: 20px;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .return-card:hover { transform: translateY(-5px); background: rgba(255, 255, 255, 0.6); }
+
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+        .status-requested { background: #ff9500; }
+        .status-picked { background: #007aff; }
+        .status-refunded { background: #34c759; }
+        .status-pending { background: #ff9500; }
+        .status-approved { background: #007aff; }
+        .status-completed { background: #34c759; }
+        .status-rejected { background: #ff3b30; }
+
+        .return-reason {
+            font-size: 0.85rem;
+            color: #6e6e73;
+            background: rgba(0,0,0,0.05);
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        
+        <main class="liquid-main">
+            <header style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1 class="vibrant-h1">Returns & Refunds</h1>
+                    <p style="color: #6e6e73; font-size: 1.2rem; font-weight: 500;">Manage your pharmaceutical returns and track refunds.</p>
+                </div>
+                <button class="pill-button" onclick="window.location.href='orders-page.html'">
+                    <i data-lucide="plus-circle"></i> New Return
+                </button>
+            </header>
+
+            <div id="returns-list" style="overflow-y: auto; max-height: calc(100vh - 250px); padding-right: 10px;">
+                <!-- Returns will be injected here -->
+            </div>
+
+            <div id="empty-state" style="display: none; text-align: center; padding: 60px 20px;">
+                <div style="width: 80px; height: 80px; background: rgba(0,0,0,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;">
+                    <i data-lucide="refresh-ccw" style="width: 40px; height: 40px; color: #6e6e73;"></i>
+                </div>
+                <h2 style="font-weight: 800; color: #1d1d1f; margin-bottom: 8px;">No return requests found</h2>
+                <p style="color: #6e6e73; margin-bottom: 24px;">If you have any issues with your medicines, you can initiate a return from your past orders.</p>
+                <a href="orders-page.html" class="pill-button" style="text-decoration: none; display: inline-flex;">View Completed Orders</a>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        // Check Auth
+        const user = auth.getUser();
+        if (!user) { window.location.href = '../auth/login.html'; }
+
+        // Load Sidebar
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('user');
+        lucide.createIcons();
+
+        async function renderReturns() {
+            const container = document.getElementById('returns-list');
+            const emptyState = document.getElementById('empty-state');
+            
+            try {
+                components.showLoader();
+                const res = await api.get('/user/returns');
+                const returns = res.data.returns || [];
+
+                if (returns.length === 0) {
+                    container.style.display = 'none';
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                container.style.display = 'block';
+                emptyState.style.display = 'none';
+
+                container.innerHTML = returns.map(ret => {
+                    const statusClass = ret.status.toLowerCase();
+                    return `
+                        <div class="return-card animate-scale-in">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+                                <div>
+                                    <div style="font-size: 0.8rem; font-weight: 800; color: var(--primary); margin-bottom: 4px;">REQUEST ID: #RET-${ret.id}</div>
+                                    <h3 style="font-weight: 800; color: #1d1d1f; font-size: 1.2rem;">Order #${ret.order_id}</h3>
+                                </div>
+                                <div class="status-chip" style="background: rgba(0,0,0,0.05); padding: 6px 16px; border-radius: 100px; font-size: 0.85rem; font-weight: 700;">
+                                    <span class="status-dot status-${statusClass}"></span>
+                                    ${ret.status.toUpperCase()}
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 20px;">
+                                <div style="width: 50px; height: 50px; background: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">📦</div>
+                                <div>
+                                    <div style="font-weight: 700; color: #1d1d1f;">Refund Amount: ₹${parseFloat(ret.grand_total || 0).toFixed(2)}</div>
+                                    <div class="return-reason">${ret.reason}</div>
+                                </div>
+                            </div>
+
+                            <div style="border-top: 1px dashed rgba(0,0,0,0.1); padding-top: 16px; display: flex; justify-content: space-between; align-items: center;">
+                                <div style="font-size: 0.85rem; color: #6e6e73; font-weight: 500;">
+                                    Requested on: <strong>${new Date(ret.created_at).toLocaleDateString()}</strong>
+                                </div>
+                                <button class="pill-button" onclick="trackReturn(${ret.id}, '${ret.status}')" style="background: transparent; border: 1px solid rgba(0,0,0,0.1); color: #1d1d1f;">Track Return</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                lucide.createIcons();
+            } catch (err) {
+                console.error(err);
+                components.showError("Failed to fetch return status.");
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        function trackReturn(id, status) {
+            status = status.toLowerCase();
+            
+            let step1Bg = 'var(--success)';
+            let line1Color = 'rgba(0,0,0,0.1)';
+            
+            let step2Bg = 'rgba(0,0,0,0.1)';
+            let step2Icon = '2';
+            let step2TitleColor = '#8e8e93';
+            let line2Color = 'rgba(0,0,0,0.1)';
+            
+            let step3Bg = 'rgba(0,0,0,0.1)';
+            let step3Icon = '3';
+            let step3TitleColor = '#8e8e93';
+            let line3Color = 'rgba(0,0,0,0.1)';
+            
+            let step4Bg = 'rgba(0,0,0,0.1)';
+            let step4Icon = '4';
+            let step4TitleColor = '#8e8e93';
+
+            if (status === 'pending') {
+                step2Bg = 'var(--primary)';
+                step2TitleColor = '#1d1d1f';
+            } else if (status === 'approved') {
+                step1Bg = 'var(--success)';
+                line1Color = 'var(--success)';
+                step2Bg = 'var(--success)';
+                step2Icon = '✓';
+                step2TitleColor = '#1d1d1f';
+                line2Color = 'var(--primary)';
+                step3Bg = 'var(--primary)';
+                step3TitleColor = '#1d1d1f';
+            } else if (status === 'assigned_for_pickup') {
+                step1Bg = 'var(--success)';
+                line1Color = 'var(--success)';
+                step2Bg = 'var(--success)';
+                step2Icon = '✓';
+                step2TitleColor = '#1d1d1f';
+                line2Color = 'var(--success)';
+                step3Bg = 'var(--success)';
+                step3Icon = '✓';
+                step3TitleColor = '#1d1d1f';
+                line3Color = 'var(--primary)';
+                step4Bg = 'var(--primary)';
+                step4TitleColor = '#1d1d1f';
+            } else if (status === 'completed') {
+                step1Bg = 'var(--success)';
+                line1Color = 'var(--success)';
+                step2Bg = 'var(--success)';
+                step2Icon = '✓';
+                step2TitleColor = '#1d1d1f';
+                line2Color = 'var(--success)';
+                step3Bg = 'var(--success)';
+                step3Icon = '✓';
+                step3TitleColor = '#1d1d1f';
+                line3Color = 'var(--success)';
+                step4Bg = 'var(--success)';
+                step4Icon = '✓';
+                step4TitleColor = '#1d1d1f';
+            } else if (status === 'rejected') {
+                step1Bg = 'var(--success)';
+                line1Color = 'var(--danger)';
+                step2Bg = 'var(--danger)';
+                step2Icon = '✗';
+                step2TitleColor = 'var(--danger)';
+            }
+
+            let statusDescription = 'Your return request is currently undergoing review.';
+            if (status === 'pending') statusDescription = 'Waiting for pharmacy review.';
+            else if (status === 'approved') statusDescription = 'Approved. A delivery rider will be assigned shortly for medicine pickup.';
+            else if (status === 'assigned_for_pickup') statusDescription = 'A delivery rider is on their way to pick up the item.';
+            else if (status === 'completed') statusDescription = 'Refund processed and credited to your wallet balance.';
+            else if (status === 'rejected') statusDescription = 'The return request was rejected after review.';
+
+            const content = `
+                <div style="padding: 0 16px;">
+                    <div style="background: rgba(0,0,0,0.03); border-radius: 12px; padding: 16px; margin-bottom: 24px; border: 1px solid rgba(0,0,0,0.05);">
+                        <div style="font-size: 0.8rem; font-weight: 800; color: #6e6e73; text-transform: uppercase;">Current Status</div>
+                        <div style="font-size: 1.1rem; font-weight: 800; color: #1d1d1f; margin-top: 4px;">${status.replace(/_/g, ' ').toUpperCase()}</div>
+                        <div style="font-size: 0.85rem; color: #6e6e73; margin-top: 4px; line-height: 1.4;">${statusDescription}</div>
+                    </div>
+                    
+                    <div class="reversal-tracker" style="display: flex; flex-direction: column; gap: 20px; font-family: inherit;">
+                        <!-- Step 1 -->
+                        <div style="display: flex; gap: 16px; align-items: flex-start;">
+                            <div style="display: flex; flex-direction: column; align-items: center;">
+                                <div style="width: 24px; height: 24px; border-radius: 50%; background: ${step1Bg}; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.8rem; z-index: 2;">✓</div>
+                                ${status !== 'rejected' ? `<div style="width: 2px; height: 40px; background: ${line1Color}; margin-top: 4px; z-index: 1;"></div>` : ''}
+                            </div>
+                            <div>
+                                <h4 style="margin: 0; font-weight: 800; color: #1d1d1f;">Return Request Placed</h4>
+                                <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #6e6e73;">Your request for return is registered.</p>
+                            </div>
+                        </div>
+
+                        <!-- Step 2 -->
+                        <div style="display: flex; gap: 16px; align-items: flex-start;">
+                            <div style="display: flex; flex-direction: column; align-items: center;">
+                                <div style="width: 24px; height: 24px; border-radius: 50%; background: ${step2Bg}; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.8rem; z-index: 2;">${step2Icon}</div>
+                                ${status !== 'rejected' && status !== 'pending' ? `<div style="width: 2px; height: 40px; background: ${line2Color}; margin-top: 4px; z-index: 1;"></div>` : ''}
+                            </div>
+                            <div>
+                                <h4 style="margin: 0; font-weight: 800; color: ${step2TitleColor};">${status === 'rejected' ? 'Return Rejected' : 'Pharmacy Review'}</h4>
+                                <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #6e6e73;">${status === 'rejected' ? 'Review failed verification check' : 'Verified by Pharmacy & Admin'}</p>
+                            </div>
+                        </div>
+
+                        ${status !== 'rejected' ? `
+                        <!-- Step 3 -->
+                        <div style="display: flex; gap: 16px; align-items: flex-start;">
+                            <div style="display: flex; flex-direction: column; align-items: center;">
+                                <div style="width: 24px; height: 24px; border-radius: 50%; background: ${step3Bg}; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.8rem; z-index: 2;">${step3Icon}</div>
+                                <div style="width: 2px; height: 40px; background: ${line3Color}; margin-top: 4px; z-index: 1;"></div>
+                            </div>
+                            <div>
+                                <h4 style="margin: 0; font-weight: 800; color: ${step3TitleColor};">Return Pickup</h4>
+                                <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #6e6e73;">Rider collects return package.</p>
+                            </div>
+                        </div>
+
+                        <!-- Step 4 -->
+                        <div style="display: flex; gap: 16px; align-items: flex-start;">
+                            <div style="display: flex; flex-direction: column; align-items: center;">
+                                <div style="width: 24px; height: 24px; border-radius: 50%; background: ${step4Bg}; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.8rem; z-index: 2;">${step4Icon}</div>
+                            </div>
+                            <div>
+                                <h4 style="margin: 0; font-weight: 800; color: ${step4TitleColor};">Refund Completed</h4>
+                                <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #6e6e73;">Credited back to your wallet.</p>
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            components.showModal(`Track Refund Return`, content);
+        }
+
+        renderReturns();
+    </script>
+</body>
+</html>

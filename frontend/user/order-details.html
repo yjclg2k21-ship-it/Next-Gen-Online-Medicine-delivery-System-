@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- PDF Library -->
+    <script src="../assets/js/html2pdf.bundle.min.js"></script>
+    <!-- Enhanced Cache Control -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <!-- Versioned Assets -->
+    <link rel="stylesheet" href="../assets/css/main.css?v=2.2">
+    <link rel="stylesheet" href="../assets/css/liquid.css?v=2.2">
+
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        
+        .receipt-glass {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: var(--l-card-r);
+            padding: var(--l-card-p);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .receipt-hr { border: none; border-top: 2px dashed rgba(0,0,0,0.1); margin: 12px 0; }
+
+        .r-table { width: 100%; border-collapse: collapse; }
+        .r-table th { padding: 8px 0; text-align: left; font-size: 0.75rem; font-weight: 800; color: #6e6e73; text-transform: uppercase; letter-spacing: 0.05em; }
+        .r-table td { padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.05); font-weight: 600; color: #1d1d1f; font-size: 0.95rem; }
+
+        /* Hide print header on screen */
+        .print-only-header { display: none; }
+
+        /* ── Physical Print Optimization ── */
+        @media print {
+            body { 
+                background: #ffffff !important; 
+                color: #000000 !important;
+                height: auto !important;
+                overflow: visible !important;
+                display: block !important;
+            }
+            .print-only-header { 
+                display: block !important; 
+            }
+            .squircle-card { 
+                background: transparent !important;
+                box-shadow: none !important;
+                border: none !important;
+                border-radius: 0 !important;
+                width: 100% !important;
+                max-width: none !important;
+                height: auto !important;
+                margin-top: 0 !important;
+                margin-bottom: 0 !important;
+                margin-left: 0 !important;
+                margin-right: 0 !important;
+                padding: 0 !important;
+                display: block !important;
+            }
+            .liquid-sidebar,
+            header,
+            #back-btn,
+            #sidebar-root,
+            .liquid-sidebar-header,
+            .liquid-nav-link,
+            #user-top-nav,
+            #admin-top-nav { 
+                display: none !important; 
+            }
+            .liquid-main {
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+                max-width: none !important;
+                height: auto !important;
+                display: block !important;
+            }
+            .receipt-glass {
+                background: #ffffff !important;
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                border-radius: 0 !important;
+                width: 100% !important;
+                max-width: none !important;
+                overflow: visible !important;
+            }
+            /* Hide the actions inside the receipt (Export PDF, Physical Print, Return) */
+            .receipt-glass > div:last-of-type {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        
+        <main class="liquid-main" style="display: flex; flex-direction: column; align-items: center;">
+            <header style="margin-bottom: 32px; display: flex; align-items: center; gap: 24px; width: 100%; max-width: 750px;">
+                <a id="back-btn" href="orders-page.html" class="pill-button" style="background: white; color: black; border: 1px solid rgba(0,0,0,0.1); padding: 12px;"><i data-lucide="arrow-left"></i></a>
+                <div>
+                    <h1 class="vibrant-h1">Order Details</h1>
+                    <p style="color: #6e6e73; font-size: 1.2rem; font-weight: 500;">Invoice and transaction details for <span id="hdr-order-id">#MM-ORD-84392</span>.</p>
+                </div>
+            </header>
+
+            <div class="receipt-glass" id="receipt-content" style="width: 100%; max-width: 750px; box-shadow: 0 20px 50px rgba(0,0,0,0.1);">
+                <div class="print-only-header">
+                    <h1 style="font-size: 1.8rem; font-weight: 800; margin-bottom: 10px;">MediMitra Digital Invoice</h1>
+                    <p style="color: #6e6e73; font-size: 0.8rem;">Authorized Medical Receipt &bull; Transaction ID: <span id="print-txn-id">TXN_982374829</span></p>
+                    <div style="border-bottom: 2px solid #000; margin-top: 15px; width: 100%;"></div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
+                    <div>
+                        <h2 style="font-weight: 800; font-size: 1.8rem; color: #1d1d1f;">Payment Receipt</h2>
+                        <p style="color: #6e6e73; font-weight: 600;">Transaction ID: <span style="font-family: monospace;" id="lvl-txn-id">TXN_982374829</span></p>
+                    </div>
+                    <div style="text-align: right;">
+                        <span id="lvl-status-badge" style="background: rgba(52, 199, 89, 0.1); color: var(--success); padding: 8px 16px; border-radius: 100px; font-size: 0.8rem; font-weight: 800;">AUTHORIZED PAYMENT</span>
+                        <p id="lvl-date" style="color: #6e6e73; margin-top: 12px; font-weight: 600;">April 8, 2026 &bull; 10:24 AM</p>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                    <div>
+                        <div style="font-size: 0.75rem; font-weight: 800; color: #6e6e73; text-transform: uppercase; margin-bottom: 12px;">Ship To</div>
+                        <p style="font-weight: 700; color: #1d1d1f; line-height: 1.6;">
+                            <span id="lvl-customer-name">John Doe</span><br>
+                            <span id="lvl-customer-addr">123 Healthcare Plaza, Apt 4B</span><br>
+                            Phaltan, Maharashtra
+                        </p>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 0.75rem; font-weight: 800; color: #6e6e73; text-transform: uppercase; margin-bottom: 12px;">Clinical Source</div>
+                        <p style="font-weight: 700; color: #1d1d1f; line-height: 1.6;">
+                            <span id="lvl-vendor-name">MediServe Pharmacy Network</span><br>
+                            <span id="lvl-vendor-addr">Shop 14, Sector 7, Vikhroli</span><br>
+                            GST: 27AADCA1234E1Z5
+                        </p>
+                    </div>
+                </div>
+
+                <div id="dispatcher-node" style="margin-top: 20px; background: rgba(0,122,255,0.05); padding: 14px 20px; border-radius: 12px; display: none; align-items: center; gap: 16px; border: 1px solid rgba(0,122,255,0.1);">
+                    <div style="width: 40px; height: 40px; background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #007aff;">
+                        <i data-lucide="truck" size="20"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.7rem; font-weight: 800; color: #007aff; text-transform: uppercase;">Delivery Partner</div>
+                        <div style="font-weight: 700; color: #1d1d1f; font-size: 0.95rem;" id="lvl-dispatcher-name">Unassigned</div>
+                    </div>
+                </div>
+
+                <div id="delivery-otp-node" style="margin-top: 12px; background: rgba(52,199,89,0.05); padding: 14px 20px; border-radius: 12px; display: none; align-items: center; gap: 16px; border: 1px solid rgba(52,199,89,0.1);">
+                    <div style="width: 40px; height: 40px; background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #34c759;">
+                        <i data-lucide="key-round" size="20"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.7rem; font-weight: 800; color: #34c759; text-transform: uppercase;">Delivery Handover OTP</div>
+                        <div style="font-weight: 900; color: #1d1d1f; font-size: 1.4rem; letter-spacing: 2px;" id="lvl-delivery-otp">------</div>
+                    </div>
+                </div>
+
+                <div class="receipt-hr"></div>
+
+                <table class="r-table">
+                    <thead>
+                        <tr>
+                            <th>Pharmaceutical Product</th>
+                            <th>Category</th>
+                            <th style="text-align: center;">Qty</th>
+                            <th style="text-align: right;">Cost</th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoice-items">
+                        <!-- Dynamic Items -->
+                    </tbody>
+                </table>
+                
+                <div id="invoice-totals" style="margin-top: 20px; border-radius: 12px; padding: 16px 20px; background: rgba(0,0,0,0.03);">
+                    <!-- Dynamic Totals -->
+                </div>
+
+                <div style="margin-top: 20px; display: flex; gap: 24px; justify-content: flex-end; align-items: center;">
+                    <!-- Return Action Node (Conditional) -->
+                    <div id="return-action-node" style="display: none;">
+                        <button class="pill-button" style="background: rgba(255, 59, 48, 0.1); color: #ff3b30; border: 1px solid rgba(255, 59, 48, 0.2);" onclick="initiateReturn()">
+                            <i data-lucide="refresh-ccw"></i> Request Reversal
+                        </button>
+                    </div>
+
+                    <button id="export-pdf-btn" class="pill-button" onclick="exportPDF()" style="background: white; color: black; border: 1px solid rgba(0,0,0,0.1);"><i data-lucide="download"></i> Export PDF</button>
+                    <button class="pill-button" onclick="physicalPrint()"><i data-lucide="printer"></i> Physical Print</button>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Versioned Injected Scripts -->
+    <script src="../assets/js/api.js?v=2.1"></script>
+    <script src="../assets/js/auth.js?v=2.1"></script>
+    <script src="../assets/js/components.js?v=2.1"></script>
+    <script src="../assets/js/liquid.js?v=2.1"></script>
+
+    <script>
+        // ── Auth Guard ──
+        var user = auth.getUser();
+        if (!user) { window.location.href = '../auth/login.html'; }
+
+        var isVendor = user.role === 'vendor';
+        document.getElementById('back-btn').href = isVendor ? '../vendor/vendor-orders.html' : 'orders-page.html';
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar(user.role);
+
+        // ── Invoice Renderer ──
+        async function renderInvoice() {
+            var orderId = new URLSearchParams(window.location.search).get('id');
+            if (!orderId) {
+                try {
+                    components.showLoader();
+                    var ordersRes = await api.get('/orders');
+                    var orders = ordersRes.data.orders || [];
+                    if (orders.length > 0) {
+                        window.location.href = 'order-details.html?id=' + orders[orders.length - 1].id;
+                        return;
+                    }
+                } catch (e) {
+                    console.error("Failed to load latest order", e);
+                } finally {
+                    components.hideLoader();
+                }
+                window.location.href = isVendor ? '../vendor/vendor-orders.html' : 'orders-page.html';
+                return;
+            }
+            try {
+                components.showLoader();
+                var res  = await api.get('/orders/' + orderId + '/invoice');
+                var data = res.data;
+
+                document.getElementById('hdr-order-id').innerText    = '#' + data.id;
+                document.getElementById('lvl-txn-id').innerText       = data.txn || 'TXN_UNAVAILABLE';
+                document.getElementById('print-txn-id').innerText     = data.txn || 'TXN_UNAVAILABLE';
+                document.getElementById('lvl-date').innerText         = data.date;
+                document.getElementById('lvl-status-badge').innerText = data.status;
+
+                var currentStatus = (data.order_status || '').toLowerCase();
+                if (currentStatus === 'delivered' && !isVendor) {
+                    document.getElementById('return-action-node').style.display = 'block';
+                } else if (currentStatus === 'return_requested') {
+                    document.getElementById('return-action-node').innerHTML =
+                        '<button class="pill-button" onclick="window.location.href=\'user-returns.html\'" style="background:rgba(255,159,10,0.1);color:#ff9f0a;padding:10px 20px;border-radius:100px;font-weight:800;font-size:0.8rem;border:1px solid rgba(255,159,10,0.2);cursor:pointer;"><i data-lucide="refresh-ccw"></i> Return Requested</button>';
+                    document.getElementById('return-action-node').style.display = 'block';
+                    document.getElementById('lvl-status-badge').style.background = 'rgba(255,159,10,0.1)';
+                    document.getElementById('lvl-status-badge').style.color = '#ff9f0a';
+                    document.getElementById('lvl-status-badge').innerText = 'RETURN REQUESTED';
+                } else if (currentStatus === 'returned') {
+                    document.getElementById('return-action-node').innerHTML =
+                        '<button class="pill-button" onclick="window.location.href=\'user-returns.html\'" style="background:rgba(52,199,89,0.1);color:var(--success);padding:10px 20px;border-radius:100px;font-weight:800;font-size:0.8rem;border:1px solid rgba(52,199,89,0.2);cursor:pointer;"><i data-lucide="check-circle"></i> Returned</button>';
+                    document.getElementById('return-action-node').style.display = 'block';
+                    document.getElementById('lvl-status-badge').style.background = 'rgba(52,199,89,0.1)';
+                    document.getElementById('lvl-status-badge').style.color = 'var(--success)';
+                    document.getElementById('lvl-status-badge').innerText = 'RETURNED';
+                }
+
+                if (data.dispatcher) {
+                    document.getElementById('dispatcher-node').style.display = 'flex';
+                    document.getElementById('lvl-dispatcher-name').innerText = data.dispatcher;
+                }
+
+                if (data.delivery_otp) {
+                    document.getElementById('delivery-otp-node').style.display = 'flex';
+                    document.getElementById('lvl-delivery-otp').innerText = data.delivery_otp;
+                }
+
+                document.getElementById('invoice-items').innerHTML = data.items.map(function(item) {
+                    return '<tr><td><div style="font-weight:700;">' + item.name + '</div><div style="font-size: 0.65rem; color: #007aff; font-weight: 800; text-transform: uppercase; margin-top: 2px;">Variant: ' + (item.brand_type || 'Standard') + '</div></td><td style="color:#6e6e73;font-size:0.8rem;">Pharmaceutical Product</td><td style="text-align:center;">' + item.qty + '</td><td style="text-align:right;">&#8377;' + (item.price * item.qty).toFixed(2) + '</td></tr>';
+                }).join('');
+
+                document.getElementById('lvl-customer-name').innerText = data.customer.name;
+                document.getElementById('lvl-customer-addr').innerText = data.customer.address;
+                document.getElementById('lvl-vendor-name').innerText   = data.vendor.name;
+                document.getElementById('lvl-vendor-addr').innerText   = data.vendor.address;
+
+                var codHtml = data.summary.codFee > 0
+                    ? '<div style="display:flex;flex-direction:column;gap:2px;"><span style="font-size:0.7rem;font-weight:800;color:var(--warning);text-transform:uppercase;">COD Fee</span><span style="font-weight:700;color:#1d1d1f;font-size:0.9rem;">&#8377;' + data.summary.codFee.toFixed(2) + '</span></div>'
+                    : '';
+
+                document.getElementById('invoice-totals').innerHTML =
+                    '<div style="display:flex;align-items:center;justify-content:space-between;gap:32px;">' +
+                      '<div style="display:flex;gap:32px;flex:1;align-items:center;">' +
+                        '<div style="display:flex;flex-direction:column;gap:2px;"><span style="font-size:0.7rem;font-weight:800;color:#6e6e73;text-transform:uppercase;">Subtotal</span><span style="font-weight:700;color:#1d1d1f;font-size:0.9rem;">&#8377;' + data.summary.subtotal.toFixed(2) + '</span></div>' +
+                        '<div style="display:flex;flex-direction:column;gap:2px;"><span style="font-size:0.7rem;font-weight:800;color:#6e6e73;text-transform:uppercase;">GST (12%)</span><span style="font-weight:700;color:#1d1d1f;font-size:0.9rem;">&#8377;' + data.summary.tax.toFixed(2) + '</span></div>' +
+                        '<div style="display:flex;flex-direction:column;gap:2px;"><span style="font-size:0.7rem;font-weight:800;color:#6e6e73;text-transform:uppercase;">Delivery</span><span style="font-weight:900;color:' + (data.summary.delivery === 0 ? 'var(--success)' : '#1d1d1f') + ';font-size:0.9rem;">' + (data.summary.delivery === 0 ? 'FREE' : '&#8377;' + data.summary.delivery.toFixed(2)) + '</span></div>' +
+                        codHtml +
+                      '</div>' +
+                      '<div style="text-align:right;padding-left:24px;border-left:1px solid rgba(0,0,0,0.1);display:flex;align-items:center;gap:16px;"><span style="color:var(--success);font-weight:900;font-size:0.8rem;text-transform:uppercase;">Settled</span><span style="color:var(--success);font-weight:900;font-size:1.6rem;">&#8377;' + data.summary.total.toFixed(2) + '</span></div>' +
+                    '</div>';
+
+                lucide.createIcons();
+            } catch (err) {
+                console.error(err);
+                document.getElementById('receipt-content').innerHTML =
+                    '<div style="text-align:center;padding:100px 20px;"><i data-lucide="file-x" size="64" style="color:#6e6e73;opacity:0.3;margin-bottom:24px;"></i><h2 style="font-weight:800;color:#1d1d1f;">Invoice Not Generated</h2><p style="color:#6e6e73;font-weight:500;margin-top:12px;">Clinical invoice synchronization failed.</p><a href="orders-page.html" class="pill-button" style="display:inline-flex;margin-top:32px;">Return to Dispatches</a></div>';
+                lucide.createIcons();
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        renderInvoice();
+
+        // ── Return Request ──
+        async function initiateReturn() {
+            var orderId = new URLSearchParams(window.location.search).get('id');
+            var reason  = await components.prompt('Return Order', 'Enter reason for return:', 'Package Damaged', 'Submit Return');
+            if (reason === null) return;
+            try {
+                components.showLoader();
+                var res = await api.post('/orders/' + orderId + '/return', { reason: reason });
+                if (res.success) {
+                    components.showSuccess('Pharmaceutical reversal protocol initiated.');
+                    setTimeout(function() { window.location.reload(); }, 2000);
+                } else {
+                    components.showError(res.message);
+                }
+            } catch (err) {
+                components.showError('Failed to submit return request. Please try again.');
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        function physicalPrint() { window.print(); }
+
+        // ── PDF Export ──────────────────────────────────────────────────────────
+        var _pdfExporting = false;
+
+        function exportPDF() {
+            console.log('[PDF] exportPDF() called');
+            if (_pdfExporting) { console.warn('[PDF] Already exporting — skipped'); return; }
+            _pdfExporting = true;
+
+            var btn       = document.getElementById('export-pdf-btn');
+            var element   = document.getElementById('receipt-content');
+            var actionBar = element.querySelector('div[style*="justify-content: flex-end"]');
+            var orderId   = new URLSearchParams(window.location.search).get('id') || 'ORD';
+            var fileName  = 'MediMitra_Invoice_' + orderId + '.pdf';
+
+            console.log('[PDF] html2pdf type:', typeof html2pdf);
+            console.log('[PDF] element found:', !!element, '| fileName:', fileName);
+
+            // Style tracker
+            var restoreTasks = [];
+            function tempStyle(el, styles) {
+                var prev = {};
+                for (var k in styles) { prev[k] = el.style[k]; el.style[k] = styles[k]; }
+                restoreTasks.push(function() { for (var k in prev) el.style[k] = prev[k]; });
+            }
+            function resetAll() {
+                restoreTasks.forEach(function(fn) { fn(); });
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i data-lucide="download"></i> Export PDF';
+                    lucide.createIcons();
+                }
+                _pdfExporting = false;
+                console.log('[PDF] Styles restored. Export complete.');
+            }
+
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i data-lucide="loader"></i> Generating\u2026';
+                lucide.createIcons();
+            }
+
+            // 1. Hide action buttons
+            if (actionBar) tempStyle(actionBar, { display: 'none' });
+
+            // Show print header in PDF
+            var printHeader = element.querySelector('.print-only-header');
+            if (printHeader) tempStyle(printHeader, { display: 'block' });
+
+            // 2. Strip glassmorphism
+            tempStyle(element, {
+                background: '#ffffff',
+                backdropFilter: 'none',
+                webkitBackdropFilter: 'none',
+                boxShadow: 'none',
+                border: '1px solid #e2e8f0',
+                overflow: 'visible'
+            });
+
+            // 3. Fix gradient heading text (invisible in canvas)
+            element.querySelectorAll('.vibrant-h1').forEach(function(el) {
+                tempStyle(el, { webkitTextFillColor: '#1d1d1f', background: 'none', color: '#1d1d1f' });
+            });
+
+            // 4. Fix semi-transparent rgba inline backgrounds
+            element.querySelectorAll('[style*="rgba"]').forEach(function(el) {
+                var s = el.getAttribute('style') || '';
+                if (/background[^;]*rgba\([^)]+,\s*0\.[0-4]/.test(s)) {
+                    tempStyle(el, { background: '#f4f7fb' });
+                }
+            });
+
+            console.log('[PDF] Styles applied — starting html2pdf immediately to preserve user gesture...');
+
+            if (typeof html2pdf === 'undefined') {
+                console.error('[PDF] html2pdf is NOT defined! Script not loaded.');
+                resetAll();
+                components.showError('PDF library failed to load. Using print dialog.');
+                window.print();
+                return;
+            }
+
+            var opt = {
+                margin:      0.4,
+                filename:    fileName,
+                image:       { type: 'jpeg', quality: 0.97 },
+                html2canvas: { scale: 2, useCORS: true, allowTaint: true, logging: false, backgroundColor: '#ffffff' },
+                jsPDF:       { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
+
+            // By avoiding setTimeout, we stay closer to the original user click event.
+            html2pdf()
+                .set(opt)
+                .from(element)
+                .toPdf()
+                .get('pdf')
+                .then(function(pdf) {
+                    resetAll();
+                    console.log('[PDF] PDF object ready. Trying Data URI fallback...');
+
+                    // ── THE ULTIMATE HACK FOR CHROME UUID ISSUE ──
+                    // Chrome strips the `download` attribute for Blob Object URLs if the 
+                    // async promise chain takes too long (User Gesture loss).
+                    // By manually converting the binary ArrayBuffer to a Base64 Data URI,
+                    // we avoid both Chrome's UUID bug AND jsPDF's internal btoa() Latin1 error (caused by the ₹ symbol).
+                    
+                    var arrayBuffer = pdf.output('arraybuffer');
+                    var bytes = new Uint8Array(arrayBuffer);
+                    var binary = '';
+                    for (var i = 0; i < bytes.byteLength; i++) {
+                        binary += String.fromCharCode(bytes[i]);
+                    }
+                    var base64 = window.btoa(binary);
+                    var dataUri = 'data:application/pdf;base64,' + base64;
+                    
+                    var a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = dataUri;
+                    a.download = fileName; // Strict filename
+                    document.body.appendChild(a);
+                    
+                    a.click();
+                    
+                    document.body.removeChild(a);
+                })
+                .catch(function(err) {
+                    console.error('[PDF] CATCH error:', err);
+                    resetAll();
+                    components.showError('PDF generation failed. Opening print dialog.');
+                    window.print();
+                });
+        }
+    </script>
+</body>
+</html>

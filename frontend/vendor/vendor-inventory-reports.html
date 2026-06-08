@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Reports | MediMitra Vendor</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .velocity-bar { height: 8px; background: rgba(0,0,0,0.05); border-radius: 100px; overflow: hidden; margin-top: 8px; }
+        .velocity-fill { height: 100%; background: var(--primary); border-radius: 100px; }
+    </style>
+</head>
+<body>
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        <main class="liquid-main">
+            <header style="margin-bottom: 24px;">
+                <h1 class="vibrant-h1">Inventory Reports</h1>
+                <p style="color: #6e6e73; font-size: 1.2rem; font-weight: 500;">Monitor your stock health and pharmaceutical inventory trends.</p>
+            </header>
+
+            <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px;">
+                <div class="liquid-card">
+                    <h3 style="font-weight: 800; margin-bottom: 20px;">Top Stocked Medicines</h3>
+                    <div id="top-skus" style="display: grid; gap: 20px;">
+                        <p style="color:#8e8e93; text-align:center;">Loading...</p>
+                    </div>
+                </div>
+
+                <div class="liquid-card" style="background: linear-gradient(135deg, #1d1d1f, #434345); color: white;">
+                    <h3 style="font-weight: 800; margin-bottom: 20px; color: white;">Stock Summary</h3>
+                    <div style="text-align: center; padding: 20px 0;">
+                        <div style="font-size: 3rem; font-weight: 900;" id="total-stock">—</div>
+                        <div style="font-size: 0.8rem; font-weight: 600; opacity: 0.7; letter-spacing: 0.1em; text-transform: uppercase;">Total Units in Stock</div>
+                    </div>
+                    <div style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span style="font-size: 0.8rem; font-weight: 600; opacity: 0.8;">Total SKUs</span>
+                            <span style="font-weight: 800;" id="total-skus">—</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span style="font-size: 0.8rem; font-weight: 600; opacity: 0.8;">Low Stock (&lt;15)</span>
+                            <span style="font-weight: 800; color: var(--warning);" id="low-stock-cnt">—</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="font-size: 0.8rem; font-weight: 600; opacity: 0.8;">Avg Price</span>
+                            <span style="font-weight: 800;" id="avg-price">—</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="liquid-card" style="margin-top: 24px;">
+                <h3 style="font-weight: 800; margin-bottom: 20px;">Category Distribution</h3>
+                <div id="cat-chart" style="display: flex; gap: 12px; height: 120px; align-items: flex-end;">
+                    <p style="color:#8e8e93;">Loading...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        const user = auth.getUser();
+        if (!user || user.role !== 'vendor') { window.location.href = '../auth/login.html'; }
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('vendor');
+        lucide.createIcons();
+
+        async function loadReports() {
+            try {
+                components.showLoader();
+                const res = await api.get('/pharmacy/inventory');
+                const inventory = (res.data && res.data.inventory) ? res.data.inventory : [];
+
+                // Stats
+                const totalStock = inventory.reduce((s, m) => s + parseInt(m.stock || 0), 0);
+                const lowStock = inventory.filter(m => parseInt(m.stock) < 15).length;
+                const avgPrice = inventory.length > 0 ? (inventory.reduce((s, m) => s + parseFloat(m.price || 0), 0) / inventory.length) : 0;
+
+                document.getElementById('total-stock').textContent = totalStock.toLocaleString();
+                document.getElementById('total-skus').textContent = inventory.length;
+                document.getElementById('low-stock-cnt').textContent = lowStock;
+                document.getElementById('avg-price').textContent = '₹' + avgPrice.toFixed(0);
+
+                // Top stocked medicines (by stock quantity)
+                const topMeds = [...inventory].sort((a, b) => b.stock - a.stock).slice(0, 5);
+                const maxStock = topMeds[0] ? topMeds[0].stock : 1;
+                document.getElementById('top-skus').innerHTML = topMeds.map(m => `
+                    <div>
+                        <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 0.9rem;">
+                            <span>${m.name}</span>
+                            <span style="color: var(--success);">${m.stock} units</span>
+                        </div>
+                        <div class="velocity-bar"><div class="velocity-fill" style="width: ${(m.stock / maxStock * 100).toFixed(0)}%;"></div></div>
+                    </div>
+                `).join('');
+
+                // Category distribution
+                const catMap = {};
+                inventory.forEach(m => {
+                    const cat = m.category_name || 'Other';
+                    catMap[cat] = (catMap[cat] || 0) + 1;
+                });
+                const cats = Object.entries(catMap).sort((a, b) => b[1] - a[1]).slice(0, 6);
+                const maxCat = cats[0] ? cats[0][1] : 1;
+                const colors = ['#007aff', '#34c759', '#ff9500', '#ff3b30', '#5856d6', '#af52de'];
+                
+                document.getElementById('cat-chart').innerHTML = cats.map((c, i) => `
+                    <div style="flex: 1; height: ${(c[1] / maxCat * 100).toFixed(0)}%; background: ${colors[i % colors.length]}; border-radius: 8px; position: relative; min-height: 20px;" title="${c[0]}: ${c[1]}">
+                        <span style="position: absolute; bottom: -22px; font-size: 0.6rem; font-weight: 700; color: #6e6e73; width: 100%; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${c[0]}</span>
+                    </div>
+                `).join('');
+
+            } catch (err) {
+                console.error(err);
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        loadReports();
+    </script>
+</body>
+</html>

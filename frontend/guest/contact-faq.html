@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact & FAQ | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        .faq-item { background: white; border-radius: 20px; padding: 24px; margin-bottom: 16px; border: 1px solid rgba(0,0,0,0.05); }
+        .faq-q { font-weight: 800; font-size: 1.1rem; color: #1d1d1f; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; }
+        .faq-a { color: #6e6e73; font-weight: 500; line-height: 1.6; }
+    </style>
+</head>
+
+<body style="background: #f2f2f7; padding: 60px 24px;">
+
+    <div style="max-width: 900px; margin: 0 auto;" class="animate-scale-in">
+        <header style="text-align: center; margin-bottom: 60px;">
+            <a href="../index.html" style="text-decoration: none; color: var(--primary); font-weight: 900; font-size: 1.2rem; display: block; margin-bottom: 20px;">← Back to Landing</a>
+            <h1 class="vibrant-h1" style="font-size: 3.5rem;">Clinical Support Hub</h1>
+            <p class="vibrant-p">Everything you need to know about pharmaceutical fulfillment.</p>
+        </header>
+
+        <!-- FAQ Section -->
+        <section style="margin-bottom: 80px;">
+            <h2 class="vibrant-h2" style="margin-bottom: 32px; text-align: center;">Frequently Asked Questions</h2>
+            
+            <div class="faq-item">
+                <div class="faq-q"><i data-lucide="help-circle" style="color: var(--primary);"></i> How do I upload a prescription?</div>
+                <div class="faq-a">You can upload your RX during the checkout flow or via the 'Prescriptions' tab in your dashboard. Our clinical pharmacists will verify it within 15-30 minutes.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q"><i data-lucide="truck" style="color: var(--success);"></i> What are the delivery charges?</div>
+                <div class="faq-a">Standard Delivery is ₹25 (Free for orders above ₹1000). Emergency Delivery is ₹70 and arrives within 15-35 minutes.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q"><i data-lucide="refresh-ccw" style="color: var(--danger);"></i> Can I return medicines?</div>
+                <div class="faq-a">Yes, returns are accepted for unopened packaging within 24 hours of delivery. Use the 'Request Reversal' button on your order details page.</div>
+            </div>
+        </section>
+
+        <!-- Contact Form -->
+        <section class="liquid-card" style="padding: 40px;">
+            <h2 class="vibrant-h2" style="margin-bottom: 12px;">Still have questions?</h2>
+            <p class="muted-text" style="margin-bottom: 32px;">Our customer success team is available 24/7 for operational assistance.</p>
+            
+            <form id="contact-form" class="liquid-form" onsubmit="event.preventDefault(); components.showSuccess('Message transmitted to support queue.');">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="input-group">
+                        <label>Full Name</label>
+                        <input type="text" placeholder="Your name" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Email Address</label>
+                        <input type="email" placeholder="email@example.com" required>
+                    </div>
+                </div>
+                <div class="input-group" style="margin-top: 20px;">
+                    <label>Inquiry Message</label>
+                    <textarea style="width:100%; min-height:120px; border:1.5px solid rgba(0,0,0,0.1); border-radius:12px; padding:12px; font-family:Inter;" placeholder="How can we help you?"></textarea>
+                </div>
+                <button class="pill-button" style="width: 100%; margin-top: 32px; height: 60px; font-size: 1.1rem;">Transmit Message</button>
+            </form>
+        </section>
+
+        <footer style="margin-top: 80px; text-align: center; color: #8e8e93; font-weight: 600;">
+            <p>&copy; 2026 MediMitra Clinical Ecosystem. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../assets/js/components.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>

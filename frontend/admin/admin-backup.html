@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backup & Recovery | Admin | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <link rel="stylesheet" href="../assets/css/admin-dark.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .backup-row { display: grid; grid-template-columns: 1fr 100px 100px 130px 180px; gap: 12px; align-items: center; padding: 14px 18px; border-radius: 12px; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 0.84rem; }
+        .backup-row:hover { background: rgba(0,0,0,0.02); }
+        .backup-header { display: grid; grid-template-columns: 1fr 100px 100px 130px 180px; gap: 12px; padding: 8px 18px; font-size: 0.72rem; font-weight: 700; color: #8e8e93; text-transform: uppercase; }
+        .badge-success { background:rgba(52,199,89,0.1);color:#34c759;padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700; }
+        .badge-failed  { background:rgba(255,59,48,0.1);color:#ff3b30;padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700; }
+        .badge-progress{ background:rgba(0,122,255,0.1);color:#007aff;padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700; }
+    </style>
+</head>
+<body>
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        <main class="liquid-main">
+            <header style="margin-bottom:20px;display:flex;justify-content:space-between;align-items:flex-start;">
+                <div>
+                    <h1 class="vibrant-h1">Backup & Recovery</h1>
+                    <p style="color:#6e6e73;font-size:1rem;font-weight:500;">Manage database snapshots and restore points.</p>
+                </div>
+                <button onclick="createBackup()" style="padding:10px 24px;border-radius:12px;background:linear-gradient(135deg,#007aff,#5856d6);color:#fff;border:none;font-weight:700;font-size:0.9rem;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;gap:8px;"><i data-lucide="database-backup" style="width:16px;height:16px;"></i> Create Backup Now</button>
+            </header>
+
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px;">
+                <div class="liquid-card" style="padding:18px;text-align:center;">
+                    <div style="font-size:2rem;font-weight:800;color:#34c759" id="cnt-total">—</div>
+                    <div style="font-size:0.75rem;color:#8e8e93;font-weight:600;margin-top:4px;">Total Backups</div>
+                </div>
+                <div class="liquid-card" style="padding:18px;text-align:center;">
+                    <div style="font-size:2rem;font-weight:800;color:#007aff" id="last-backup">—</div>
+                    <div style="font-size:0.75rem;color:#8e8e93;font-weight:600;margin-top:4px;">Last Backup</div>
+                </div>
+                <div class="liquid-card" style="padding:18px;text-align:center;">
+                    <div style="font-size:2rem;font-weight:800;color:#5856d6" id="total-size">—</div>
+                    <div style="font-size:0.75rem;color:#8e8e93;font-weight:600;margin-top:4px;">Total Storage</div>
+                </div>
+            </div>
+
+            <div class="liquid-card" style="padding:20px;margin-bottom:20px;">
+                <h3 style="font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:8px;"><i data-lucide="shield" style="color:#34c759;width:18px;height:18px;"></i> Auto-Backup Schedule</h3>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                    <div style="padding:14px;background:rgba(52,199,89,0.06);border-radius:12px;border:1px solid rgba(52,199,89,0.15);">
+                        <div style="font-weight:700;margin-bottom:4px;">Daily Snapshot</div>
+                        <div style="font-size:0.82rem;color:#6e6e73;">Every day at 02:00 AM IST</div>
+                        <div id="next-daily" style="font-size:0.78rem;color:#34c759;font-weight:600;margin-top:6px;">✓ Next: Tomorrow 02:00 AM</div>
+                    </div>
+                    <div style="padding:14px;background:rgba(0,122,255,0.06);border-radius:12px;border:1px solid rgba(0,122,255,0.15);">
+                        <div style="font-weight:700;margin-bottom:4px;">Weekly Full Backup</div>
+                        <div style="font-size:0.82rem;color:#6e6e73;">Every Sunday at 03:00 AM IST</div>
+                        <div id="next-weekly" style="font-size:0.78rem;color:#007aff;font-weight:600;margin-top:6px;">↗ Next: Sun 20-Apr 03:00 AM</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="liquid-card" style="padding:20px;">
+                <h3 style="font-weight:800;margin-bottom:16px;">Backup History</h3>
+                <div class="backup-header"><span>Filename</span><span>Size</span><span>Type</span><span>Status</span><span>Actions</span></div>
+                <div id="backup-list"></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../assets/js/api.js?v=2"></script>
+    <script src="../assets/js/auth.js?v=2"></script>
+    <script src="../assets/js/components.js?v=2"></script>
+    <script src="../assets/js/liquid.js?v=2"></script>
+    <script>
+        const user = auth.getUser();
+        if (!user || user.role !== 'admin') window.location.href = '../auth/login.html';
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('admin');
+        lucide.createIcons();
+
+        const mockBackups = [
+            { id:1, filename:'full_backup_2026-04-14_1200.sql.gz', size:'42.5 MB', type:'Full', status:'success', created_at:'2026-04-14 12:00' },
+            { id:2, filename:'daily_2026-04-13_0200.sql.gz', size:'38.1 MB', type:'Daily', status:'success', created_at:'2026-04-13 02:00' },
+            { id:3, filename:'full_backup_2026-04-13_0300.sql.gz', size:'37.8 MB', type:'Full', status:'success', created_at:'2026-04-13 03:00' },
+            { id:4, filename:'daily_2026-04-12_0200.sql.gz', size:'36.2 MB', type:'Daily', status:'failed', created_at:'2026-04-12 02:00' },
+            { id:5, filename:'full_backup_2026-04-07_0300.sql.gz', size:'35.0 MB', type:'Full', status:'success', created_at:'2026-04-07 03:00' },
+        ];
+
+        async function loadBackups() {
+            try {
+                const r = await api.get('/admin/backups');
+                const backups = r.data.backups || [];
+                
+                document.getElementById('cnt-total').textContent = backups.length;
+                
+                if (backups.length > 0) {
+                    const lastDate = new Date(backups[0].created_at);
+                    const diffMs = new Date() - lastDate;
+                    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+                    document.getElementById('last-backup').textContent = diffHrs === 0 ? 'Recently' : `${diffHrs} hrs ago`;
+                    
+                    const totalMB = backups.reduce((acc, b) => acc + parseFloat(b.size), 0);
+                    document.getElementById('total-size').textContent = totalMB.toFixed(1) + ' MB';
+                } else {
+                    document.getElementById('last-backup').textContent = 'Never';
+                    document.getElementById('total-size').textContent = '0 MB';
+                }
+
+                const sc = { success:'badge-success', failed:'badge-failed', in_progress:'badge-progress' };
+                document.getElementById('backup-list').innerHTML = backups.length ? backups.map(b => `
+                    <div class="backup-row">
+                        <div>
+                            <div style="font-weight:600;font-size:0.82rem;font-family:monospace;">${b.filename}</div>
+                            <div style="font-size:0.75rem;color:#8e8e93;margin-top:2px;">${b.created_at}</div>
+                        </div>
+                        <span style="color:#6e6e73">${b.size}</span>
+                        <span style="color:#6e6e73">${b.type}</span>
+                        <span><span class="${sc[b.status]||'badge-progress'}">${b.status}</span></span>
+                        <div style="display:flex;gap:8px;">
+                            <button onclick="downloadBackup(${b.id})" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(0,0,0,0.1);background:transparent;font-size:0.75rem;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;gap:5px;"><i data-lucide="download" style="width:12px;height:12px;"></i> Download</button>
+                            ${b.status==='success' ? `<button onclick="restoreBackup(${b.id})" style="padding:6px 12px;border-radius:8px;background:rgba(255,149,0,0.1);color:#ff9500;border:1px solid rgba(255,149,0,0.2);font-size:0.75rem;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;">Restore Backup</button>` : ''}
+                        </div>
+                    </div>
+                `).join('') : '<p style="text-align:center;padding:40px;color:#8e8e93;font-weight:600;">No backups found.</p>';
+                lucide.createIcons();
+            } catch(e) {
+                console.error(e);
+                if(typeof components !== "undefined") components.showError("Network exception or protocol verification failed.");
+            }
+        }
+
+        async function createBackup() {
+            try { 
+                components.showLoader();
+                await api.post('/admin/backups', { type: 'manual' }); 
+                components.showSuccess('Database snapshot captured successfully.');
+                loadBackups();
+            } catch(e) { 
+                console.error(e); 
+                components.showError("Failed to initiate backup."); 
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        function updateScheduleTiming() {
+            // Logic to calculate next Sunday and Tomorrow
+            const now = new Date();
+            
+            // Tomorrow 02:00 AM
+            const tomorrow = new Date(now);
+            tomorrow.setDate(now.getDate() + 1);
+            const tomorrowStr = tomorrow.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+            document.getElementById('next-daily').textContent = `✓ Next: ${tomorrowStr} 02:00 AM`;
+
+            // Next Sunday 03:00 AM
+            const nextSun = new Date(now);
+            nextSun.setDate(now.getDate() + (7 - now.getDay()) % 7 || 7);
+            const sunStr = nextSun.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+            document.getElementById('next-weekly').textContent = `↗ Next: Sun ${sunStr} 03:00 AM`;
+        }
+
+        async function downloadBackup(id) { 
+            components.showSuccess(`Initiating download for backup #${id}...`);
+            try {
+                const response = await fetch(`${api.BASE_URL}/admin/backups/${id}/download`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                if (!response.ok) throw new Error('Download failed');
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                
+                let filename = `backup_${id}.sql`;
+                const contentDisposition = response.headers.get('Content-Disposition');
+                if (contentDisposition) {
+                    const match = contentDisposition.match(/filename="(.+)"/);
+                    if (match) filename = match[1];
+                }
+                
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } catch (e) {
+                console.error(e);
+                components.showError('Failed to download backup.');
+            }
+        }
+
+        async function restoreBackup(id) {
+            components.showModal(
+                'Clinical Recovery Protocol',
+                `
+                <p style="color:#6e6e73; margin-bottom: 20px;">You are about to restore the pharmaceutical ledger from <b>Backup #${id}</b>. This will overwrite all current system artifacts.</p>
+                <div id="restore-progress-container" style="display:none; margin-bottom: 20px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom: 8px;">
+                        <span style="font-size: 0.8rem; font-weight: 700;">RESTORING DATABASE NODES</span>
+                        <span id="restore-pct" style="font-size: 0.8rem; font-weight: 800;">0%</span>
+                    </div>
+                    <div style="background: rgba(0,0,0,0.05); height: 8px; border-radius: 4px; overflow: hidden;">
+                        <div id="restore-bar" style="background: linear-gradient(90deg, #ff9500, #ff3b30); width: 0%; height: 100%; transition: width 0.3s ease;"></div>
+                    </div>
+                </div>
+                `,
+                [
+                    {
+                        label: 'Authorize Restore',
+                        type: 'danger',
+                        onClick: async () => {
+                            const container = document.getElementById('restore-progress-container');
+                            const bar = document.getElementById('restore-bar');
+                            const pct = document.getElementById('restore-pct');
+                            container.style.display = 'block';
+
+                            let progress = 0;
+                            const interval = setInterval(async () => {
+                                progress += Math.random() * 15;
+                                if (progress >= 100) {
+                                    progress = 100;
+                                    clearInterval(interval);
+                                    
+                                    try {
+                                        await api.post(`/admin/backups/${id}/restore`, {});
+                                        components.showSuccess('Ledger successfully re-anchored. System stabilization complete.');
+                                        setTimeout(() => window.location.reload(), 2000);
+                                    } catch(e) {
+                                        components.showError('Critical failure during database injection.');
+                                    }
+                                }
+                                bar.style.width = progress + '%';
+                                pct.textContent = Math.round(progress) + '%';
+                            }, 400);
+                        }
+                    },
+                    { label: 'Abort' }
+                ]
+            );
+        }
+
+        loadBackups();
+        updateScheduleTiming();
+    </script>
+</body>
+</html>

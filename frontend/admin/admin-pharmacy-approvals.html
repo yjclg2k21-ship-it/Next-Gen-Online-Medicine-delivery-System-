@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharmacy Approvals | Admin | MediMitra</title>
+    <meta name="description" content="Approve or reject pending medicine listings and pharmacy vendor applications.">
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <link rel="stylesheet" href="../assets/css/admin-dark.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .tab-bar { display: flex; gap: 4px; background: rgba(0,0,0,0.06); border-radius: 12px; padding: 4px; margin-bottom: 20px; width: fit-content; }
+        .tab-btn { padding: 8px 20px; border-radius: 10px; border: none; background: transparent; font-weight: 600; font-size: 0.85rem; cursor: pointer; font-family: Inter,sans-serif; color: #6e6e73; transition: all 0.2s; }
+        .tab-btn.active { background: #fff; color: #1d1d1f; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .med-row { display: grid; grid-template-columns: 1fr 120px 80px 100px 120px 160px; gap: 12px; align-items: center; padding: 14px 18px; border-radius: 12px; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 0.85rem; }
+        .med-row:hover { background: rgba(0,122,255,0.03); }
+        .med-header { display: grid; grid-template-columns: 1fr 120px 80px 100px 120px 160px; gap: 12px; padding: 8px 18px; font-size: 0.72rem; font-weight: 700; color: #8e8e93; text-transform: uppercase; }
+        .vendor-row { display: grid; grid-template-columns: 56px 1fr 140px 110px 140px; gap: 14px; align-items: center; padding: 16px 20px; border-radius: 14px; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .vendor-row:hover { background: rgba(0,122,255,0.03); }
+        .badge-pending  { background: rgba(255,149,0,0.12); color: #ff9500; }
+        .badge-approved { background: rgba(52,199,89,0.12); color: #34c759; }
+        .badge-rejected { background: rgba(255,59,48,0.12); color: #ff3b30; }
+        .status-badge { padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; }
+    </style>
+</head>
+<body>
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        <main class="liquid-main">
+            <header style="margin-bottom: 20px;">
+                <h1 class="vibrant-h1">Pharmacy Approvals</h1>
+                <p style="color: #6e6e73; font-size: 1rem; font-weight: 500;">Approve medicine listings and vendor applications.</p>
+            </header>
+
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;">
+                <div class="liquid-card" style="padding:18px;text-align:center;"><div style="font-size:1.8rem;font-weight:800;color:#ff9500" id="cnt-pmeds">0</div><div style="font-size:0.75rem;color:#8e8e93;font-weight:600;margin-top:4px;">Pending Medicines</div></div>
+                <div class="liquid-card" style="padding:18px;text-align:center;"><div style="font-size:1.8rem;font-weight:800;color:#5856d6" id="cnt-pvend">0</div><div style="font-size:0.75rem;color:#8e8e93;font-weight:600;margin-top:4px;">Pending Vendors</div></div>
+                <div class="liquid-card" style="padding:18px;text-align:center;"><div style="font-size:1.8rem;font-weight:800;color:#34c759" id="cnt-appr">0</div><div style="font-size:0.75rem;color:#8e8e93;font-weight:600;margin-top:4px;">Approved Today</div></div>
+            </div>
+
+            <div class="liquid-card" style="padding:20px;">
+                <div class="tab-bar">
+                    <button class="tab-btn active" id="tab-med" onclick="switchTab('medicines')">💊 Pending Medicines</button>
+                    <button class="tab-btn" id="tab-vend" onclick="switchTab('vendors')">🏥 Vendor Applications</button>
+                </div>
+
+                <!-- Medicines Tab -->
+                <div id="tab-medicines">
+                    <div class="med-header"><span>Medicine</span><span>Vendor</span><span>Price</span><span>Stock</span><span>Submitted</span><span>Actions</span></div>
+                    <div id="medicines-list"></div>
+                </div>
+
+                <!-- Vendors Tab -->
+                <div id="tab-vendors" style="display:none;">
+                    <div id="vendors-list"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        const user = auth.getUser();
+        if (!user || user.role !== 'admin') window.location.href = '../auth/login.html';
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('admin');
+        lucide.createIcons();
+
+        let medicines = [], vendors = [];
+
+        async function loadData() {
+            try {
+                const stats = await api.get('/admin/approval-stats');
+                document.getElementById('cnt-pmeds').textContent = stats.pending_medicines;
+                document.getElementById('cnt-pvend').textContent = stats.pending_vendors;
+                document.getElementById('cnt-appr').textContent  = stats.approved_today;
+
+                const medRes = await api.get('/admin/medicine/pending');
+                medicines = (medRes.data && medRes.data.medicines) ? medRes.data.medicines : [];
+                
+                const vendRes = await api.get('/admin/vendors');
+                vendors = vendRes.vendors?.filter(v => v.status === 'pending') || [];
+
+                renderMeds(); 
+                renderVendors();
+            } catch(e) {
+                console.error('Data sync failure:', e);
+                components.showError('Failed to synchronize approval telemetry.');
+            }
+        }
+
+        function renderMeds() {
+            const el = document.getElementById('medicines-list');
+            if (!medicines.length) { el.innerHTML = '<p style="text-align:center;padding:40px;color:#8e8e93;">No pending medicines.</p>'; return; }
+            el.innerHTML = medicines.map(m => `
+                <div class="med-row">
+                    <div><div style="font-weight:700">${m.name}</div><div style="font-size:0.75rem;color:#8e8e93;">prescription required</div></div>
+                    <span style="color:#6e6e73;font-size:0.82rem">${m.vendor_name}</span>
+                    <span style="font-weight:700;">₹${m.price}</span>
+                    <span style="color:#6e6e73">${m.stock} units</span>
+                    <span style="color:#8e8e93;font-size:0.78rem">${m.created_at}</span>
+                    <div style="display:flex;gap:8px;">
+                        <button onclick="approveMed(${m.id})" style="padding:6px 14px;border-radius:8px;background:#34c759;color:#fff;border:none;font-weight:700;font-size:0.75rem;cursor:pointer;font-family:Inter,sans-serif;">✓ Approve</button>
+                        <button onclick="rejectMed(${m.id})" style="padding:6px 14px;border-radius:8px;background:#ff3b30;color:#fff;border:none;font-weight:700;font-size:0.75rem;cursor:pointer;font-family:Inter,sans-serif;">✗ Reject</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderVendors() {
+            const el = document.getElementById('vendors-list');
+            if (!vendors.length) { el.innerHTML = '<p style="text-align:center;padding:40px;color:#8e8e93;">No pending vendor applications.</p>'; return; }
+            el.innerHTML = vendors.map(v => `
+                <div class="vendor-row">
+                    <div style="width:44px;height:44px;border-radius:12px;background:#5856d6;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;">${v.name.charAt(0)}</div>
+                    <div>
+                        <div style="font-weight:700">${v.name}</div>
+                        <div style="font-size:0.78rem;color:#8e8e93">${v.email} · License: ${v.license || 'N/A'}</div>
+                    </div>
+                    <span style="color:#8e8e93;font-size:0.78rem">Pending Review</span>
+                    <span class="status-badge badge-pending">Pending</span>
+                    <div style="display:flex;gap:8px;">
+                        <button onclick="approveVendor(${v.id})" style="padding:7px 14px;border-radius:10px;background:#34c759;color:#fff;border:none;font-weight:700;font-size:0.78rem;cursor:pointer;font-family:Inter,sans-serif;">✓ Approve</button>
+                        <button onclick="rejectVendor(${v.id})" style="padding:7px 14px;border-radius:10px;background:#ff3b30;color:#fff;border:none;font-weight:700;font-size:0.78rem;cursor:pointer;font-family:Inter,sans-serif;">✗ Reject</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function switchTab(tab) {
+            document.getElementById('tab-medicines').style.display = tab === 'medicines' ? 'block' : 'none';
+            document.getElementById('tab-vendors').style.display   = tab === 'vendors' ? 'block' : 'none';
+            document.getElementById('tab-med').classList.toggle('active', tab === 'medicines');
+            document.getElementById('tab-vend').classList.toggle('active', tab === 'vendors');
+        }
+
+        async function approveMed(id) {
+            const note = await components.prompt("Approve Medicine", "Enter Clinical Vetting Note:", "Verified for distribution", "Approve");
+            if (note === null) return;
+            try { 
+                await api.post(`/admin/medicine/${id}/approve`, { status: 'approved', vetting_note: note }); 
+                components.showSuccess('Medicine approved successfully.');
+                loadData();
+            } catch(e) { components.showError("Approval failed."); }
+        }
+
+        async function rejectMed(id) {
+            try { 
+                await api.post(`/admin/medicine/${id}/approve`, { status: 'rejected' }); 
+                components.showSuccess('Medicine rejected.');
+                loadData();
+            } catch(e) { components.showError("Rejection failed."); }
+        }
+
+        async function approveVendor(id) {
+            components.showLoader();
+            try { 
+                await api.post(`/admin/vendors/${id}/approve`, {}); 
+                components.showSuccess('Vendor approved successfully.');
+                loadData();
+            } catch(e) { components.showError("Approval failed."); }
+            finally { components.hideLoader(); }
+        }
+
+        async function rejectVendor(id) {
+            components.showLoader();
+            try { 
+                await api.post(`/admin/vendors/${id}/suspend`, {}); 
+                components.showSuccess('Vendor application rejected.');
+                loadData();
+            } catch(e) { components.showError("Rejection failed."); }
+            finally { components.hideLoader(); }
+        }
+
+        loadData();
+    </script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Aggressive Anti-Caching for Critical Fixes -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+    <title>Activity Logs | Admin | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <link rel="stylesheet" href="../assets/css/admin-dark.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        
+        .log-container {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: var(--l-card-r);
+            padding: var(--l-card-p);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            display: grid;
+            grid-template-columns: 100px 100px 1fr 120px;
+            padding: var(--l-card-p);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            align-items: center;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        .log-entry:hover { background: rgba(255,255,255,0.3); border-radius: var(--l-card-r); }
+
+        .log-timestamp { font-family: monospace; color: #6e6e73; font-weight: 700; }
+        .log-role { text-transform: uppercase; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.05em; }
+        .log-msg { font-weight: 600; color: #1d1d1f; }
+        .log-status { font-weight: 800; text-align: right; }
+    </style>
+</head>
+<body>
+    
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        
+        <main class="liquid-main">
+            <header style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-end;">
+                <div>
+                    <h1 class="vibrant-h1">Audit Trail</h1>
+                    <p style="color: #6e6e73; font-size: 1.2rem; font-weight: 500;">Comprehensive system activity and security telemetry.</p>
+                </div>
+                <div id="export-btn-container" style="display: flex; gap: 12px;">
+                    <button class="pill-button" style="background: #e0e0e0; color: #888; border: none;"><i data-lucide="loader"></i> Preparing Export...</button>
+                </div>
+            </header>
+
+            <div class="log-container">
+                <div style="display: grid; grid-template-columns: 100px 100px 1fr 120px; padding: 0 20px 15px 20px; color: #6e6e73; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">
+                    <span>Time</span>
+                    <span>Role</span>
+                    <span>Event Description</span>
+                    <span style="text-align: right;">Status</span>
+                </div>
+                
+                <div id="log-list">
+                    <p style="text-align:center;padding:40px;color:#8e8e93;">Synchronizing clinical audit trails...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../assets/js/api.js?v=final_102"></script>
+    <script src="../assets/js/auth.js?v=final_102"></script>
+    <script src="../assets/js/components.js?v=final_102"></script>
+    <script src="../assets/js/liquid.js?v=final_102"></script>
+    <script>
+        // Check Admin Auth
+        const user = auth.getUser();
+        if (!user || user.role !== 'admin') { window.location.href = '../auth/login.html'; }
+
+        // Load Sidebar
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('admin');
+        lucide.createIcons();
+
+        async function loadLogs() {
+            try {
+                components.showLoader();
+                
+                // Pre-populate the native download link
+                const token = localStorage.getItem('token');
+                const rootPath = window.location.origin + '/Next%20Gen%20Online%20Medicine%20Delivery%20System';
+                const exportUrl = rootPath + '/backend/public/api_export.php?token=' + token;
+                
+                const exportBtnContainer = document.getElementById('export-btn-container');
+                exportBtnContainer.innerHTML = `<a href="${exportUrl}" download="medimitra_audit_trail.csv" class="pill-button" style="background: #00d2ff; color: white; border: none; box-shadow: 0 4px 15px rgba(0,210,255,0.3); text-decoration: none; display: inline-flex; align-items: center; gap: 8px;"><i data-lucide="download"></i> Export Forensic CSV</a>`;
+                lucide.createIcons();
+
+                const res = await api.get('/admin/logs/activity');
+                const logs = res.data.logs;
+                
+                const container = document.getElementById('log-list');
+                
+                if (!logs || logs.length === 0) {
+                    container.innerHTML = '<p style="text-align:center;padding:40px;color:#8e8e93;">No forensic trails found in current clinical cycle.</p>';
+                } else {
+                    container.innerHTML = logs.map(log => {
+                        const time = new Date(log.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                        const roleColor = log.user_role === 'admin' ? 'var(--danger)' : (log.user_role === 'vendor' ? 'var(--primary)' : '#6e6e73');
+                        return `
+                            <div class="log-entry">
+                                <div class="log-timestamp">${time}</div>
+                                <div class="log-role" style="color: ${roleColor};">${log.user_role || 'SYSTEM'}</div>
+                                <div class="log-msg">${log.action}: ${log.target_model || ''} #${log.target_id || ''} by ${log.user_name || 'System'}</div>
+                                <div class="log-status" style="color: var(--success);">SUCCESS</div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            } catch (err) {
+                console.error(err);
+                components.showError("Forensic intelligence synchronization failed.");
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        loadLogs();
+    </script>
+</body>
+</html>

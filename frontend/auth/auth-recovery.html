@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Recovery | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/glass.css">
+    <style>
+        body { background: #fbfbfd; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        .auth-card { background: #fff; padding: 40px 30px; border-radius: 28px; width: 100%; max-width: 440px; box-shadow: 0 20px 60px rgba(0,0,0,0.05); box-sizing: border-box; }
+        .step-pill { background: #f1f5f9; color: #1d1d1f; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; display: inline-block; margin-bottom: 20px; }
+        .recovery-option { border: 1px solid rgba(0,0,0,0.1); border-radius: 16px; padding: 16px; display: flex; align-items: center; gap: 16px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; box-sizing: border-box; }
+        .recovery-option:hover { border-color: #007aff; background: rgba(0,122,255,0.02); }
+        .option-icon { width: 44px; height: 44px; border-radius: 12px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; color: #007aff; flex-shrink: 0; }
+
+        @media (max-width: 480px) {
+            .auth-card {
+                padding: 30px 20px;
+                border-radius: 20px;
+            }
+            .auth-card h1 {
+                font-size: 1.5rem !important;
+            }
+            .recovery-option {
+                padding: 12px;
+                gap: 12px;
+            }
+            .option-icon {
+                width: 38px;
+                height: 38px;
+                border-radius: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-card animate-scale-in">
+        <div class="step-pill">ACCOUNT SECURITY</div>
+        <h1 style="font-weight:800; font-size:1.75rem; margin-bottom:8px;">Account Verification</h1>
+        <p style="color:#8e8e93; font-size:0.9rem; margin-bottom:30px;">Choose a method to verify your identity and recover your account access.</p>
+        
+        <div class="recovery-option" onclick="location.href='forgot-password.html'">
+            <div class="option-icon"><i data-lucide="mail"></i></div>
+            <div style="flex:1;">
+                <div style="font-weight:700;">Email OTP / Link</div>
+                <div style="font-size:0.8rem; color:#8e8e93;">Send recovery code to registered email</div>
+            </div>
+            <i data-lucide="chevron-right" style="width:18px; color:#8e8e93;"></i>
+        </div>
+
+        <div class="recovery-option">
+            <div class="option-icon"><i data-lucide="smartphone"></i></div>
+            <div style="flex:1;">
+                <div style="font-weight:700;">SMS Verification</div>
+                <div style="font-size:0.8rem; color:#8e8e93;">Send verification code to +91 ******3210</div>
+            </div>
+            <i data-lucide="chevron-right" style="width:18px; color:#8e8e93;"></i>
+        </div>
+
+        <div class="recovery-option">
+            <div class="option-icon" style="color:#af52de;"><i data-lucide="shield-check"></i></div>
+            <div style="flex:1;">
+                <div style="font-weight:700;">Security Questions</div>
+                <div style="font-size:0.8rem; color:#8e8e93;">Answer pre-set security challenge</div>
+            </div>
+            <i data-lucide="chevron-right" style="width:18px; color:#8e8e93;"></i>
+        </div>
+
+        <div style="margin-top:40px; border-top:1px solid rgba(0,0,0,0.05); padding-top:24px; display:flex; justify-content:space-between; align-items:center;">
+            <a href="login.html" style="color:#007aff; font-weight:600; text-decoration:none; font-size:0.9rem;">Return to Login</a>
+            <span style="color:#8e8e93; font-size:0.85rem;">Need help? <a href="../guest/faq-page.html" style="color:#1d1d1f; font-weight:700; text-decoration:none;">Support</a></span>
+        </div>
+    </div>
+
+    <script>lucide.createIcons();</script>
+</body>
+</html>

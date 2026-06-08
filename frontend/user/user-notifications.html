@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        
+        .n-container {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: var(--l-card-r);
+            padding: var(--l-card-p);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .n-card {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: var(--l-card-r);
+            padding: var(--l-card-p);
+            margin-bottom: 16px;
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            border: 1px solid transparent;
+        }
+        .n-card.unread { background: white; border-color: rgba(0, 122, 255, 0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .n-card:hover { transform: scale(1.01); }
+
+        .n-icon-box {
+            width: 54px; height: 54px; border-radius: var(--l-card-r);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        
+    </style>
+</head>
+<body>
+    
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        
+        <main class="liquid-main">
+            <header style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-end;">
+                <div>
+                    <h1 class="vibrant-h1">Notifications</h1>
+                    <p style="color: #6e6e73; font-size: 1.2rem; font-weight: 500;">Real-time updates and delivery status.</p>
+                </div>
+                <button class="pill-button" style="background: white; color: black; border: 1px solid rgba(0,0,0,0.05);">Mark all read</button>
+            </header>
+
+            <div class="n-container">
+                <!-- Unread Notification -->
+                <div class="n-card unread">
+                    <div class="n-icon-box" style="background: rgba(52, 199, 89, 0.1); color: var(--success);"><i data-lucide="truck"></i></div>
+                    <div style="flex: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+                            <h3 style="font-weight: 800; font-size: 1.1rem; color: #1d1d1f;">Order Out for Delivery</h3>
+                            <span style="font-size: 0.75rem; color: #6e6e73; font-weight: 700;">2 hours ago</span>
+                        </div>
+                        <p style="color: #6e6e73; font-weight: 500; font-size: 0.95rem; line-height: 1.5;">Your order #MM-84392 from MediServe is out for delivery. Estimated arrival is today by 4:30 PM.</p>
+                    </div>
+                </div>
+
+                <!-- Read Notification -->
+                <div class="n-card">
+                    <div class="n-icon-box" style="background: rgba(0, 122, 255, 0.1); color: var(--primary);"><i data-lucide="file-check"></i></div>
+                    <div style="flex: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+                            <h3 style="font-weight: 800; font-size: 1.1rem; color: #1d1d1f;">Prescription Verification</h3>
+                            <span style="font-size: 0.75rem; color: #6e6e73; font-weight: 700;">1 day ago</span>
+                        </div>
+                        <p style="color: #6e6e73; font-weight: 500; font-size: 0.95rem; line-height: 1.5;">Dr. Sharma's clinic prescription has been verified successfully. You can now purchase Schedule-H medicines.</p>
+                    </div>
+                </div>
+
+                <!-- Read Notification 2 -->
+                <div class="n-card">
+                    <div class="n-icon-box" style="background: rgba(255, 149, 0, 0.1); color: var(--warning);"><i data-lucide="sparkles"></i></div>
+                    <div style="flex: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+                            <h3 style="font-weight: 800; font-size: 1.1rem; color: #1d1d1f;">Account Reward</h3>
+                            <span style="font-size: 0.75rem; color: #6e6e73; font-weight: 700;">3 days ago</span>
+                        </div>
+                        <p style="color: #6e6e73; font-weight: 500; font-size: 0.95rem; line-height: 1.5;">Use code HEALTH15 to get 15% off your next wellness order.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        // Check Auth
+        const user = auth.getUser();
+        if (!user) { window.location.href = '../auth/login.html'; }
+
+        // Load Sidebar
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('user');
+        lucide.createIcons();
+
+        async function loadNotifications() {
+            try {
+                components.showLoader();
+                const res = await api.get('/notifications');
+                const { notifications, unread_count } = res.data;
+                
+                const container = document.querySelector('.n-container');
+                
+                if (notifications.length === 0) {
+                    container.innerHTML = '<p style="text-align:center;padding:40px;color:#8e8e93;">No alerts in your account.</p>';
+                    return;
+                }
+
+                container.innerHTML = notifications.map(notif => {
+                    let icon = 'bell';
+                    let color = 'var(--primary)';
+                    let bg = 'rgba(0, 122, 255, 0.1)';
+
+                    if (notif.type === 'order') { icon = 'truck'; color = 'var(--success)'; bg = 'rgba(52, 199, 89, 0.1)'; }
+                    if (notif.type === 'prescription') { icon = 'file-check'; color = 'var(--warning)'; bg = 'rgba(255, 149, 0, 0.1)'; }
+                    if (notif.type === 'security') { icon = 'shield-alert'; color = 'var(--danger)'; bg = 'rgba(255, 59, 48, 0.1)'; }
+
+                    return `
+                        <div class="n-card ${notif.is_read ? '' : 'unread'}" onclick="markAsRead(${notif.id})">
+                            <div class="n-icon-box" style="background: ${bg}; color: ${color};"><i data-lucide="${icon}"></i></div>
+                            <div style="flex: 1;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+                                    <h3 style="font-weight: 800; font-size: 1.1rem; color: #1d1d1f;">${notif.title}</h3>
+                                    <span style="font-size: 0.75rem; color: #6e6e73; font-weight: 700;">${new Date(notif.created_at).toLocaleDateString()}</span>
+                                </div>
+                                <p style="color: #6e6e73; font-weight: 500; font-size: 0.95rem; line-height: 1.5;">${notif.message}</p>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                lucide.createIcons();
+            } catch (err) {
+                console.error(err);
+                components.showError("Failed to load notifications.");
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        async function markAsRead(id) {
+            try {
+                await api.post(`/notifications/${id}/read`);
+                loadNotifications();
+            } catch (err) { console.error(err); }
+        }
+
+        async function markAllRead() {
+            try {
+                await api.post('/notifications/mark-all-read');
+                loadNotifications();
+            } catch (err) { console.error(err); }
+        }
+
+        loadNotifications();
+    </script>
+</body>
+</html>

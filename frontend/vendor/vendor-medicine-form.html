@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Medicine | MediMitra Vendor</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        
+        .form-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+        }
+
+        .m-input-pill {
+            background: rgba(255,255,255,0.5);
+            border: 1px solid rgba(0,0,0,0.1);
+            padding: 18px 20px;
+            border-radius: 16px;
+            font-size: 1rem;
+            font-weight: 600;
+            outline: none;
+            width: 100%;
+            transition: all 0.3s;
+        }
+        .m-input-pill:focus { border-color: var(--primary); background: white; box-shadow: 0 4px 20px rgba(0, 122, 255, 0.05); }
+
+        .m-label {
+            display: block; font-size: 0.8rem; font-weight: 800; color: #6e6e73; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.05em;
+        }
+
+        .upload-zone {
+            border: 2px dashed rgba(0,0,0,0.1);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            background: rgba(255,255,255,0.3);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .upload-zone:hover { background: rgba(255,255,255,0.5); border-color: var(--primary); }
+
+        .category-chip {
+            padding: 10px 20px; border-radius: 100px; background: white; border: 1px solid rgba(0,0,0,0.1); font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: all 0.3s;
+        }
+        .category-chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+    </style>
+</head>
+<body>
+    
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        
+        <main class="liquid-main">
+            <header style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end;">
+                <div>
+                    <h1 class="vibrant-h1">Medicine Catalog</h1>
+                    <p style="color: #6e6e73; font-size: 1.2rem; font-weight: 500;">Add new medicines to your inventory.</p>
+                </div>
+                <a href="vendor-inventory.html" style="color: var(--primary); font-weight: 700; text-decoration: none; display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="arrow-left" size="18"></i> View Inventory
+                </a>
+            </header>
+
+            <div class="form-container">
+                <div class="liquid-card" style="padding: 32px;">
+                    <h3 style="font-weight: 800; margin-bottom: 24px;">General Information</h3>
+                    
+                    <div style="margin-bottom: 24px;">
+                        <label class="m-label">Medicine Name</label>
+                        <input type="text" id="m-name" class="m-input-pill" placeholder="e.g. Paracetamol 500mg (Crocin)">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+                        <div>
+                            <label class="m-label">Unit Price (₹)</label>
+                            <input type="number" id="m-price" class="m-input-pill" placeholder="0.00">
+                        </div>
+                        <div>
+                            <label class="m-label">Initial Stock</label>
+                            <input type="number" id="m-stock" class="m-input-pill" placeholder="100">
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 24px;">
+                        <label class="m-label">Category</label>
+                        <div style="display: flex; flex-wrap: wrap; gap: 10px;" id="cat-list">
+                            <div class="category-chip active">Antibiotics</div>
+                            <div class="category-chip">Antidiabetic</div>
+                            <div class="category-chip">Pain Relief</div>
+                            <div class="category-chip">Cardiac</div>
+                            <div class="category-chip">Pediatric</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="m-label">Regulatory Requirements</label>
+                        <div style="display: flex; gap: 24px; align-items: center; background: rgba(0,0,0,0.02); padding: 16px; border-radius: 12px;">
+                            <input type="checkbox" id="rx-req" style="width: 20px; height: 20px;">
+                            <label for="rx-req" style="font-weight: 700; font-size: 0.9rem;">Require Prescription (Schedule-H)</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 24px;">
+                    <div class="liquid-card" style="padding: 32px;">
+                        <h3 style="font-weight: 800; margin-bottom: 24px;">Product Image</h3>
+                        <div class="upload-zone" onclick="document.getElementById('med-image').click()">
+                            <input type="file" id="med-image" hidden accept="image/*" onchange="previewImage(this)">
+                            <div id="upload-placeholder">
+                                <i data-lucide="image-plus" size="48" style="color: #6e6e73; margin-bottom: 16px;"></i>
+                                <div style="font-weight: 800;">Upload Packaging Photo</div>
+                                <div style="font-size: 0.8rem; color: #6e6e73; margin-top: 8px;">PNG, JPG up to 5MB</div>
+                            </div>
+                            <div id="image-preview" style="display: none;">
+                                <img id="preview-img" src="" style="width: 100%; height: 180px; object-fit: contain; border-radius: 12px;">
+                                <div style="margin-top: 12px; font-size: 0.8rem; color: var(--primary); font-weight: 700;">Tap to Change</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="liquid-card" style="padding: 32px; flex: 1;">
+                        <h3 style="font-weight: 800; margin-bottom: 16px;">Description</h3>
+                        <textarea id="m-desc" class="m-input-pill" style="height: 120px; resize: none;" placeholder="Medicine composition, usage instructions, and safety warnings..."></textarea>
+                    </div>
+
+                    <button class="pill-button" style="width: 100%; justify-content: center; padding: 24px; font-size: 1.1rem; border-radius: 20px;" onclick="saveMedicine(this)">
+                        Publish to Marketplace
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        // Check Auth
+        const user = auth.getUser();
+        if (!user || user.role !== 'vendor') { window.location.href = '../auth/login.html'; }
+
+        // Load Sidebar
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('vendor');
+        lucide.createIcons();
+
+        let selectedCategoryId = null;
+
+        async function loadTaxonomy() {
+            try {
+                const res = await api.get('/vendor/taxonomy');
+                const catList = document.getElementById('cat-list');
+                const categories = res.data.categories || [];
+                
+                catList.innerHTML = categories.map((cat, index) => `
+                    <div class="category-chip ${index === 0 ? 'active' : ''}" data-id="${cat.id}" onclick="selectCategory(this, ${cat.id})">
+                        ${cat.name}
+                    </div>
+                `).join('');
+                
+                if (categories.length > 0) selectedCategoryId = categories[0].id;
+            } catch (err) { console.error("Failed to load categories."); }
+        }
+
+        window.selectCategory = (el, id) => {
+            document.querySelectorAll('.category-chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            selectedCategoryId = id;
+        };
+
+        async function saveMedicine(btn) {
+            const name = document.getElementById('m-name').value;
+            const price = parseFloat(document.getElementById('m-price').value);
+            const stock = parseInt(document.getElementById('m-stock').value);
+            const rx = document.getElementById('rx-req').checked;
+            const desc = document.getElementById('m-desc').value;
+            const imageFile = document.getElementById('med-image').files[0];
+
+            if (!name || isNaN(price) || !selectedCategoryId) {
+                components.showError('Please fill in essential medicine details.');
+                return;
+            }
+
+            btn.innerHTML = "Processing...";
+            btn.disabled = true;
+            
+            try {
+                components.showLoader();
+                
+                // Use FormData for image upload support
+                const formData = new FormData();
+                formData.append('name', name);
+                formData.append('category_id', selectedCategoryId);
+                formData.append('price', price);
+                formData.append('stock', stock);
+                formData.append('requires_prescription', rx ? 1 : 0);
+                formData.append('description', desc);
+                if (imageFile) {
+                    formData.append('image', imageFile);
+                }
+
+                await api.post('/vendor/medicines', formData);
+                
+                components.showSuccess("Medicine submitted successfully.");
+                setTimeout(() => {
+                    window.location.href = "vendor-inventory.html";
+                }, 1500);
+            } catch (err) {
+                console.error(err);
+                btn.disabled = false;
+                btn.innerHTML = "Publish to Marketplace";
+                components.showError("Failed to register medicine.");
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        function previewImage(input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('upload-placeholder').style.display = 'none';
+                    document.getElementById('image-preview').style.display = 'block';
+                    document.getElementById('preview-img').src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        loadTaxonomy();
+    </script>
+</body>
+</html>

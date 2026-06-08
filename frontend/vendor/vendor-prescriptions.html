@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clinical Review | MediMitra Vendor</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        
+        .px-status {
+            padding: 6px 12px;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+        .status-pending { background: rgba(255, 149, 0, 0.1); color: var(--warning); }
+        .status-verified { background: rgba(52, 199, 89, 0.1); color: var(--success); }
+    </style>
+</head>
+<body>
+    
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        
+        <main class="liquid-main">
+            <header style="margin-bottom: 24px;">
+                <h1 class="vibrant-h1">Prescription Lab</h1>
+                <p style="color: #6e6e73; font-size: 1.2rem; font-weight: 500;">Verify prescription details before order dispatch.</p>
+            </header>
+
+            <!-- Search & Filter Bar -->
+            <div style="display:flex; gap:12px; align-items:center; margin-bottom:20px; flex-wrap:wrap;">
+                <input type="text" id="vpSearchInput" placeholder="Search patient name..." oninput="applyVpFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; min-width:200px; outline:none;">
+                <select id="vpFilterSelect" onchange="applyVpFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; font-weight:600;">
+                    <option value="all">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                </select>
+            </div>
+
+            <div class="liquid-card" style="padding: 0; overflow: hidden;">
+                <table class="liquid-table">
+                    <thead>
+                        <tr>
+                            <th>Patient / Order</th>
+                            <th>Prescription Requirement</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="prescriptionsBody">
+                        <!-- Dynamic Data -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State -->
+            <div id="empty-state" style="display: none; text-align: center; padding: 60px 20px;">
+                <i data-lucide="file-check-2" size="48" style="color: #6e6e73; opacity: 0.3; margin-bottom: 20px;"></i>
+                <h3 style="font-weight: 800; color: #1d1d1f;">All Cleared</h3>
+                <p style="color: #6e6e73; font-weight: 500;">No prescription approvals pending.</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        // Check Auth
+        const user = auth.getUser();
+        if (!user || user.role !== 'vendor') { window.location.href = '../auth/login.html'; }
+
+        // Load Sidebar
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('vendor');
+        lucide.createIcons();
+
+        let currentPrescriptions = [];
+        let allVendorPrescriptions = [];
+
+        async function loadPrescriptions() {
+            try {
+                components.showLoader();
+                const res = await api.get('/vendor/prescriptions/pending');
+                allVendorPrescriptions = (res && res.data && res.data.prescriptions) ? res.data.prescriptions : [];
+                applyVpFilters();
+            } catch (err) {
+                console.error(err);
+                components.showError("Failed to sync prescription approvals.");
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        function applyVpFilters() {
+            const search = (document.getElementById('vpSearchInput').value || '').toLowerCase();
+            const filter = document.getElementById('vpFilterSelect').value;
+
+            let filtered = [...allVendorPrescriptions];
+
+            if (search) {
+                filtered = filtered.filter(px => (px.patient_name || '').toLowerCase().includes(search));
+            }
+            if (filter !== 'all') {
+                filtered = filtered.filter(px => px.status === filter);
+            }
+
+            currentPrescriptions = filtered;
+            renderVendorPrescriptions(filtered);
+        }
+
+        function renderVendorPrescriptions(list) {
+                const body = document.getElementById('prescriptionsBody');
+                const empty = document.getElementById('empty-state');
+
+                if (list.length === 0) {
+                    body.parentElement.parentElement.style.display = 'none';
+                    empty.style.display = 'block';
+                    return;
+                }
+
+                body.parentElement.parentElement.style.display = 'table';
+                empty.style.display = 'none';
+
+                body.innerHTML = list.map((px, index) => `
+                    <tr id="px-row-${px.id}">
+                        <td>
+                            <div style="font-weight: 800; color: #1d1d1f;">${px.patient_name || 'Patient'}</div>
+                            <div style="font-size: 0.75rem; color: #6e6e73;">Prescription ID: #${px.id}</div>
+                        </td>
+                        <td style="font-weight: 600; color: #1d1d1f; font-size: 0.9rem;">
+                            Doctor: ${px.doctor || 'N/A'} · ${px.file_type === 'pdf' ? '📄 PDF' : '🖼️ Image'}
+                            ${px.expiry_date ? `<br><span style="font-size:0.75rem; color:${new Date(px.expiry_date) < new Date() ? 'var(--danger)' : '#6e6e73'}; font-weight:700;">${new Date(px.expiry_date) < new Date() ? '⚠ EXPIRED' : 'Expires: ' + new Date(px.expiry_date).toLocaleDateString()}</span>` : ''}
+                            ${px.times_used >= px.max_uses ? `<br><span style="font-size:0.75rem; color:var(--warning); font-weight:700;">⚠ Reuse limit reached (${px.times_used}/${px.max_uses})</span>` : ''}
+                        </td>
+                        <td>
+                            <span class="px-status ${px.status === 'approved' ? 'status-verified' : 'status-pending'}">
+                                ${px.status === 'approved' ? '✓ APPROVED' : px.status === 'rejected' ? '✗ REJECTED' : 'NEEDS REVIEW 🕒'}
+                            </span>
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="pill-button" style="padding: 8px 16px; font-size: 0.8rem; background: rgba(0,0,0,0.05); color: #1d1d1f;" onclick="showPreview(${px.id}, '${px.patient_name || ''}')">Preview</button>
+                                ${px.status === 'pending' ? `
+                                <button class="pill-button" style="padding: 8px 16px; font-size: 0.8rem;" onclick="reviewRx(${px.id}, 'approved')" ${px.expiry_date && new Date(px.expiry_date) < new Date() ? 'disabled title="Cannot approve expired prescription"' : ''}>Approve</button>
+                                <button class="pill-button" style="padding: 8px 16px; font-size: 0.8rem; background: var(--danger);" onclick="reviewRx(${px.id}, 'rejected')">Reject</button>
+                                ` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+                lucide.createIcons();
+        }
+
+        window.showPreview = (prescriptionId, name) => {
+            document.getElementById('modal-title').innerText = `Prescription: ${name || 'Patient'}`;
+            const container = document.querySelector('#modal-overlay .liquid-card > div:nth-child(2)');
+            container.innerHTML = `<p style="padding:40px; text-align:center; color:#8e8e93;">Loading document...</p>`;
+            document.getElementById('modal-overlay').style.display = 'flex';
+            
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            fetch(`${api.BASE_URL}/prescriptions/${prescriptionId}/view`, { 
+                headers: { 'Authorization': 'Bearer ' + token } 
+            })
+            .then(res => {
+                if (!res.ok) throw new Error('Not found');
+                const contentType = res.headers.get('content-type') || '';
+                return res.blob().then(blob => ({ blob, contentType }));
+            })
+            .then(({ blob, contentType }) => {
+                const url = URL.createObjectURL(blob);
+                if (contentType.includes('pdf')) {
+                    container.innerHTML = `<iframe src="${url}" style="width:100%; height:400px; border:none; border-radius:8px;"></iframe>`;
+                } else {
+                    container.innerHTML = `<img src="${url}" style="width:100%; border-radius:8px; display:block;">`;
+                }
+            })
+            .catch(() => {
+                container.innerHTML = `<p style="padding:40px; text-align:center; color:#ff3b30; font-weight:600;">Document not available for preview.</p>`;
+            });
+        }
+
+        window.closeModal = () => {
+            document.getElementById('modal-overlay').style.display = 'none';
+        }
+
+        window.reviewRx = async (id, status) => {
+            try {
+                components.showLoader();
+                let remarks = status === 'approved' ? 'Prescription verified by pharmacist.' : await components.prompt('Reject Prescription', 'Provide rejection reason:', '', 'Reject');
+                if (status === 'rejected' && !remarks) { components.hideLoader(); return; }
+
+                await api.post(`/vendor/prescriptions/${id}/review`, { status, remarks });
+                components.showSuccess(`Prescription #${id} ${status}.`);
+                loadPrescriptions();
+            } catch (err) {
+                console.error(err);
+                components.showError("Failed to update status.");
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        loadPrescriptions();
+    </script>
+
+    <!-- Modal UI -->
+    <div id="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(20px); z-index: 9999; justify-content: center; align-items: center;" onclick="closeModal()">
+        <div class="liquid-card animate-scale-in" style="width: 500px; max-height: 90vh; padding: 24px; position: relative;" onclick="event.stopPropagation()">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 id="modal-title" style="font-weight: 800;">Document Preview</h3>
+                <button onclick="closeModal()" style="background: none; border: none; cursor: pointer; color: #1d1d1f;"><i data-lucide="x"></i></button>
+            </div>
+            <div style="background: #f1f5f9; border-radius: 12px; overflow: hidden; border: 1px solid rgba(0,0,0,0.05); min-height: 200px; display: flex; align-items: center; justify-content: center;">
+                <p style="color:#8e8e93; font-weight:500;">No document selected</p>
+            </div>
+            <div style="margin-top: 16px; font-size: 0.8rem; color: #6e6e73; font-weight: 500; text-align: center;">Click outside or use (X) to close viewer.</div>
+        </div>
+    </div>
+</body>
+</html>

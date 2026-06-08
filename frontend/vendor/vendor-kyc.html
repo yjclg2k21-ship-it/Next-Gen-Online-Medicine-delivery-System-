@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KYC Verification | MediMitra Vendor</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        
+        .kyc-step-card {
+            background: rgba(255,255,255,0.6); backdrop-filter: blur(20px);
+            padding: 32px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.3);
+            margin-bottom: 20px; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        .upload-zone {
+            border: 2px dashed rgba(0, 122, 255, 0.2);
+            border-radius: 16px; padding: 40px 20px; text-align: center;
+            background: rgba(0, 122, 255, 0.03); cursor: pointer;
+            transition: all 0.2s; position: relative;
+        }
+        .upload-zone:hover { background: rgba(0, 122, 255, 0.06); border-color: var(--primary); }
+        .upload-zone.has-file { border-style: solid; background: rgba(52, 199, 89, 0.05); border-color: var(--success); }
+
+        .status-banner {
+            padding: 16px 24px; border-radius: 16px; margin-bottom: 24px;
+            display: flex; align-items: center; gap: 12px; font-weight: 700;
+        }
+        .status-pending { background: rgba(255, 149, 0, 0.1); color: #ff9500; }
+        .status-verified { background: rgba(52, 199, 89, 0.1); color: #34c759; }
+        .status-rejected { background: rgba(255, 59, 48, 0.1); color: #ff3b30; }
+
+        .doc-type-pill {
+            padding: 8px 16px; border-radius: 100px; background: white;
+            border: 1px solid rgba(0,0,0,0.05); font-size: 0.85rem; font-weight: 700;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .doc-type-pill.active { background: var(--primary); color: white; border-color: var(--primary); }
+    </style>
+</head>
+<body>
+    
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        
+        <main class="liquid-main">
+            <header style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <h1 class="vibrant-h1">KYC Verification</h1>
+                    <p style="color: #6e6e73; font-size: 1.2rem; font-weight: 500;">Submit documents and business files for verification.</p>
+                </div>
+                <div id="kyc-status-badge"></div>
+            </header>
+
+            <div id="kyc-content">
+                <!-- Status specific content here -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        // Check Auth
+        const user = auth.getUser();
+        if (!user || user.role !== 'vendor') { window.location.href = '../auth/login.html'; }
+
+        // Load Sidebar
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('vendor');
+        lucide.createIcons();
+
+        let selectedDocType = 'pharmacy_license';
+
+        async function initKYC() {
+            try {
+                components.showLoader();
+                const res = await api.get(`/kyc/status/${user.id}`);
+                if (!kyc || kyc.status === 'not_submitted') {
+                    renderSubmissionForm();
+                } else {
+                    renderStatusView(kyc);
+                }
+            } catch (err) {
+                renderSubmissionForm();
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        function renderStatusView(kyc) {
+            const statusMap = {
+                'pending': { label: 'PENDING VERIFICATION', class: 'status-pending', icon: 'clock', desc: 'Our compliance team is reviewing your documents.' },
+                'verified': { label: 'VERIFIED ACCOUNT', class: 'status-verified', icon: 'check-circle', desc: 'Your account is fully verified and medicine listing is active.' },
+                'rejected': { label: 'VERIFICATION FAILED', class: 'status-rejected', icon: 'x-circle', desc: `Rejected: ${kyc.rejection_reason || 'Invalid documentation.'}` }
+            };
+
+            const state = statusMap[kyc.status] || statusMap['pending'];
+
+            document.getElementById('kyc-status-badge').innerHTML = `
+                <div class="status-banner ${state.class}">
+                    <i data-lucide="${state.icon}"></i> ${state.label}
+                </div>
+            `;
+
+            document.getElementById('kyc-content').innerHTML = `
+                <div class="kyc-step-card">
+                    <h2 style="font-weight: 800; margin-bottom: 12px; color: #1d1d1f;">${state.label}</h2>
+                    <p style="color: #6e6e73; margin-bottom: 24px;">${state.desc}</p>
+                    
+                    <div style="background: white; border-radius: 16px; padding: 20px; border: 1px solid rgba(0,0,0,0.05);">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-size: 0.75rem; font-weight: 800; color: #8e8e93; text-transform: uppercase;">Submitted Document</div>
+                                <div style="font-weight: 700; color: #1d1d1f; margin-top: 4px;">${kyc.document_type.replace('_', ' ').toUpperCase()}</div>
+                            </div>
+                            <button class="pill-button" onclick="window.open('${api.baseURL}/storage/private/kyc/${kyc.document_image}', '_blank')">
+                                <i data-lucide="eye"></i> View Doc
+                            </button>
+                        </div>
+                    </div>
+                    
+                    ${kyc.status === 'rejected' ? `
+                        <button class="pill-button" onclick="renderSubmissionForm()" style="margin-top: 24px; width: 100%; justify-content: center; background: var(--primary);">
+                            <i data-lucide="refresh-ccw"></i> Resubmit Documents
+                        </button>
+                    ` : ''}
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        function renderSubmissionForm() {
+            document.getElementById('kyc-content').innerHTML = `
+                <div class="kyc-step-card animate-scale-in">
+                    <h2 style="font-weight: 800; margin-bottom: 20px; color: #1d1d1f;">Select Document Type</h2>
+                    <div style="display: flex; gap: 12px; margin-bottom: 32px; flex-wrap: wrap;">
+                        <button class="doc-type-pill active" onclick="setDocType('pharmacy_license', this)">Pharmacy License</button>
+                        <button class="doc-type-pill" onclick="setDocType('gst', this)">GST Certificate</button>
+                        <button class="doc-type-pill" onclick="setDocType('aadhar', this)">Aadhar Card</button>
+                        <button class="doc-type-pill" onclick="setDocType('license', this)">Personal ID</button>
+                    </div>
+
+                    <div class="input-card" style="margin-bottom: 24px; background: white; border: 1px solid rgba(0,122,255,0.1);">
+                        <label style="font-size: 0.75rem; font-weight: 800; color: #8e8e93; text-transform: uppercase; margin-bottom: 8px; display: block;">Document Number</label>
+                        <input type="text" id="doc-number" class="field-input" placeholder="Enter Registration/ID Number" style="width: 100%; border: none; outline: none; font-size: 1.1rem; font-weight: 700;">
+                    </div>
+
+                    <div class="upload-zone" id="upload-zone" onclick="document.getElementById('doc-file').click()">
+                        <input type="file" id="doc-file" hidden onchange="handleFile(this)">
+                        <div id="upload-prompt">
+                            <i data-lucide="upload-cloud" style="width: 48px; height: 48px; color: var(--primary); margin-bottom: 16px;"></i>
+                            <div style="font-weight: 800; font-size: 1.1rem;">Click to upload file</div>
+                            <div style="font-size: 0.85rem; color: #8e8e93; margin-top: 4px;">PDF, JPG or PNG (Max 5MB)</div>
+                        </div>
+                        <div id="file-info" style="display: none;">
+                            <i data-lucide="file-check" style="width: 48px; height: 48px; color: var(--success); margin-bottom: 16px;"></i>
+                            <div id="file-name" style="font-weight: 800; font-size: 1.1rem;">file_name.pdf</div>
+                            <div style="font-size: 0.85rem; color: var(--success); margin-top: 4px;">Ready for verification</div>
+                        </div>
+                    </div>
+
+                    <button class="pill-button" onclick="submitKYC()" style="margin-top: 32px; width: 100%; justify-content: center; background: var(--primary); height: 56px; font-size: 1.1rem;">
+                        <i data-lucide="shield-check"></i> Submit for Verification
+                    </button>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        function setDocType(type, btn) {
+            selectedDocType = type;
+            document.querySelectorAll('.doc-type-pill').forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        function handleFile(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                document.getElementById('upload-prompt').style.display = 'none';
+                document.getElementById('file-info').style.display = 'block';
+                document.getElementById('file-name').textContent = file.name;
+                document.getElementById('upload-zone').classList.add('has-file');
+                lucide.createIcons();
+            }
+        }
+
+        async function submitKYC() {
+            const docNumber = document.getElementById('doc-number').value.trim();
+            const fileInput = document.getElementById('doc-file');
+            
+            if (!docNumber) return components.showError("Document number is required.");
+            if (!fileInput.files.length) return components.showError("Please upload the document artifact.");
+
+            try {
+                components.showLoader();
+                const formData = new FormData();
+                formData.append('document_type', selectedDocType);
+                formData.append('document_number', docNumber);
+                formData.append('document', fileInput.files[0]);
+
+                const res = await api.post('/kyc/submit', formData);
+                if (res.success) {
+                    components.showSuccess("KYC document uploaded successfully.");
+                    initKYC();
+                }
+            } catch (err) {
+                components.showError("Failed to upload KYC documents.");
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        initKYC();
+    </script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sitemap | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        .site-section { margin-bottom: 40px; }
+        .site-section-title { font-weight: 800; font-size: 1.25rem; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .site-link { display: block; padding: 8px 0; color: #6e6e73; text-decoration: none; font-weight: 500; transition: color 0.2s; border-bottom: 1px solid rgba(0,0,0,0.03); }
+        .site-link:hover { color: #007aff; }
+        .site-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 40px; }
+    </style>
+</head>
+<body style="background:#fff;">
+    <div id="header-root"></div>
+
+    <main class="container" style="padding: 60px 20px;">
+        <h1 style="font-size: 3rem; font-weight: 800; margin-bottom: 12px; text-align: center;">Site Directory</h1>
+        <p style="text-align: center; color: #8e8e93; font-size: 1.1rem; margin-bottom: 80px;">All clinical segments, management consoles, and support modules in one view.</p>
+
+        <div class="site-grid">
+            <div class="site-section">
+                <div class="site-section-title"><i data-lucide="shopping-bag" style="color:#007aff;"></i> Storefront</div>
+                <a href="home-page.html" class="site-link">Homepage</a>
+                <a href="../user/medicines-page.html" class="site-link">All Medicines</a>
+                <a href="../user/user-dashboard.html" class="site-link">User Dashboard</a>
+                <a href="../user/cart-page.html" class="site-link">Shopping Cart</a>
+            </div>
+
+            <div class="site-section">
+                <div class="site-section-title"><i data-lucide="shield-check" style="color:#34c759;"></i> Admin Area</div>
+                <a href="../admin/admin-dashboard.html" class="site-link">Admin Center</a>
+                <a href="../admin/admin-vendors.html" class="site-link">Pharmacy Network</a>
+                <a href="../admin/admin-users.html" class="site-link">User Directory</a>
+                <a href="../admin/admin-system-logs.html" class="site-link">System Audit Logs</a>
+            </div>
+
+            <div class="site-section">
+                <div class="site-section-title"><i data-lucide="hospital" style="color:#5856d6;"></i> Vendor Portal</div>
+                <a href="../vendor/vendor-dashboard.html" class="site-link">Vendor Dashboard</a>
+                <a href="../vendor/vendor-orders.html" class="site-link">Order Management</a>
+                <a href="../vendor/vendor-inventory.html" class="site-link">Inventory Control</a>
+                <a href="../vendor/vendor-pos.html" class="site-link">POS Terminal</a>
+            </div>
+
+            <div class="site-section">
+                <div class="site-section-title"><i data-lucide="truck" style="color:#ffcc00;"></i> Delivery Portal</div>
+                <a href="../delivery/delivery-dashboard.html" class="site-link">Partner Dashboard</a>
+                <a href="../delivery/delivery-queue.html" class="site-link">Live Dispatch Queue</a>
+                <a href="../delivery/delivery-earnings.html" class="site-link">Earnings</a>
+            </div>
+
+            <div class="site-section">
+                <div class="site-section-title"><i data-lucide="help-circle" style="color:#ff9500;"></i> Info & Support</div>
+                <a href="faq-page.html" class="site-link">Knowledge Base (FAQ)</a>
+                <a href="legal-page.html" class="site-link">Clinical Privacy & T&C</a>
+                <a href="../guest/medicine-check-tool.html" class="site-link">Clinical Check Tool</a>
+                <a href="../guest/medicine-safety-sheet.html" class="site-link">Safety Guidelines</a>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-root"></div>
+
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script>
+        const user = auth.getUser();
+        document.getElementById('header-root').innerHTML = components.header(user, false);
+        document.getElementById('footer-root').innerHTML = components.footer();
+        lucide.createIcons();
+    </script>
+</body>
+</html>

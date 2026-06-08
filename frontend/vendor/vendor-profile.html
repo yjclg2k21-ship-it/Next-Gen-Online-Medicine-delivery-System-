@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile | MediMitra Vendor</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <!-- Leaflet Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        
+        .profile-container {
+            max-height: 80vh; overflow-y: auto; padding-right: 10px;
+        }
+
+        .profile-header-card {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            padding: 32px;
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 24px;
+            margin-bottom: 24px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .profile-header-info {
+            flex: 1; min-width: 250px;
+        }
+
+        .avatar-squircle {
+            width: 100px; height: 100px; background: white; border-radius: 28px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2.5rem; box-shadow: 0 12px 32px rgba(0,0,0,0.2);
+            position: relative; z-index: 2;
+        }
+
+        .form-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+        }
+
+        .input-card {
+            background: rgba(255,255,255,0.6); backdrop-filter: blur(20px);
+            padding: 20px; border-radius: 20px;
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: all 0.3s;
+        }
+        .input-card:focus-within {
+            background: white; border-color: var(--primary); box-shadow: 0 8px 24px rgba(0, 122, 255, 0.1);
+        }
+
+        .field-label {
+            font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase;
+            letter-spacing: 0.05em; margin-bottom: 8px; display: block;
+        }
+
+        .field-input {
+            width: 100%; border: none; background: transparent; 
+            font-size: 1.1rem; font-weight: 700; color: #1e293b;
+            outline: none; padding: 0;
+        }
+
+        #profile-map { height: 300px; border-radius: 20px; margin-top: 10px; border: 1px solid rgba(0,0,0,0.1); }
+
+        .save-banner {
+            position: fixed; bottom: 40px; right: 40px; 
+            background: var(--primary); color: white; padding: 16px 32px;
+            border-radius: 100px; font-weight: 700; display: flex; align-items: center; gap: 12px;
+            box-shadow: 0 12px 32px rgba(0, 122, 255, 0.3);
+            cursor: pointer; transform: translateY(100px); opacity: 0; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000;
+        }
+        .save-banner.show { transform: translateY(0); opacity: 1; }
+    </style>
+</head>
+<body>
+    
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        
+        <main class="liquid-main">
+            <header style="margin-bottom: 24px;">
+                <h1 class="vibrant-h1">Pharmacy Profile</h1>
+                <p style="color: #6e6e73; font-size: 1.2rem; font-weight: 500;">Manage your pharmacy details and account settings.</p>
+            </header>
+
+            <div class="profile-container">
+                <div class="profile-header-card">
+                    <div class="avatar-squircle">🏥</div>
+                    <div class="profile-header-info">
+                        <div style="background: rgba(34, 197, 94, 0.2); color: #4ade80; padding: 6px 12px; border-radius: 100px; font-size: 0.75rem; font-weight: 800; display: inline-flex; align-items: center; gap: 6px;">
+                            <i data-lucide="check-circle" size="14"></i> LICENSED PHARMACY
+                        </div>
+                        <h2 style="font-size: 2rem; font-weight: 800; margin: 12px 0 4px 0;" id="display-name">Loading...</h2>
+                        <p style="color: #a5b4fc; font-weight: 600; font-size: 1.1rem;" id="display-id">Pharmacy ID: Pending</p>
+                    </div>
+                </div>
+
+                <form id="profile-form">
+                    <div class="form-grid">
+                        <div class="input-card">
+                            <label class="field-label">Pharmacy Name</label>
+                            <input type="text" id="pharmacy_name" class="field-input" oninput="handleInput()">
+                        </div>
+                        <div class="input-card">
+                            <label class="field-label">Owner Name</label>
+                            <input type="text" id="owner_name" class="field-input" oninput="handleInput()">
+                        </div>
+                        <div class="input-card">
+                            <label class="field-label">License Number</label>
+                            <input type="text" id="license_number" class="field-input" readonly style="opacity: 0.6;">
+                        </div>
+                        <div class="input-card">
+                            <label class="field-label">GSTIN / Tax ID</label>
+                            <input type="text" id="gst_number" class="field-input" oninput="handleInput()">
+                        </div>
+                        <div class="input-card" style="grid-column: span 2;">
+                            <label class="field-label">Pharmacy Address</label>
+                            <input type="text" id="address" class="field-input" oninput="handleInput()">
+                        </div>
+                        <div class="input-card">
+                            <label class="field-label">Opening Time</label>
+                            <input type="time" id="opening_time" class="field-input" oninput="handleInput()">
+                        </div>
+                        <div class="input-card">
+                            <label class="field-label">Closing Time</label>
+                            <input type="time" id="closing_time" class="field-input" oninput="handleInput()">
+                        </div>
+                        
+                        <div class="input-card">
+                            <label class="field-label">Pharmacist Reg. Number</label>
+                            <input type="text" id="pharmacist_reg_number" class="field-input" oninput="handleInput()">
+                        </div>
+                        <div class="input-card">
+                            <label class="field-label">PAN Card Number</label>
+                            <input type="text" id="pan_card_number" class="field-input" oninput="handleInput()">
+                        </div>
+                        <div class="input-card" style="grid-column: span 2;">
+                            <label class="field-label">Aadhaar Number</label>
+                            <input type="text" id="aadhaar_number" class="field-input" oninput="handleInput()">
+                        </div>
+
+                        <div class="input-card">
+                            <label class="field-label">Bank Name</label>
+                            <input type="text" id="bank_name" class="field-input" oninput="handleInput()">
+                        </div>
+                        <div class="input-card">
+                            <label class="field-label">IFSC Code</label>
+                            <input type="text" id="ifsc_code" class="field-input" oninput="handleInput()">
+                        </div>
+                        <div class="input-card" style="grid-column: span 2;">
+                            <label class="field-label">Account Number</label>
+                            <input type="text" id="account_number" class="field-input" oninput="handleInput()">
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 24px;">
+                        <label class="field-label">Pinpoint Pharmacy on Map</label>
+                        <div id="profile-map"></div>
+                        <input type="hidden" id="lat">
+                        <input type="hidden" id="lng">
+                    </div>
+
+                    <div style="margin-top: 32px; display: grid; gap: 24px;">
+                        <div class="input-card" style="background: rgba(255,255,255,0.8);">
+                            <h3 style="font-weight: 800; margin-bottom: 20px; color: #0f172a;">Change Password</h3>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                <div>
+                                    <label class="field-label">Current Password</label>
+                                    <input type="password" id="oldPassword" class="field-input" style="border-bottom: 1px solid #ddd; padding-bottom: 8px;">
+                                </div>
+                                <div>
+                                    <label class="field-label">New Password</label>
+                                    <input type="password" id="newPassword" class="field-input" style="border-bottom: 1px solid #ddd; padding-bottom: 8px;">
+                                </div>
+                            </div>
+                            <button type="button" onclick="updatePassword()" style="background: #0f172a; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer;">Update Password</button>
+                        </div>
+
+                        <div class="input-card" style="border-color: #fee2e2; background: #fff5f5;">
+                            <h3 style="font-weight: 800; color: #dc2626; margin-bottom: 8px;">Delete or Deactivate Account</h3>
+                            <p style="color: #991b1b; font-size: 0.9rem; margin-bottom: 20px;">Deactivating or deleting your account will suspend your pharmacy operations and remove you from the platform.</p>
+                            <div style="display: flex; gap: 12px;">
+                                <button type="button" onclick="deactivateAccount()" style="background: #ef4444; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer;">Deactivate Account</button>
+                                <button type="button" onclick="deleteAccount()" style="background: white; color: #ef4444; border: 1px solid #ef4444; padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer;">Delete Account</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                <div style="margin-top: 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding-bottom: 100px;">
+                    <div class="liquid-card" style="text-align: center; padding: 20px;">
+                        <div style="font-size: 1.5rem; margin-bottom: 8px;">⭐</div>
+                        <div style="font-weight: 800;">4.8 / 5.0</div>
+                        <div style="font-size: 0.7rem; color: #6e6e73; font-weight: 700;">TRUST RATING</div>
+                    </div>
+                    <div class="liquid-card" style="text-align: center; padding: 20px;">
+                        <div style="font-size: 1.5rem; margin-bottom: 8px;">🚀</div>
+                        <div style="font-weight: 800;">14 min</div>
+                        <div style="font-size: 0.7rem; color: #6e6e73; font-weight: 700;">AVG DISPATCH</div>
+                    </div>
+                    <div class="liquid-card" style="text-align: center; padding: 20px;">
+                        <div style="font-size: 1.5rem; margin-bottom: 8px;">✅</div>
+                        <div style="font-weight: 800;">99.4%</div>
+                        <div style="font-size: 0.7rem; color: #6e6e73; font-weight: 700;">FULFILLMENT</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="save-banner" class="save-banner" onclick="saveProfile()">
+                <i data-lucide="save"></i> Save Profile Changes
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        // Check Auth
+        const user = auth.getUser();
+        if (!user || user.role !== 'vendor') { window.location.href = '../auth/login.html'; }
+
+        // Load Sidebar
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('vendor');
+        lucide.createIcons();
+
+        let map, marker;
+        const phaltanCenter = [17.9868, 74.4379];
+
+        async function initProfile() {
+            try {
+                const res = await api.get('/vendor/profile');
+                const p = res.data.profile;
+
+                document.getElementById('display-name').innerText = p.pharmacy_name || 'My Pharmacy';
+                document.getElementById('display-id').innerText = `Pharmacy ID: VND-${p.id.toString().padStart(4, '0')}`;
+                
+                // Sync name with base user object in local/session storage
+                const storedUser = auth.getUser();
+                if (storedUser && p.pharmacy_name) {
+                    storedUser.name = p.pharmacy_name;
+                    auth.updateUser(storedUser);
+                }
+
+                // Update active top profile elements immediately
+                const topProfileContainer = document.querySelector('.vendor-user-profile');
+                if (topProfileContainer) {
+                    const initials = (p.pharmacy_name || '').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+                    const avatarDiv = topProfileContainer.querySelector('div');
+                    const nameDiv = topProfileContainer.querySelector('div:nth-child(2)');
+                    if (avatarDiv) avatarDiv.innerText = initials;
+                    if (nameDiv) nameDiv.innerText = p.pharmacy_name;
+                }
+
+                document.getElementById('pharmacy_name').value = p.pharmacy_name || '';
+                document.getElementById('owner_name').value = p.owner_name || '';
+                document.getElementById('license_number').value = p.license_number || 'PENDING';
+                document.getElementById('gst_number').value = p.gst_number || '';
+                document.getElementById('address').value = p.address || '';
+                document.getElementById('opening_time').value = p.opening_time || '09:00:00';
+                document.getElementById('closing_time').value = p.closing_time || '21:00:00';
+                document.getElementById('lat').value = p.latitude || '';
+                document.getElementById('lng').value = p.longitude || '';
+
+                document.getElementById('pharmacist_reg_number').value = p.pharmacist_reg_number || '';
+                document.getElementById('pan_card_number').value = p.pan_card_number || '';
+                document.getElementById('aadhaar_number').value = p.aadhaar_number || '';
+                document.getElementById('bank_name').value = p.bank_name || '';
+                document.getElementById('ifsc_code').value = p.ifsc_code || '';
+                document.getElementById('account_number').value = p.account_number || '';
+
+                // Initialize Map
+                const startPos = p.latitude ? [p.latitude, p.longitude] : phaltanCenter;
+                map = L.map('profile-map').setView(startPos, 14);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', {
+                    attribution: '&copy; CartoDB'
+                }).addTo(map);
+
+                const pharmacyIcon = L.divIcon({
+                    className: 'custom-div-icon',
+                    html: "<div style='background:#34c759; color:white; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:3px solid white; box-shadow:0 0 10px rgba(0,0,0,0.1);'><i data-lucide='pill' style='width:16px;'></i></div>",
+                    iconSize: [30, 30],
+                    iconAnchor: [15, 15]
+                });
+
+                marker = L.marker(startPos, { icon: pharmacyIcon, draggable: true }).addTo(map);
+                lucide.createIcons();
+
+                marker.on('dragend', () => {
+                    const pos = marker.getLatLng();
+                    document.getElementById('lat').value = pos.lat;
+                    document.getElementById('lng').value = pos.lng;
+                    handleInput();
+                });
+
+                map.on('click', (e) => {
+                    marker.setLatLng(e.latlng);
+                    document.getElementById('lat').value = e.latlng.lat;
+                    document.getElementById('lng').value = e.latlng.lng;
+                    handleInput();
+                });
+
+            } catch (err) {
+                console.error(err);
+                components.showError("Failed to fetch pharmacy profile.");
+            }
+        }
+
+        function handleInput() {
+            const banner = document.getElementById('save-banner');
+            banner.classList.add('show');
+            document.getElementById('display-name').innerText = document.getElementById('pharmacy_name').value || 'My Pharmacy';
+        }
+
+        async function saveProfile() {
+            const data = {
+                name: document.getElementById('pharmacy_name').value, // Map pharmacy name to base user name
+                pharmacy_name: document.getElementById('pharmacy_name').value,
+                owner_name: document.getElementById('owner_name').value,
+                gst_number: document.getElementById('gst_number').value,
+                address: document.getElementById('address').value,
+                opening_time: document.getElementById('opening_time').value,
+                closing_time: document.getElementById('closing_time').value,
+                latitude: document.getElementById('lat').value,
+                longitude: document.getElementById('lng').value,
+                pharmacist_reg_number: document.getElementById('pharmacist_reg_number').value,
+                pan_card_number: document.getElementById('pan_card_number').value,
+                aadhaar_number: document.getElementById('aadhaar_number').value,
+                bank_name: document.getElementById('bank_name').value,
+                ifsc_code: document.getElementById('ifsc_code').value,
+                account_number: document.getElementById('account_number').value
+            };
+
+            const banner = document.getElementById('save-banner');
+            banner.innerHTML = '<i data-lucide="loader-2" class="animate-spin"></i> Saving...';
+            lucide.createIcons();
+
+            try {
+                await api.post('/vendor/profile/update', data);
+                
+                // Update local storage/session storage user object
+                const user = auth.getUser();
+                if (user) {
+                    user.name = data.name;
+                    auth.updateUser(user);
+                }
+
+                // Update active DOM elements on the page immediately
+                document.getElementById('display-name').innerText = data.name;
+                const initials = data.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+                
+                const topProfileContainer = document.querySelector('.vendor-user-profile');
+                if (topProfileContainer) {
+                    const avatarDiv = topProfileContainer.querySelector('div');
+                    const nameDiv = topProfileContainer.querySelector('div:nth-child(2)');
+                    if (avatarDiv) avatarDiv.innerText = initials;
+                    if (nameDiv) nameDiv.innerText = data.name;
+                }
+
+                banner.innerHTML = '<i data-lucide="check"></i> Profile Saved!';
+                banner.style.background = 'var(--success)';
+                lucide.createIcons();
+                
+                setTimeout(() => {
+                    banner.classList.remove('show');
+                    setTimeout(() => {
+                        banner.innerHTML = '<i data-lucide="save"></i> Save Profile Changes';
+                        banner.style.background = '';
+                        lucide.createIcons();
+                    }, 400);
+                }, 2000);
+            } catch (err) {
+                components.showError("Pharmacy profile update failed.");
+                banner.innerHTML = '<i data-lucide="save"></i> Save Profile Changes';
+                lucide.createIcons();
+            }
+        }
+
+        async function updatePassword() {
+            const oldPass = document.getElementById('oldPassword').value;
+            const newPass = document.getElementById('newPassword').value;
+            if (!oldPass || !newPass) return components.showError("All credential fields required.");
+            try {
+                await api.post('/user/password', { old_password: oldPass, new_password: newPass });
+                components.showError("Password updated successfully.");
+                document.getElementById('oldPassword').value = '';
+                document.getElementById('newPassword').value = '';
+            } catch (err) { components.showError(err.message); }
+        }
+
+        async function deactivateAccount() {
+            const confirmed = await components.confirm('Deactivate Account', 'Are you sure you want to deactivate your pharmacy account? Order dispatches will be suspended.', 'Yes, Deactivate');
+            if (!confirmed) return;
+            try {
+                await api.post('/user/deactivate');
+                auth.logout();
+            } catch (err) { components.showError(err.message); }
+        }
+
+        async function deleteAccount() {
+            const pass = await components.prompt("Delete Account", "WARNING: This will permanently delete your pharmacy account. Enter password to confirm:", "", "Delete Permanently");
+            if (!pass) return;
+            try {
+                await api.request('DELETE', '/user/account', { password: pass });
+                components.showError("Pharmacy account deleted successfully.");
+                auth.logout();
+            } catch (err) { components.showError(err.message); }
+        }
+
+        initProfile();
+    </script>
+</body>
+</html>
+</body>
+</html>

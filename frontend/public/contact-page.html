@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Support | MediMitra</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/glass.css">
+    <style>
+        body { min-height: 100vh; background: #f8fafc; display: block; }
+        .contact-container {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 4rem;
+            padding: 120px 0;
+            align-items: flex-start;
+        }
+        .contact-info {
+            padding: 2rem;
+        }
+        .info-item {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+        .info-icon {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border-radius: var(--l-card-r);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            box-shadow: var(--shadow);
+        }
+        .form-card {
+            background: white;
+            padding: 3rem;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-lg);
+        }
+
+        @media (max-width: 992px) {
+            .contact-container { grid-template-columns: 1fr; gap: 2rem; }
+            .contact-info { order: 2; }
+            .form-card { order: 1; }
+        }
+    </style>
+</head>
+<body>
+    <!-- App Loader -->
+    <div id="loader" class="loader-overlay">
+        <div class="loader-spinner"></div>
+    </div>
+
+    <!-- Layout Roots -->
+    <div id="header-root"></div>
+    
+    <main class="container">
+        <div class="contact-container">
+            <div class="contact-info animate-fade-in">
+                <h1 style="font-size: 2.5rem; margin-bottom: 1.5rem; font-weight: 800; letter-spacing: -0.02em;">Get in <span style="color: var(--primary);">Touch.</span></h1>
+                <p style="color: var(--grey); margin-bottom: 3rem;">Have questions about our clinical pharmacy services or partnership opportunities? Our expert support team is here to help 24/7.</p>
+                
+                <div class="info-item">
+                    <div class="info-icon">📞</div>
+                    <div>
+                        <h4 style="margin-bottom: 0.25rem;">Phone Support</h4>
+                        <p style="color: var(--grey);">+1 (800) MEDI-MITRA</p>
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-icon">📧</div>
+                    <div>
+                        <h4 style="margin-bottom: 0.25rem;">Email Inquiry</h4>
+                        <p style="color: var(--grey);">support@medimitra.com</p>
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-icon">📍</div>
+                    <div>
+                        <h4 style="margin-bottom: 0.25rem;">Clinical HQ</h4>
+                        <p style="color: var(--grey);">123 Healthcare Plaza, Phaltan, Satara, MH</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-card animate-scale-in">
+                <form id="contactForm">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <input type="text" placeholder="John Doe" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <input type="email" placeholder="john@example.com" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Department</label>
+                        <select style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: white;">
+                            <option>Patient Support</option>
+                            <option>Pharmacy Partnership</option>
+                            <option>Technical Issue</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Message</label>
+                        <textarea rows="5" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; outline: none; transition: border-color 0.3s;" placeholder="How can we help you?"></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-block">Send Message <span style="margin-left: 8px;">🚀</span></button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-root"></div>
+
+    <!-- Scripts -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/ui-loader.js"></script>
+    <script>
+        document.getElementById('contactForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            btn.disabled = true;
+            btn.innerText = 'Sending...';
+            setTimeout(() => {
+                components.showError('Thank you! Your message has been received.');
+                btn.disabled = false;
+                btn.innerText = 'Send Message 🚀';
+                e.target.reset();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

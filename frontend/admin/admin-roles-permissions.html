@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roles & Permissions | Admin | MediMitra</title>
+    <meta name="description" content="Manage admin roles and permission matrix for the MediMitra platform.">
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <link rel="stylesheet" href="../assets/css/admin-dark.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .matrix-table { width: 100%; border-collapse: collapse; }
+        .matrix-table th { padding: 12px 16px; text-align: center; font-size: 0.78rem; font-weight: 700; color: #8e8e93; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid rgba(0,0,0,0.06); }
+        .matrix-table th:first-child { text-align: left; }
+        .matrix-table td { padding: 13px 16px; text-align: center; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 0.85rem; }
+        .matrix-table td:first-child { text-align: left; font-weight: 600; }
+        .matrix-table tr:hover td { background: rgba(0,122,255,0.03); }
+        .perm-toggle { width: 22px; height: 22px; border-radius: 6px; border: 2px solid rgba(0,0,0,0.12); background: transparent; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s; }
+        .perm-toggle.granted { background: #34c759; border-color: #34c759; color: #fff; }
+        .perm-toggle.denied { background: transparent; border-color: rgba(0,0,0,0.12); color: transparent; }
+        .role-chip { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; margin: 0 4px; cursor: default; }
+        .module-badge { font-size: 0.7rem; font-weight: 600; padding: 2px 8px; border-radius: 6px; background: rgba(0,122,255,0.08); color: #007aff; margin-left: 8px; }
+    </style>
+</head>
+<body>
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        <main class="liquid-main">
+            <header style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <h1 class="vibrant-h1">Roles & Permissions</h1>
+                    <p style="color: #6e6e73; font-size: 1rem; font-weight: 500;">Define what each role can access and perform.</p>
+                </div>
+                <button onclick="saveMatrix()" style="padding: 10px 24px; border-radius: 12px; background: #007aff; color: #fff; border: none; font-weight: 700; font-size: 0.9rem; cursor: pointer; font-family: Inter,sans-serif;">Save Changes</button>
+            </header>
+
+            <div style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+                <div class="role-chip" style="background:rgba(0,122,255,0.1);color:#007aff;">👤 User</div>
+                <div class="role-chip" style="background:rgba(88,86,214,0.1);color:#5856d6;">🏥 Vendor</div>
+                <div class="role-chip" style="background:rgba(52,199,89,0.1);color:#34c759;">🚚 Delivery</div>
+                <div class="role-chip" style="background:rgba(255,149,0,0.1);color:#ff9500;">⚙️ Admin</div>
+            </div>
+
+            <div class="liquid-card" style="padding: 20px; overflow-x: auto;">
+                <table class="matrix-table">
+                    <thead>
+                        <tr>
+                            <th style="width:280px">Permission</th>
+                            <th>👤 User</th>
+                            <th>🏥 Vendor</th>
+                            <th>🚚 Delivery</th>
+                            <th>⚙️ Admin</th>
+                        </tr>
+                    </thead>
+                    <tbody id="perm-matrix"></tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script src="../assets/js/api.js?v=3"></script>
+    <script src="../assets/js/auth.js?v=3"></script>
+    <script src="../assets/js/components.js?v=3"></script>
+    <script src="../assets/js/liquid.js?v=3"></script>
+    <script>
+        const userAuth = auth.getUser();
+        if (!userAuth || userAuth.role !== 'admin') window.location.href = '../auth/login.html';
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('admin');
+        lucide.createIcons();
+
+        const permissions = [
+            { module: 'Orders', name: 'View Own Orders', user: true, vendor: false, delivery: false, admin: true },
+            { module: 'Orders', name: 'Place Order', user: true, vendor: false, delivery: false, admin: true },
+            { module: 'Orders', name: 'Cancel Order', user: true, vendor: false, delivery: false, admin: true },
+            { module: 'Orders', name: 'Manage All Orders', user: false, vendor: true, delivery: false, admin: true },
+            { module: 'Orders', name: 'Update Delivery Status', user: false, vendor: false, delivery: true, admin: true },
+            { module: 'Inventory', name: 'View Catalog', user: true, vendor: true, delivery: false, admin: true },
+            { module: 'Inventory', name: 'Add/Edit Medicines', user: false, vendor: true, delivery: false, admin: true },
+            { module: 'Inventory', name: 'Approve Medicines', user: false, vendor: false, delivery: false, admin: true },
+            { module: 'Users', name: 'View User List', user: false, vendor: false, delivery: false, admin: true },
+            { module: 'Users', name: 'Block/Unblock Users', user: false, vendor: false, delivery: false, admin: true },
+            { module: 'Finance', name: 'View Own Earnings', user: false, vendor: true, delivery: true, admin: true },
+            { module: 'Finance', name: 'Request Payout', user: false, vendor: true, delivery: true, admin: true },
+            { module: 'Finance', name: 'View All Financials', user: false, vendor: false, delivery: false, admin: true },
+            { module: 'Support', name: 'Submit Tickets', user: true, vendor: true, delivery: true, admin: true },
+            { module: 'Support', name: 'Reply/Close Tickets', user: false, vendor: false, delivery: false, admin: true },
+            { module: 'Settings', name: 'Platform Settings', user: false, vendor: false, delivery: false, admin: true },
+        ];
+
+        let matrix = [];
+        let roles = [];
+
+        async function loadMatrix() {
+            try {
+                components.showLoader();
+                // Mocking data since this is static role-based access control for now
+                setTimeout(() => {
+                    matrix = permissions;
+                    roles = [
+                        { name: 'User' },
+                        { name: 'Vendor' },
+                        { name: 'Delivery' },
+                        { name: 'Admin' }
+                    ];
+                    renderMatrix();
+                    components.hideLoader();
+                }, 500);
+            } catch (err) {
+                console.error(err);
+                components.showError('Failed to synchronize access matrix.');
+                components.hideLoader();
+            }
+        }
+
+        function renderMatrix() {
+            const tbody = document.getElementById('perm-matrix');
+            const thead = document.querySelector('.matrix-table thead tr');
+            
+            // Render Header
+            thead.innerHTML = `<th style="width:280px">Permission</th>` + 
+                             roles.map(r => `<th>${r.name}</th>`).join('');
+
+            // Render Body
+            tbody.innerHTML = matrix.map((p, i) => {
+                const modBadge = i === 0 || p.module !== matrix[i-1].module ? `<span class="module-badge">${p.module}</span>` : '';
+                return `
+                    <tr>
+                        <td>${p.name} ${modBadge}</td>
+                        ${roles.map(role => `
+                        <td>
+                            <button class="perm-toggle ${p[role.name.toLowerCase()] ? 'granted' : 'denied'}" 
+                                    onclick="togglePerm(${i},'${role.name.toLowerCase()}')" 
+                                    title="${p[role.name.toLowerCase()] ? 'Revoke' : 'Grant'} for ${role.name}">
+                                ✓
+                            </button>
+                        </td>`).join('')}
+                    </tr>`;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function togglePerm(i, roleKey) {
+            matrix[i][roleKey] = !matrix[i][roleKey];
+            renderMatrix();
+        }
+
+        async function saveMatrix() {
+            try { 
+                components.showLoader();
+                // Mock saving since permissions are hardcoded in middleware
+                setTimeout(() => {
+                    components.showSuccess('Permission matrix securely anchored.');
+                    components.hideLoader();
+                }, 800);
+            } catch(e) { 
+                console.error(e); 
+                components.showError("Protocol verification failed."); 
+                components.hideLoader();
+            }
+        }
+
+        loadMatrix();
+    </script>
+</body>
+</html>

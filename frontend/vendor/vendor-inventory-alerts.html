@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Alerts | Vendor</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+</head>
+
+<body>
+
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+
+        <main class="liquid-main">
+            <header class="vibrant-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <h1 class="vibrant-h1">Stock Alerts</h1>
+                    <p class="vibrant-p">Automated detection of depleted medicine stock.</p>
+                </div>
+                <div class="badge warning" style="font-size: 0.9rem; padding: 12px 24px;">Low Stock Threshold: 15 Units</div>
+            </header>
+
+            <section class="liquid-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                    <h2 class="vibrant-h2">Critical Replenishment Needed</h2>
+                    <span id="alert-count" class="badge danger">-- Alerts</span>
+                </div>
+                
+                <div id="alert-list" class="log-grid">
+                    <p class="muted-text">Checking stock levels...</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        // Check Auth
+        if (auth.getUser()?.role !== 'vendor') window.location.href = '../auth/login.html';
+
+        // Load Sidebar
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('vendor');
+        lucide.createIcons();
+
+        async function loadAlerts() {
+            try {
+                components.showLoader();
+                // Reuse the dashboard stats or dedicated inventory-reports endpoint
+                const res = await api.get('/vendor/inventory-reports'); // Backend logic exists for inventory logs
+                
+                // For MVP, we use the dash stats if reports is too complex
+                const dashRes = await api.get('/vendor/dashboard');
+                const alerts = dashRes.data.stats.low_stock_alerts || [];
+                
+                const list = document.getElementById('alert-list');
+                document.getElementById('alert-count').innerText = `${alerts.length} Active Alerts`;
+
+                if (alerts.length > 0) {
+                    list.innerHTML = alerts.map(m => `
+                        <div class="log-item" onclick="window.location.href='vendor-medicine-form.html?id=${m.id}'" style="cursor: pointer;">
+                            <div class="log-info">
+                                <span class="log-title">${m.name}</span>
+                                <span class="log-meta">Chemical Salt: ${m.salt || 'N/A'}</span>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 1.1rem; font-weight: 800; color: var(--danger);">${m.stock} Units</div>
+                                <div style="font-size: 0.7rem; color: #8e8e93; font-weight: 700; text-transform: uppercase;">Action Required</div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    list.innerHTML = '<div style="text-align: center; padding: 60px; color: #8e8e93;">Stock levels are healthy. No low stock detected.</div>';
+                }
+            } catch (err) {
+                console.error(err);
+                components.showError('Failed to sync supply alerts.');
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        loadAlerts();
+    </script>
+</body>
+
+</html>

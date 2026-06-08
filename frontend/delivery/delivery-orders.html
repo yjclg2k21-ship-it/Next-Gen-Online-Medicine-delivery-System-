@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dispatches | Fleet | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <link rel="stylesheet" href="../assets/css/emergency-alerts.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        
+        .delivery-item-card {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: var(--l-card-r);
+            padding: var(--l-card-p);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            margin-bottom: 16px;
+            display: grid;
+            grid-template-columns: 80px 1fr 180px;
+            align-items: center;
+            gap: 24px;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .delivery-item-card:hover { transform: translateY(-5px); background: rgba(255, 255, 255, 0.6); }
+
+        .route-path {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            position: relative;
+            padding-left: 24px;
+        }
+        .route-path::before {
+            content: '';
+            position: absolute;
+            left: 5px;
+            top: 10px;
+            bottom: 10px;
+            width: 2px;
+            background: dashed rgba(0,0,0,0.1);
+            border-left: 2px dashed rgba(0,0,0,0.1);
+        }
+        .point { position: relative; font-size: 0.9rem; font-weight: 600; }
+        .point::after { content: ''; position: absolute; left: -23px; top: 6px; width: 10px; height: 10px; border-radius: 50%; background: var(--primary); }
+        .point.end::after { background: var(--success); }
+
+        /* Emergency Priority Section */
+        .emergency-priority-section {
+            margin-bottom: 24px;
+            padding: 20px;
+            background: rgba(255, 59, 48, 0.05);
+            border: 2px solid rgba(255, 59, 48, 0.3);
+            border-radius: var(--l-card-r);
+        }
+        .emergency-priority-section h2 {
+            color: #ff3b30;
+            font-size: 1.1rem;
+            font-weight: 800;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .emergency-order-card {
+            background: rgba(255, 59, 48, 0.08);
+            border: 2px solid #ff3b30;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 12px;
+            position: relative;
+        }
+        .emergency-order-card:last-child { margin-bottom: 0; }
+        .emergency-order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+        .emergency-order-header .left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .emergency-sla-timer {
+            font-family: "SF Mono", "Fira Code", "Courier New", monospace;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #ff3b30;
+            padding: 6px 14px;
+            background: rgba(255, 59, 48, 0.1);
+            border-radius: 10px;
+        }
+        .emergency-sla-timer.warning { color: #ff9500; background: rgba(255, 149, 0, 0.1); }
+        .emergency-sla-timer.breached { color: #fff; background: #ff3b30; }
+        .emergency-order-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .emergency-detail-block {
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 12px;
+            padding: 12px 14px;
+        }
+        .emergency-detail-block label {
+            display: block;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #6e6e73;
+            margin-bottom: 4px;
+        }
+        .emergency-detail-block span {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #1d1d1f;
+        }
+        .emergency-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .emergency-actions button {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-accept {
+            background: #ff3b30;
+            color: #fff;
+        }
+        .btn-accept:hover { background: #e0342b; transform: scale(1.02); }
+        .btn-pickup {
+            background: #ff9500;
+            color: #fff;
+        }
+        .btn-pickup:hover { background: #e08600; transform: scale(1.02); }
+        .btn-delivered {
+            background: #34c759;
+            color: #fff;
+        }
+        .btn-delivered:hover { background: #2db84e; transform: scale(1.02); }
+        .btn-disabled {
+            background: rgba(0,0,0,0.05);
+            color: #aaa;
+            cursor: not-allowed;
+        }
+
+        .standard-suppressed-notice {
+            padding: 24px;
+            text-align: center;
+            color: #ff3b30;
+            font-weight: 700;
+            font-size: 0.9rem;
+            background: rgba(255, 59, 48, 0.05);
+            border-radius: 12px;
+            border: 1px dashed rgba(255, 59, 48, 0.3);
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        
+        <main class="liquid-main">
+            <header style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-end;">
+                <div>
+                    <h1 class="vibrant-h1">Active Routes</h1>
+                    <p style="color: #6e6e73; font-size: 1.2rem; font-weight: 500;">Manage your assigned delivery orders.</p>
+                </div>
+                <div class="order-tabs-pill">
+                    <div class="order-pill active">Assigned (8)</div>
+                    <div class="order-pill">In Transit (3)</div>
+                </div>
+            </header>
+
+            <!-- Search, Filter & Sort Bar -->
+            <div style="display:flex; gap:12px; align-items:center; margin-bottom:20px; flex-wrap:wrap;">
+                <input type="text" id="delSearchInput" placeholder="Search order ID..." oninput="applyDeliveryFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; min-width:180px; outline:none;">
+                <select id="delFilterSelect" onchange="applyDeliveryFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; font-weight:600;">
+                    <option value="all">All Status</option>
+                    <option value="assigned">Assigned</option>
+                    <option value="dispatched">Picked/In Transit</option>
+                    <option value="delivered">Delivered</option>
+                </select>
+                <select id="delSortSelect" onchange="applyDeliveryFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; font-weight:600;">
+                    <option value="priority">Priority First</option>
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                </select>
+            </div>
+
+            <!-- Emergency Priority Queue Section -->
+            <div id="emergency-priority-section" class="emergency-priority-section" style="display: none;">
+                <h2><span class="emergency-status-dot"></span> 🚨 Emergency Priority Queue</h2>
+                <div id="emergency-orders-container">
+                    <!-- Emergency order cards rendered here -->
+                </div>
+            </div>
+
+            <div style="display: grid; gap: 12px;" id="orders-list">
+                <!-- Dynamic Orders -->
+                <div style="padding: 40px; text-align: center; color: #6e6e73; font-weight: 600;">Scanning active routes...</div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script src="../assets/js/emergency-alerts.js"></script>
+    <script>
+        // Check Auth
+        const user = auth.getUser();
+        if (!user || user.role !== 'delivery') {
+            window.location.href = '../auth/login.html';
+        }
+
+        // Load Sidebar
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('delivery');
+
+        // =====================================================================
+        // EMERGENCY PRIORITY QUEUE STATE
+        // =====================================================================
+        let emergencyOrders = [];
+        let previousEmergencyIds = [];
+        let emergencyAlertActive = false;
+        let emergencyAccepted = false;
+        let slaCountdownInterval = null;
+        let emergencyPollId = null;
+        let hasActiveEmergency = false;
+
+        // =====================================================================
+        // EMERGENCY PRIORITY QUEUE - 10 SECOND POLLING
+        // =====================================================================
+        function startEmergencyPolling() {
+            emergencyPollId = EmergencyAlerts.startPolling('/delivery/priority-queue', 10000, handleEmergencyQueueData);
+        }
+
+        function handleEmergencyQueueData(data, error) {
+            if (error || !data) {
+                console.error('Emergency queue poll error:', error);
+                return;
+            }
+
+            const orders = data.data && data.data.emergency_orders ? data.data.emergency_orders : [];
+            emergencyOrders = orders;
+
+            // Detect new emergency assignments
+            const currentIds = orders.map(o => o.id);
+            const newOrders = currentIds.filter(id => !previousEmergencyIds.includes(id));
+
+            if (newOrders.length > 0 && !emergencyAccepted) {
+                triggerEmergencyAlert(orders.find(o => o.id === newOrders[0]));
+            }
+
+            previousEmergencyIds = currentIds;
+
+            // Determine if there's an active (accepted/picked_up) emergency
+            hasActiveEmergency = orders.some(o =>
+                o.emergency_status === 'accepted' ||
+                o.emergency_status === 'picked_up' ||
+                o.emergency_status === 'in_transit'
+            );
+
+            renderEmergencySection(orders);
+            suppressStandardOrdersIfNeeded();
+        }
+
+        function triggerEmergencyAlert(order) {
+            if (emergencyAlertActive) return;
+            emergencyAlertActive = true;
+
+            const orderData = order ? {
+                orderId: order.id,
+                customerName: order.customer_name || 'Customer',
+                items: order.items_summary || 'Emergency medicines',
+                slaRemaining: order.sla_remaining ? EmergencyAlerts.formatCountdown(order.sla_remaining) : 'N/A'
+            } : null;
+
+            // Start repeating audio alert every 10 seconds
+            EmergencyAlerts.startRepeatingAlert(10000, { orderData: orderData });
+        }
+
+        function acknowledgeEmergencyAlert() {
+            emergencyAlertActive = false;
+            EmergencyAlerts.stopAudio();
+            EmergencyAlerts.hideOverlay();
+        }
+
+        // =====================================================================
+        // RENDER EMERGENCY SECTION
+        // =====================================================================
+        function renderEmergencySection(orders) {
+            const section = document.getElementById('emergency-priority-section');
+            const container = document.getElementById('emergency-orders-container');
+
+            if (!orders || orders.length === 0) {
+                section.style.display = 'none';
+                stopSLACountdown();
+                return;
+            }
+
+            section.style.display = 'block';
+
+            container.innerHTML = orders.map(order => {
+                const slaRemaining = order.sla_remaining || 0;
+                const slaClass = slaRemaining <= 0 ? 'breached' : (slaRemaining <= 600 ? 'warning' : '');
+                const slaDisplay = slaRemaining <= 0
+                    ? '-' + EmergencyAlerts.formatElapsedBreach(Math.abs(slaRemaining))
+                    : EmergencyAlerts.formatCountdown(slaRemaining);
+
+                const vendorName = order.vendor_name || 'Pharmacy';
+                const vendorAddress = order.vendor_address || 'Pickup location';
+                const vendorDistance = order.vendor_distance_km ? order.vendor_distance_km.toFixed(1) + ' km' : 'N/A';
+                const customerName = order.customer_name || 'Customer';
+                const customerAddress = order.delivery_address || order.address || 'Delivery address';
+
+                const status = order.emergency_status || order.status || 'assigned';
+                const actionButtons = getActionButtons(order.id, status);
+
+                return `
+                <div class="emergency-order-card emergency-highlight" data-order-id="${order.id}" data-sla-remaining="${slaRemaining}" data-sla-deadline="${order.sla_deadline || ''}">
+                    <div class="emergency-order-header">
+                        <div class="left">
+                            <span class="emergency-badge"><i class="ri-alarm-warning-fill"></i> 🚨 EMERGENCY</span>
+                            <span style="font-size: 0.8rem; font-weight: 700; color: #6e6e73;">#MM-DLV-${order.id}</span>
+                        </div>
+                        <div class="emergency-sla-timer ${slaClass}" data-sla-timer="${order.id}">
+                            ${slaDisplay}
+                        </div>
+                    </div>
+                    <div class="emergency-order-details">
+                        <div class="emergency-detail-block">
+                            <label>Vendor Pickup</label>
+                            <span>${vendorName}</span>
+                            <span style="font-size: 0.8rem; color: #6e6e73; margin-top: 2px;">${vendorAddress}</span>
+                            <span style="font-size: 0.75rem; color: #ff3b30; font-weight: 700; margin-top: 4px;">📍 ${vendorDistance} away</span>
+                        </div>
+                        <div class="emergency-detail-block">
+                            <label>Customer Delivery</label>
+                            <span>${customerName}</span>
+                            <span style="font-size: 0.8rem; color: #6e6e73; margin-top: 2px;">${customerAddress}</span>
+                        </div>
+                    </div>
+                    <div class="emergency-actions">
+                        ${actionButtons}
+                    </div>
+                </div>
+                `;
+            }).join('');
+
+            // Start SLA countdown updates every 1 second
+            startSLACountdown();
+        }
+
+        function getActionButtons(orderId, status) {
+            switch (status) {
+                case 'assigned':
+                    return `
+                        <button class="btn-accept" onclick="acceptEmergencyOrder(${orderId})">✓ Accept</button>
+                        <button class="btn-disabled" disabled>Picked Up</button>
+                        <button class="btn-disabled" disabled>Delivered</button>
+                    `;
+                case 'accepted':
+                    return `
+                        <button class="btn-disabled" disabled>✓ Accepted</button>
+                        <button class="btn-pickup" onclick="pickupEmergencyOrder(${orderId})">📦 Picked Up</button>
+                        <button class="btn-disabled" disabled>Delivered</button>
+                    `;
+                case 'picked_up':
+                case 'in_transit':
+                    return `
+                        <button class="btn-disabled" disabled>✓ Accepted</button>
+                        <button class="btn-disabled" disabled>✓ Picked Up</button>
+                        <button class="btn-delivered" onclick="deliverEmergencyOrder(${orderId})">🏠 Delivered</button>
+                    `;
+                default:
+                    return `
+                        <button class="btn-accept" onclick="acceptEmergencyOrder(${orderId})">✓ Accept</button>
+                        <button class="btn-disabled" disabled>Picked Up</button>
+                        <button class="btn-disabled" disabled>Delivered</button>
+                    `;
+            }
+        }
+
+        // =====================================================================
+        // SLA COUNTDOWN TIMER - Updates every 1 second
+        // =====================================================================
+        function startSLACountdown() {
+            stopSLACountdown();
+            slaCountdownInterval = setInterval(updateSLATimers, 1000);
+        }
+
+        function stopSLACountdown() {
+            if (slaCountdownInterval) {
+                clearInterval(slaCountdownInterval);
+                slaCountdownInterval = null;
+            }
+        }
+
+        function updateSLATimers() {
+            const cards = document.querySelectorAll('.emergency-order-card');
+            cards.forEach(card => {
+                let remaining = parseInt(card.getAttribute('data-sla-remaining'));
+                remaining -= 1;
+                card.setAttribute('data-sla-remaining', remaining);
+
+                const timerId = card.getAttribute('data-order-id');
+                const timerEl = card.querySelector(`[data-sla-timer="${timerId}"]`);
+                if (timerEl) {
+                    const slaClass = remaining <= 0 ? 'breached' : (remaining <= 600 ? 'warning' : '');
+                    timerEl.className = 'emergency-sla-timer ' + slaClass;
+
+                    if (remaining <= 0) {
+                        timerEl.textContent = '-' + EmergencyAlerts.formatElapsedBreach(Math.abs(remaining));
+                    } else {
+                        timerEl.textContent = EmergencyAlerts.formatCountdown(remaining);
+                    }
+                }
+            });
+        }
+
+        // =====================================================================
+        // EMERGENCY ORDER ACTIONS
+        // =====================================================================
+        async function acceptEmergencyOrder(orderId) {
+            try {
+                components.showLoader();
+                const res = await api.post(`/delivery/emergency/${orderId}/accept`);
+                if (res.success) {
+                    emergencyAccepted = true;
+                    acknowledgeEmergencyAlert();
+                    components.showSuccess('Emergency order accepted. Proceed to vendor for pickup.');
+                    // Refresh emergency queue immediately
+                    handleEmergencyQueueData(await api.get('/delivery/priority-queue'), null);
+                    loadOrders();
+                } else {
+                    components.showError(res.error || 'Failed to accept emergency order.');
+                }
+            } catch (err) {
+                console.error(err);
+                components.showError('Failed to accept emergency order.');
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        async function pickupEmergencyOrder(orderId) {
+            try {
+                components.showLoader();
+                const res = await api.post(`/delivery/emergency/${orderId}/pickup`);
+                if (res.success) {
+                    components.showSuccess('Pickup confirmed. Navigate to customer delivery address.');
+                    // Refresh emergency queue immediately
+                    handleEmergencyQueueData(await api.get('/delivery/priority-queue'), null);
+                    loadOrders();
+                } else {
+                    components.showError(res.error || 'Failed to confirm pickup.');
+                }
+            } catch (err) {
+                console.error(err);
+                components.showError('Failed to confirm pickup.');
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        async function deliverEmergencyOrder(orderId) {
+            try {
+                components.showLoader();
+                const res = await api.post(`/delivery/emergency/${orderId}/deliver`);
+                if (res.success) {
+                    emergencyAccepted = false;
+                    hasActiveEmergency = false;
+                    components.showSuccess('Delivery confirmed! Partner unlocked for new orders.');
+                    // Refresh emergency queue immediately
+                    handleEmergencyQueueData(await api.get('/delivery/priority-queue'), null);
+                    loadOrders();
+                } else {
+                    components.showError(res.error || 'Failed to confirm delivery.');
+                }
+            } catch (err) {
+                console.error(err);
+                components.showError('Failed to confirm delivery.');
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        // =====================================================================
+        // SUPPRESS STANDARD ORDERS WHEN EMERGENCY IS ACTIVE
+        // =====================================================================
+        function suppressStandardOrdersIfNeeded() {
+            const ordersList = document.getElementById('orders-list');
+            if (hasActiveEmergency) {
+                ordersList.innerHTML = `
+                    <div class="standard-suppressed-notice">
+                        🚨 Standard order notifications suppressed while emergency delivery is active.<br>
+                        <span style="font-weight: 500; font-size: 0.8rem; color: #6e6e73;">Complete your emergency delivery to resume standard orders.</span>
+                    </div>
+                `;
+            }
+        }
+
+        // =====================================================================
+        // STANDARD ORDERS LOADING
+        // =====================================================================
+        let allDeliveryOrders = [];
+
+        async function loadOrders() {
+            // If emergency is active, suppress standard orders
+            if (hasActiveEmergency) {
+                suppressStandardOrdersIfNeeded();
+                return;
+            }
+
+            try {
+                components.showLoader();
+                const res = await api.get('/delivery/orders');
+                allDeliveryOrders = res.data.orders || [];
+                
+                // Update Badge Counts
+                const assignedCount = allDeliveryOrders.filter(o => o.status === 'assigned').length;
+                const transitCount = allDeliveryOrders.filter(o => o.status === 'dispatched' || o.status === 'processing').length;
+                
+                document.querySelector('.order-tabs-pill').innerHTML = `
+                    <div class="order-pill ${assignedCount > 0 ? 'active' : ''}">Assigned (${assignedCount})</div>
+                    <div class="order-pill ${assignedCount === 0 && transitCount > 0 ? 'active' : ''}">In Transit (${transitCount})</div>
+                `;
+
+                applyDeliveryFilters();
+            } catch (err) {
+                console.error(err);
+                components.showError("Failed to synchronize active routes.");
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        function applyDeliveryFilters() {
+            if (hasActiveEmergency) return;
+
+            const search = (document.getElementById('delSearchInput').value || '').toLowerCase();
+            const filter = document.getElementById('delFilterSelect').value;
+            const sort = document.getElementById('delSortSelect').value;
+
+            let orders = [...allDeliveryOrders];
+
+            if (search) {
+                orders = orders.filter(o => String(o.id).toLowerCase().includes(search));
+            }
+            if (filter !== 'all') {
+                if (filter === 'dispatched') {
+                    orders = orders.filter(o => o.status === 'dispatched' || o.status === 'processing');
+                } else {
+                    orders = orders.filter(o => o.status === filter);
+                }
+            }
+
+            if (sort === 'priority') {
+                orders.sort((a, b) => {
+                    const aE = a.type === 1 || a.type === 'emergency' || a.is_emergency;
+                    const bE = b.type === 1 || b.type === 'emergency' || b.is_emergency;
+                    if (aE && !bE) return -1;
+                    if (!aE && bE) return 1;
+                    return 0;
+                });
+            } else if (sort === 'newest') {
+                orders.sort((a, b) => parseInt(b.id || 0) - parseInt(a.id || 0));
+            } else if (sort === 'oldest') {
+                orders.sort((a, b) => parseInt(a.id || 0) - parseInt(b.id || 0));
+            }
+
+            renderOrders(orders);
+        }
+
+        function renderOrders(orders) {
+            const container = document.getElementById('orders-list');
+            if (!orders || orders.length === 0) {
+                container.innerHTML = '<div style="padding: 60px; text-align: center; color: #6e6e73; font-weight: 600;">No active dispatches assigned to your node.</div>';
+                return;
+            }
+
+            container.innerHTML = orders.map(o => {
+                const isEmergency = o.type === 1 || o.type === 'emergency' || o.is_emergency;
+                const isDelivered = o.status === 'delivered';
+                const statusColor = isDelivered ? 'var(--success)' : (isEmergency ? '#ff3b30' : 'var(--primary)');
+                const icon = isEmergency ? '🧪' : '📦';
+                
+                let subLabelHtml = '';
+                if (isDelivered) {
+                    subLabelHtml = `<div style="font-size: 0.75rem; color: var(--success); font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">✓ Delivered</div>`;
+                } else {
+                    subLabelHtml = `
+                        <div style="font-size: 0.75rem; color: ${statusColor}; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">
+                            ${isEmergency ? '🚨 EMERGENCY: DELIVER ASAP' : 'EST. TIME: 15-30 MINS'}
+                        </div>`;
+                }
+
+                let buttonsHtml = '';
+                if (isDelivered) {
+                    buttonsHtml = `
+                        <button class="pill-button" style="width: 100%; justify-content: center; padding: 12px 10px; font-size: 0.85rem;" onclick="window.location.href='delivery-order-details.html?id=${o.id}'">
+                            View Details
+                        </button>
+                    `;
+                } else {
+                    buttonsHtml = `
+                        <div style="display: grid; grid-template-columns: ${o.status === 'assigned' ? '1fr 1fr' : '1fr'}; gap: 8px; width: 100%;">
+                            <button class="pill-button" style="width: 100%; justify-content: center; padding: 12px 10px; font-size: 0.85rem;" onclick="window.location.href='delivery-order-details.html?id=${o.id}'">
+                                ${o.status === 'assigned' ? 'Start Route' : 'View Progress'}
+                            </button>
+                            ${o.status === 'assigned' ? `
+                            <button class="pill-button" style="width: 100%; justify-content: center; padding: 12px 10px; font-size: 0.85rem; background: rgba(255,59,48,0.1); color: #ff3b30; border: 1px solid rgba(255,59,48,0.2);" onclick="rejectOrder('${o.id}')">
+                                Reject
+                            </button>` : ''}
+                        </div>
+                    `;
+                }
+                
+                return `
+                <div class="delivery-item-card" style="${isEmergency ? 'border-left: 5px solid #ff3b30;' : (isDelivered ? 'border-left: 5px solid var(--success);' : '')}">
+                    <div style="background: white; width: 80px; height: 80px; border-radius: var(--l-card-r); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; border: 1px solid rgba(0,0,0,0.05);">${icon}</div>
+                    <div class="route-path">
+                        <div class="point">Pharmacy Node (Pickup)</div>
+                        <div class="point end">${o.address || 'Standard Location'} (Delivery)</div>
+                        ${subLabelHtml}
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="display: block; font-family: monospace; font-weight: 800; font-size: 0.8rem; color: #6e6e73; margin-bottom: 4px;">#MM-DLV-${o.id}</span>
+                        <div style="margin-bottom: 12px;">
+                            <span style="background: ${isDelivered ? 'rgba(52,199,89,0.1)' : (isEmergency ? 'rgba(255,59,48,0.1)' : 'rgba(0,122,255,0.1)')}; color: ${statusColor}; padding: 4px 10px; border-radius: 8px; font-size: 0.7rem; font-weight: 800;">
+                                ${isDelivered ? 'DELIVERED' : (isEmergency ? 'EMERGENCY' : 'STANDARD')}
+                            </span>
+                        </div>
+                        <div style="width: 100%;">
+                            ${buttonsHtml}
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        async function rejectOrder(id) {
+            const reason = await components.prompt("Reject Order", "Enter reason for rejection:", "", "Reject");
+            if (!reason) return;
+            try {
+                components.showLoader();
+                const res = await api.post(`/delivery/orders/${id}/reject`, { reason });
+                if (res.success) {
+                    components.showSuccess("Order returned to dispatch queue.");
+                    loadOrders();
+                }
+            } catch (err) {
+                components.showError("Failed to reject order.");
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        // =====================================================================
+        // INITIALIZATION
+        // =====================================================================
+        loadOrders();
+        startEmergencyPolling();
+    </script>
+</body>
+</html>

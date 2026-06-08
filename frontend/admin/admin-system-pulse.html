@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Pulse | Admin | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <link rel="stylesheet" href="../assets/css/admin-dark.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .metric-card { background: #fff; border-radius: 16px; padding: 20px 24px; display: flex; align-items: center; gap: 16px; border: 1px solid rgba(0,0,0,0.06); transition: transform 0.2s; }
+        .metric-card:hover { transform: translateY(-2px); }
+        .metric-icon { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
+        .progress-bar-wrap { background: rgba(0,0,0,0.06); border-radius: 8px; height: 8px; overflow: hidden; margin-top: 8px; }
+        .progress-bar { height: 8px; border-radius: 8px; transition: width 0.5s ease; }
+        .live-dot { width: 8px; height: 8px; background: #34c759; border-radius: 50%; display: inline-block; animation: pulse-dot 1.5s infinite; }
+        @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.3)} }
+        .log-entry { padding: 10px 14px; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 0.8rem; font-family: monospace; display: grid; grid-template-columns: 90px 70px 1fr; gap: 10px; }
+        .log-entry:hover { background: rgba(0,0,0,0.02); }
+    </style>
+</head>
+<body>
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        <main class="liquid-main">
+            <header style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1 class="vibrant-h1">System Pulse</h1>
+                    <p style="color: #6e6e73; font-size: 1rem; font-weight: 500;">Live server health and operational metrics.</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="live-dot"></span>
+                    <span style="font-size: 0.82rem; font-weight: 700; color: #34c759;">Live — Auto-refreshes every 15s</span>
+                </div>
+            </header>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px;">
+                <div class="metric-card">
+                    <div class="metric-icon" style="background:rgba(0,122,255,0.1);">🖥️</div>
+                    <div style="flex:1">
+                        <div style="font-size:0.78rem;color:#8e8e93;font-weight:600;">CPU Usage</div>
+                        <div style="font-size:1.6rem;font-weight:800;" id="cpu-val">—</div>
+                        <div class="progress-bar-wrap"><div class="progress-bar" id="cpu-bar" style="background:#007aff;width:0%"></div></div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon" style="background:rgba(88,86,214,0.1);">🧠</div>
+                    <div style="flex:1">
+                        <div style="font-size:0.78rem;color:#8e8e93;font-weight:600;">Memory Usage</div>
+                        <div style="font-size:1.6rem;font-weight:800;" id="mem-val">—</div>
+                        <div class="progress-bar-wrap"><div class="progress-bar" id="mem-bar" style="background:#5856d6;width:0%"></div></div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon" style="background:rgba(52,199,89,0.1);">⚡</div>
+                    <div style="flex:1">
+                        <div style="font-size:0.78rem;color:#8e8e93;font-weight:600;">API Latency</div>
+                        <div style="font-size:1.6rem;font-weight:800;" id="lat-val">—</div>
+                        <div style="font-size:0.75rem;color:#34c759;font-weight:600;margin-top:6px;">Excellent response time</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="liquid-card" style="padding: 20px;">
+                    <h3 style="font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:8px;"><i data-lucide="activity" style="color:#007aff;width:18px;height:18px;"></i> Key Metrics</h3>
+                    <div id="metrics-grid" style="display:grid;gap:12px;"></div>
+                    <button onclick="triggerPulse()" style="margin-top:16px;width:100%;padding:12px;border-radius:12px;background:linear-gradient(135deg,#007aff,#5856d6);color:#fff;border:none;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;font-size:0.9rem;">🚀 Trigger Global Pulse</button>
+                </div>
+
+                <div class="liquid-card" style="padding: 20px;">
+                    <h3 style="font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:8px;"><i data-lucide="terminal" style="color:#5856d6;width:18px;height:18px;"></i> Recent Events</h3>
+                    <div id="pulse-logs" style="max-height:300px;overflow-y:auto;"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        const user = auth.getUser();
+        if (!user || user.role !== 'admin') window.location.href = '../auth/login.html';
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('admin');
+        lucide.createIcons();
+
+        async function fetchPulse() {
+            try { 
+                const res = await api.get('/admin/pulse'); 
+                const pulse = (res.data && res.data.pulse) || res.pulse || {};
+                
+                const cpu = parseInt(pulse.cpu) || 0; 
+                const mem = parseInt(pulse.mem) || 0;
+                
+                document.getElementById('cpu-val').textContent = pulse.cpu || '0%';
+                document.getElementById('mem-val').textContent = pulse.mem || '0 MB';
+                document.getElementById('lat-val').textContent = pulse.latency || '0ms';
+                
+                document.getElementById('cpu-bar').style.width = cpu + '%';
+                document.getElementById('mem-bar').style.width = Math.min(mem * 2, 100) + '%';
+                document.getElementById('cpu-bar').style.background = cpu > 80 ? '#ff3b30' : cpu > 60 ? '#ff9500' : '#007aff';
+                document.getElementById('mem-bar').style.background = mem > 85 ? '#ff3b30' : mem > 70 ? '#ff9500' : '#5856d6';
+
+                const metrics = [
+                    { label: 'API Uptime', value: pulse.api_uptime || '100%', color: '#34c759' },
+                    { label: 'Active Users (15min)', value: pulse.active_nodes || '0', color: '#007aff' },
+                    { label: 'Order Velocity', value: pulse.order_velocity || '0 orders/hr', color: '#ff9500' },
+                    { label: 'Response Time', value: pulse.latency || '0ms', color: '#5856d6' },
+                ];
+                document.getElementById('metrics-grid').innerHTML = metrics.map(m => `
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:rgba(0,0,0,0.03);border-radius:10px;">
+                        <span style="font-size:0.85rem;color:#6e6e73;font-weight:500;">${m.label}</span>
+                        <span style="font-weight:800;color:${m.color}">${m.value}</span>
+                    </div>
+                `).join('');
+            } catch(e) {
+                console.error('Pulse fetch failed:', e);
+            }
+        }
+
+        async function fetchLogs() {
+            try {
+                const res = await api.get('/admin/logs/activity');
+                const logs = (res.data && res.data.logs) || [];
+                
+                if (logs.length === 0) {
+                    document.getElementById('pulse-logs').innerHTML = '<div style="padding:20px;text-align:center;color:#8e8e93;font-size:0.85rem;">No recent events.</div>';
+                    return;
+                }
+
+                document.getElementById('pulse-logs').innerHTML = logs.slice(0, 15).map(l => {
+                    const time = l.created_at ? new Date(l.created_at).toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit'}) : '--:--';
+                    const action = l.action || l.msg || 'Unknown';
+                    const entity = l.entity_type ? `${l.entity_type} #${l.entity_id || ''}` : '';
+                    return `
+                        <div class="log-entry">
+                            <span style="color:#8e8e93">${time}</span>
+                            <span style="color:#007aff;font-weight:800">[EVENT]</span>
+                            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${action} ${entity}</span>
+                        </div>
+                    `;
+                }).join('');
+            } catch(e) {
+                console.error('Log fetch failed:', e);
+                document.getElementById('pulse-logs').innerHTML = '<div style="padding:20px;text-align:center;color:#8e8e93;font-size:0.85rem;">Unable to load events.</div>';
+            }
+        }
+
+        async function triggerPulse() {
+            const btn = document.querySelector('button[onclick="triggerPulse()"]');
+            const originalText = btn.innerText;
+            btn.innerText = "Synchronizing...";
+            btn.disabled = true;
+            
+            try { 
+                await api.post('/admin/pulse/trigger', {}); 
+                components.showSuccess('Global pulse triggered. All systems synchronized.');
+                fetchPulse();
+                fetchLogs();
+            } catch(e) { 
+                console.error(e); 
+                components.showError("Network exception or protocol verification failed."); 
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        fetchPulse();
+        fetchLogs();
+        setInterval(fetchPulse, 10000);
+        setInterval(fetchLogs, 30000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendor Settings | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        
+        .settings-grid {
+            display: grid; grid-template-columns: 280px 1fr; gap: 32px; height: 100%;
+        }
+
+        .side-menu {
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .side-item {
+            padding: 14px 20px; border-radius: 16px; font-weight: 700; color: #6e6e73; cursor: pointer; transition: all 0.3s;
+            display: flex; align-items: center; gap: 12px;
+        }
+        .side-item:hover { background: rgba(0,0,0,0.03); color: #1d1d1f; }
+        .side-item.active { background: white; color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body>
+    
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        
+        <main class="liquid-main">
+            <header style="margin-bottom: 32px;">
+                <h1 class="vibrant-h1">Pharmacy Settings</h1>
+                <p style="color: #6e6e73; font-size: 1.2rem; font-weight: 500;">Manage your store settings and financial info.</p>
+            </header>
+
+            <div class="settings-grid">
+                <nav class="side-menu">
+                    <div class="side-item active" onclick="switchSection(this, 'bank')">
+                        <i data-lucide="landmark"></i> Bank & Payouts
+                    </div>
+                    <div class="side-item" onclick="switchSection(this, 'hours')">
+                        <i data-lucide="clock"></i> Store Hours
+                    </div>
+                    <div class="side-item" onclick="switchSection(this, 'security')">
+                        <i data-lucide="shield-check"></i> Security
+                    </div>
+                    <div class="side-item" onclick="switchSection(this, 'delivery-zone')">
+                        <i data-lucide="map-pin"></i> Delivery Zone
+                    </div>
+                    <div class="side-item" onclick="auth.logout()" style="margin-top: auto; color: var(--danger);">
+                        <i data-lucide="log-out"></i> Sign Out
+                    </div>
+                </nav>
+
+                <div class="liquid-card" style="padding: 40px; position: relative; overflow-y: auto;">
+                    <div id="section-bank" class="config-sec">
+                        <h3 style="font-weight: 800; margin-bottom: 24px;">Bank & Payouts</h3>
+                        <div style="background: rgba(52, 199, 89, 0.05); padding: 20px; border-radius: 16px; border: 1px solid rgba(52, 199, 89, 0.1); margin-bottom: 24px;">
+                            <div style="font-size: 0.9rem; color: var(--success); font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                                <i data-lucide="check-circle" size="18"></i> KYC Verified
+                            </div>
+                            <div style="font-size: 0.8rem; color: #6e6e73; margin-top: 8px;">Weekly payouts are scheduled for every Monday.</div>
+                        </div>
+                        <div class="input-card" style="margin-bottom: 16px;">
+                            <label class="field-label">Bank Name</label>
+                            <input type="text" id="bank_name" class="field-input" placeholder="e.g. HDFC Bank">
+                        </div>
+                        <div class="input-card" style="margin-bottom: 16px;">
+                            <label class="field-label">Settlement Account Number</label>
+                            <input type="text" id="account_number" class="field-input" placeholder="e.g. 5010023456789">
+                        </div>
+                        <div class="input-card" style="margin-bottom: 24px;">
+                            <label class="field-label">IFSC Code</label>
+                            <input type="text" id="ifsc_code" class="field-input" placeholder="e.g. HDFC0001234">
+                        </div>
+                        <button class="pill-button" onclick="saveBankDetails()">Save Payout Details</button>
+                    </div>
+
+                    <div id="section-hours" class="config-sec" style="display: none;">
+                        <h3 style="font-weight: 800; margin-bottom: 24px;">Store Hours</h3>
+                        <p style="color: #6e6e73; margin-bottom: 24px; font-weight: 600;">Define when your pharmacy is active for new orders.</p>
+                        
+                        <div id="hours-view">
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.06);">
+                                <span style="font-weight: 700;">Monday - Saturday</span>
+                                <span id="hours-text" style="font-weight: 800; color: var(--primary);">Not Set</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0;">
+                                <span style="font-weight: 700;">Sunday</span>
+                                <span id="sunday-status-text" style="font-weight: 800; color: #ff3b30;">Closed</span>
+                            </div>
+                            <button class="pill-button" style="margin-top: 32px;" onclick="showHoursEditor(true)">Edit Schedule</button>
+                        </div>
+
+                        <div id="hours-edit" style="display: none; flex-direction: column; gap: 16px; max-width: 420px; margin-top: 16px;">
+                            <div class="input-card">
+                                <label class="field-label">Opening Time (Mon–Sat)</label>
+                                <input type="time" id="opening_time" class="field-input">
+                            </div>
+                            <div class="input-card">
+                                <label class="field-label">Closing Time (Mon–Sat)</label>
+                                <input type="time" id="closing_time" class="field-input">
+                            </div>
+
+                            <!-- Sunday Toggle -->
+                            <div class="input-card" style="display: flex; align-items: center; justify-content: space-between;">
+                                <div>
+                                    <div class="field-label" style="margin-bottom: 4px;">Sunday</div>
+                                    <div style="font-size: 0.85rem; color: #6e6e73; font-weight: 600;">Is your pharmacy open on Sundays?</div>
+                                </div>
+                                <label style="position: relative; display: inline-block; width: 52px; height: 28px; cursor: pointer;">
+                                    <input type="checkbox" id="sunday_open" style="opacity:0; width:0; height:0;" onchange="toggleSundayFields()">
+                                    <span id="sunday-toggle-track" style="position:absolute; top:0; left:0; right:0; bottom:0; background:#ddd; border-radius:28px; transition:0.3s;">
+                                        <span id="sunday-toggle-knob" style="position:absolute; height:22px; width:22px; left:3px; bottom:3px; background:white; border-radius:50%; transition:0.3s; box-shadow:0 2px 4px rgba(0,0,0,0.2);"></span>
+                                    </span>
+                                </label>
+                            </div>
+
+                            <div id="sunday-hours-fields" style="display: none; flex-direction: column; gap: 12px;">
+                                <div class="input-card">
+                                    <label class="field-label">Sunday Opening Time</label>
+                                    <input type="time" id="sunday_opening_time" class="field-input">
+                                </div>
+                                <div class="input-card">
+                                    <label class="field-label">Sunday Closing Time</label>
+                                    <input type="time" id="sunday_closing_time" class="field-input">
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 12px; margin-top: 12px;">
+                                <button class="pill-button" onclick="saveHours()">Save Schedule</button>
+                                <button class="pill-button" style="background: rgba(0,0,0,0.05); color: black;" onclick="showHoursEditor(false)">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="section-security" class="config-sec" style="display: none;">
+                        <h3 style="font-weight: 800; margin-bottom: 24px;">Security & Access</h3>
+                        <div class="input-card" style="margin-bottom: 16px;">
+                            <label class="field-label">Current Password</label>
+                            <input type="password" class="field-input" value="••••••••">
+                        </div>
+                        <div class="input-card" style="margin-bottom: 24px;">
+                            <label class="field-label">New Password</label>
+                            <input type="password" class="field-input" placeholder="Enter new password">
+                        </div>
+                        <button class="pill-button" onclick="updatePassword()">Update Password</button>
+                    </div>
+
+                    <!-- ═══ DELIVERY ZONE SECTION ═══ -->
+                    <div id="section-delivery-zone" class="config-sec" style="display: none;">
+                        <h3 style="font-weight: 800; margin-bottom: 8px;">Delivery Zone</h3>
+                        <p style="color: #6e6e73; font-size: 0.9rem; font-weight: 600; margin-bottom: 24px;">
+                            Set how far your pharmacy delivers. <strong style="color:#ff3b30;">Maximum allowed: 20 km.</strong>
+                        </p>
+
+                        <!-- Radius Slider -->
+                        <div class="input-card" style="margin-bottom: 20px;">
+                            <label class="field-label" style="display:flex;justify-content:space-between;align-items:center;">
+                                <span>Delivery Radius</span>
+                                <strong id="radius-display" style="font-size:1.3rem;color:var(--primary);">10 km</strong>
+                            </label>
+                            <input type="range" id="delivery_radius_km" min="0" max="20" step="0.5" value="10"
+                                style="width:100%;accent-color:var(--primary);height:6px;margin-top:12px;cursor:pointer;"
+                                oninput="updateRadiusDisplay(this.value)">
+                            <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:#6e6e73;font-weight:700;margin-top:6px;">
+                                <span>0 km</span><span>5 km</span><span>10 km</span><span>15 km</span><span>20 km</span>
+                            </div>
+                        </div>
+
+                        <!-- Store Location -->
+                        <div class="input-card" style="margin-bottom: 16px;">
+                            <label class="field-label" style="display:flex;justify-content:space-between;align-items:center;">
+                                📍 Store Location
+                                <button type="button" onclick="useStoreGPS()"
+                                    style="padding:6px 14px;border-radius:100px;border:none;background:linear-gradient(135deg,#007aff,#00c6ff);color:#fff;font-weight:800;font-size:0.75rem;cursor:pointer;">
+                                    Use GPS
+                                </button>
+                            </label>
+                            <div id="zone-map" style="height:220px;border-radius:14px;border:2px solid rgba(0,122,255,0.15);overflow:hidden;margin-top:10px;z-index:0;"></div>
+                            <div id="zone-coords" style="font-size:0.75rem;color:#8e8e93;font-weight:600;margin-top:6px;">
+                                Click map to pin your store location
+                            </div>
+                            <input type="hidden" id="store_lat">
+                            <input type="hidden" id="store_lng">
+                        </div>
+
+                        <button class="pill-button" onclick="saveDeliveryZone()">
+                            <i data-lucide="save"></i> Save Delivery Zone
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Leaflet for zone map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Scripts -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        // Check Auth
+        const user = auth.getUser();
+        if (!user || user.role !== 'vendor') { window.location.href = '../auth/login.html'; }
+
+        // Load Sidebar
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('vendor');
+        lucide.createIcons();
+
+        function switchSection(el, id) {
+            document.querySelectorAll('.side-item').forEach(i => i.classList.remove('active'));
+            document.querySelectorAll('.config-sec').forEach(s => s.style.display = 'none');
+            
+            el.classList.add('active');
+            document.getElementById('section-' + id).style.display = 'block';
+            if (id === 'delivery-zone') {
+                setTimeout(initZoneMap, 100);
+            }
+        }
+
+        // Helper to format HH:MM:SS to 12-hour format with AM/PM
+        function formatTime(timeStr) {
+            if (!timeStr) return 'Closed';
+            const parts = timeStr.split(':');
+            let hours = parseInt(parts[0], 10);
+            const minutes = parts[1] || '00';
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            const strTime = (hours < 10 ? '0' + hours : hours) + ':' + minutes + ' ' + ampm;
+            return strTime;
+        }
+
+        // Load profile data
+        async function loadProfile() {
+            try {
+                components.showLoader();
+                const res = await api.get('/vendor/profile');
+                const p = res.data.profile;
+
+                // Populate Bank details
+                document.getElementById('bank_name').value = p.bank_name || '';
+                document.getElementById('account_number').value = p.account_number || '';
+                document.getElementById('ifsc_code').value = p.ifsc_code || '';
+
+                // Populate Time inputs (format HH:MM for input[type=time])
+                if (p.opening_time) {
+                    document.getElementById('opening_time').value = p.opening_time.substring(0, 5);
+                }
+                if (p.closing_time) {
+                    document.getElementById('closing_time').value = p.closing_time.substring(0, 5);
+                }
+
+                // Sunday open toggle
+                const sundayOpen = p.sunday_open == 1;
+                document.getElementById('sunday_open').checked = sundayOpen;
+                updateSundayToggleUI(sundayOpen);
+                if (p.sunday_opening_time) {
+                    document.getElementById('sunday_opening_time').value = p.sunday_opening_time.substring(0, 5);
+                }
+                if (p.sunday_closing_time) {
+                    document.getElementById('sunday_closing_time').value = p.sunday_closing_time.substring(0, 5);
+                }
+                document.getElementById('sunday-hours-fields').style.display = sundayOpen ? 'flex' : 'none';
+
+                // Update Hours View Text
+                if (p.opening_time && p.closing_time) {
+                    const openFormatted = formatTime(p.opening_time);
+                    const closeFormatted = formatTime(p.closing_time);
+                    document.getElementById('hours-text').innerText = `${openFormatted} - ${closeFormatted}`;
+                } else {
+                    document.getElementById('hours-text').innerText = 'Not Set';
+                }
+
+                // Sunday view text
+                const sundayStatusEl = document.getElementById('sunday-status-text');
+                if (sundayOpen) {
+                    const sOpen = formatTime(p.sunday_opening_time);
+                    const sClose = formatTime(p.sunday_closing_time);
+                    sundayStatusEl.style.color = 'var(--primary)';
+                    sundayStatusEl.innerText = (p.sunday_opening_time && p.sunday_closing_time) ? `${sOpen} - ${sClose}` : 'Open';
+                } else {
+                    sundayStatusEl.style.color = '#ff3b30';
+                    sundayStatusEl.innerText = 'Closed';
+                }
+                // Load delivery zone settings
+                const radius = parseFloat(p.delivery_radius_km || 10);
+                const sliderEl = document.getElementById('delivery_radius_km');
+                sliderEl.value = Math.min(radius, 20);
+                updateRadiusDisplay(sliderEl.value);
+
+                if (p.latitude) document.getElementById('store_lat').value = p.latitude;
+                if (p.longitude) document.getElementById('store_lng').value = p.longitude;
+
+            } catch (err) {
+                console.error(err);
+                components.showError("Failed to fetch settings.");
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        // ── DELIVERY ZONE FUNCTIONS ───────────────────────────────────────
+        let zoneMap = null, zoneMarker = null, zoneCircle = null;
+
+        function updateRadiusDisplay(val) {
+            document.getElementById('radius-display').textContent = val + ' km';
+            if (zoneCircle) {
+                zoneCircle.setRadius(parseFloat(val) * 1000);
+            }
+        }
+
+        function initZoneMap() {
+            if (zoneMap) { zoneMap.invalidateSize(); return; }
+            const lat = parseFloat(document.getElementById('store_lat').value) || 17.9868;
+            const lng = parseFloat(document.getElementById('store_lng').value) || 74.4379;
+            const radius = parseFloat(document.getElementById('delivery_radius_km').value) || 10;
+
+            zoneMap = L.map('zone-map').setView([lat, lng], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap', maxZoom: 19
+            }).addTo(zoneMap);
+
+            // Place existing pin if coords are set
+            if (document.getElementById('store_lat').value) {
+                placeStorePin(lat, lng, false);
+            }
+
+            zoneMap.on('click', e => placeStorePin(e.latlng.lat, e.latlng.lng, true));
+        }
+
+        function placeStorePin(lat, lng, updateCoords = true) {
+            if (zoneMarker) zoneMap.removeLayer(zoneMarker);
+            if (zoneCircle) zoneMap.removeLayer(zoneCircle);
+
+            zoneMarker = L.marker([lat, lng], { draggable: true }).addTo(zoneMap)
+                .bindPopup('🏥 Your Pharmacy').openPopup();
+
+            const radius = parseFloat(document.getElementById('delivery_radius_km').value) || 10;
+            zoneCircle = L.circle([lat, lng], {
+                radius: radius * 1000,
+                color: '#007aff',
+                fillColor: '#007aff',
+                fillOpacity: 0.08,
+                weight: 2
+            }).addTo(zoneMap);
+
+            zoneMap.fitBounds(zoneCircle.getBounds(), { padding: [20, 20] });
+
+            if (updateCoords) {
+                document.getElementById('store_lat').value = lat.toFixed(8);
+                document.getElementById('store_lng').value = lng.toFixed(8);
+                document.getElementById('zone-coords').textContent = `📍 Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}`;
+                document.getElementById('zone-coords').style.color = '#34c759';
+            }
+
+            zoneMarker.on('dragend', e => {
+                const pos = e.target.getLatLng();
+                placeStorePin(pos.lat, pos.lng, true);
+            });
+        }
+
+        function useStoreGPS() {
+            if (!navigator.geolocation) { components.showError('GPS not supported.'); return; }
+            navigator.geolocation.getCurrentPosition(pos => {
+                if (!zoneMap) initZoneMap();
+                placeStorePin(pos.coords.latitude, pos.coords.longitude, true);
+            }, () => components.showError('Location access denied.'), { enableHighAccuracy: true });
+        }
+
+        async function saveDeliveryZone() {
+            const radius = parseFloat(document.getElementById('delivery_radius_km').value);
+            const lat = document.getElementById('store_lat').value;
+            const lng = document.getElementById('store_lng').value;
+
+            if (radius < 0 || radius > 20) {
+                components.showError('Radius must be between 0 and 20 km.');
+                return;
+            }
+
+            try {
+                components.showLoader();
+                await api.post('/vendor/profile/update', {
+                    delivery_radius_km: radius,
+                    latitude: lat ? parseFloat(lat) : null,
+                    longitude: lng ? parseFloat(lng) : null
+                });
+                components.showSuccess(`Delivery zone saved: ${radius} km radius ✓`);
+            } catch (err) {
+                components.showError('Failed to save delivery zone.');
+                console.error(err);
+            } finally {
+                components.hideLoader();
+            }
+        }
+        // ────────────────────────────────────────────────────────────────
+
+        // Toggle hours editor
+        function showHoursEditor(show) {
+            if (show) {
+                document.getElementById('hours-view').style.display = 'none';
+                document.getElementById('hours-edit').style.display = 'flex';
+            } else {
+                document.getElementById('hours-view').style.display = 'block';
+                document.getElementById('hours-edit').style.display = 'none';
+            }
+        }
+
+        // Update the toggle knob visual
+        function updateSundayToggleUI(isOpen) {
+            const track = document.getElementById('sunday-toggle-track');
+            const knob = document.getElementById('sunday-toggle-knob');
+            if (isOpen) {
+                track.style.background = 'var(--primary)';
+                knob.style.transform = 'translateX(24px)';
+            } else {
+                track.style.background = '#ddd';
+                knob.style.transform = 'translateX(0)';
+            }
+        }
+
+        // Toggle Sunday fields when checkbox changes
+        function toggleSundayFields() {
+            const isOpen = document.getElementById('sunday_open').checked;
+            updateSundayToggleUI(isOpen);
+            document.getElementById('sunday-hours-fields').style.display = isOpen ? 'flex' : 'none';
+        }
+
+        // Save Payout Details
+        async function saveBankDetails() {
+            const data = {
+                bank_name: document.getElementById('bank_name').value.trim(),
+                account_number: document.getElementById('account_number').value.trim(),
+                ifsc_code: document.getElementById('ifsc_code').value.trim()
+            };
+
+            if (!data.bank_name || !data.account_number || !data.ifsc_code) {
+                components.showError("Please fill in all bank details.");
+                return;
+            }
+
+            try {
+                components.showLoader();
+                await api.post('/vendor/profile/update', data);
+                components.showSuccess("Payout details updated successfully.");
+                await loadProfile();
+            } catch (err) {
+                components.showError(err.message || "Failed to update payout details.");
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        // Save Schedule (Store Hours)
+        async function saveHours() {
+            const openingTime = document.getElementById('opening_time').value;
+            const closingTime = document.getElementById('closing_time').value;
+            const sundayOpen = document.getElementById('sunday_open').checked ? 1 : 0;
+
+            if (!openingTime || !closingTime) {
+                components.showError("Please select both weekday opening and closing times.");
+                return;
+            }
+
+            const data = {
+                opening_time: openingTime,
+                closing_time: closingTime,
+                sunday_open: sundayOpen
+            };
+
+            // Add Sunday times if open
+            if (sundayOpen) {
+                const sOpen = document.getElementById('sunday_opening_time').value;
+                const sClose = document.getElementById('sunday_closing_time').value;
+                if (!sOpen || !sClose) {
+                    components.showError("Please set Sunday opening and closing times.");
+                    return;
+                }
+                data.sunday_opening_time = sOpen;
+                data.sunday_closing_time = sClose;
+            }
+
+            try {
+                components.showLoader();
+                await api.post('/vendor/profile/update', data);
+                components.showSuccess("Store hours updated successfully.");
+                showHoursEditor(false);
+                await loadProfile();
+            } catch (err) {
+                components.showError(err.message || "Failed to update store hours.");
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        async function updatePassword() {
+            const inputs = document.querySelectorAll('#section-security input[type="password"]');
+            const currentPass = inputs[0] ? inputs[0].value.trim() : '';
+            const newPass = inputs[1] ? inputs[1].value.trim() : '';
+
+            if (!newPass || newPass.length < 6) {
+                components.showError('New password must be at least 6 characters.');
+                return;
+            }
+            if (!currentPass) {
+                components.showError('Please enter your current password.');
+                return;
+            }
+
+            try {
+                components.showLoader();
+                await api.post('/user/password', { current_password: currentPass, new_password: newPass });
+                components.showSuccess('Password updated successfully.');
+                inputs[0].value = '';
+                inputs[1].value = '';
+            } catch (err) {
+                components.showError(err.message || 'Failed to update password.');
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        // Initialize Settings
+        loadProfile();
+    </script>
+</body>
+</html>

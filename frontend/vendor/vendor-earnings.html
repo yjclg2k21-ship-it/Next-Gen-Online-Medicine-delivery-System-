@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Earnings | Vendor | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .e-stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 16px; }
+        .e-card { background: rgba(255,255,255,0.4); border-radius: var(--l-card-r); padding: var(--l-card-p); border: 1px solid rgba(255,255,255,0.5); }
+        .ledger-container { background: rgba(255,255,255,0.4); border-radius: var(--l-card-r); padding: var(--l-card-p); border: 1px solid rgba(255,255,255,0.5); }
+        .ledger-row { display: grid; grid-template-columns: 1fr 150px 150px; padding: 20px 24px; border-bottom: 1px solid rgba(0,0,0,0.05); align-items: center; }
+    </style>
+</head>
+<body>
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        <main class="liquid-main">
+            <header style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-end;">
+                <div>
+                    <h1 class="vibrant-h1">Financial Hub</h1>
+                    <p style="color: #6e6e73; font-size: 1.2rem; font-weight: 500;">Track your pharmacy revenue and settlement cycle.</p>
+                </div>
+            </header>
+
+            <div class="e-stat-grid">
+                <div class="e-card">
+                    <div style="color: #6e6e73; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Total Revenue</div>
+                    <div style="font-size: 1.8rem; font-weight: 800; color: var(--success);" id="total-revenue">—</div>
+                </div>
+                <div class="e-card">
+                    <div style="color: #6e6e73; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Total Orders</div>
+                    <div style="font-size: 1.8rem; font-weight: 800; color: #1d1d1f;" id="total-orders">—</div>
+                </div>
+                <div class="e-card">
+                    <div style="color: #6e6e73; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Platform Fee (15%)</div>
+                    <div style="font-size: 1.8rem; font-weight: 800; color: var(--warning);" id="platform-fee">—</div>
+                </div>
+            </div>
+
+            <div class="ledger-container">
+                <h3 style="font-weight: 800; margin-bottom: 16px;">Order Revenue History</h3>
+                <div style="display: grid; grid-template-columns: 1fr 150px 150px; padding: 0 24px 15px 24px; color: #6e6e73; font-size: 0.8rem; font-weight: 800; text-transform: uppercase;">
+                    <span>Order Details</span>
+                    <span>Status</span>
+                    <span style="text-align: right;">Amount</span>
+                </div>
+                <div id="ledger-body">
+                    <p style="text-align:center; padding:40px; color:#8e8e93;">Loading...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        const user = auth.getUser();
+        if (!user || user.role !== 'vendor') { window.location.href = '../auth/login.html'; }
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('vendor');
+        lucide.createIcons();
+
+        async function loadEarnings() {
+            try {
+                components.showLoader();
+                const res = await api.get('/vendor/earnings');
+                const data = res.data;
+
+                const totalRev = parseFloat(data.total_revenue || 0);
+                const totalOrders = data.total_orders || 0;
+                const fee = totalRev * 0.15;
+
+                document.getElementById('total-revenue').textContent = '₹' + totalRev.toLocaleString('en-IN', {maximumFractionDigits: 0});
+                document.getElementById('total-orders').textContent = totalOrders;
+                document.getElementById('platform-fee').textContent = '₹' + fee.toLocaleString('en-IN', {maximumFractionDigits: 0});
+
+                // Load recent orders as transaction history
+                const ordersRes = await api.get('/vendor/orders');
+                const orders = (ordersRes.data && ordersRes.data.orders) ? ordersRes.data.orders : [];
+
+                const ledger = document.getElementById('ledger-body');
+                if (orders.length === 0) {
+                    ledger.innerHTML = '<p style="text-align:center; padding:40px; color:#8e8e93;">No transactions yet.</p>';
+                    return;
+                }
+
+                ledger.innerHTML = orders.slice(0, 15).map(o => {
+                    const date = new Date(o.created_at).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
+                    const statusColor = o.status === 'delivered' ? 'var(--success)' : (o.status === 'cancelled' ? 'var(--danger)' : 'var(--primary)');
+                    const statusBg = o.status === 'delivered' ? 'rgba(52,199,89,0.1)' : (o.status === 'cancelled' ? 'rgba(255,59,48,0.1)' : 'rgba(0,122,255,0.1)');
+                    return `
+                        <div class="ledger-row">
+                            <div>
+                                <div style="font-weight: 800; color: #1d1d1f;">Order #${o.id} ${o.customer_name ? '— ' + o.customer_name : ''}</div>
+                                <div style="font-size: 0.85rem; color: #6e6e73; font-weight: 600;">${date}</div>
+                            </div>
+                            <div><span style="font-size: 0.75rem; font-weight: 800; color: ${statusColor}; background: ${statusBg}; padding: 4px 10px; border-radius: 100px; text-transform: uppercase;">${o.status}</span></div>
+                            <div style="text-align: right; font-weight: 800; color: ${o.status === 'cancelled' ? 'var(--danger)' : 'var(--success)'}; font-size: 1.1rem;">${o.status === 'cancelled' ? '-' : '+'}₹${parseFloat(o.grand_total).toLocaleString('en-IN', {minimumFractionDigits: 2})}</div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error(err);
+                components.showError('Failed to load earnings data.');
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        loadEarnings();
+    </script>
+</body>
+</html>

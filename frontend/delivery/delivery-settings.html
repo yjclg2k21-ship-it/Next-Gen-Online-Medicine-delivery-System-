@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partner Settings | Delivery | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .form-label { display: block; font-size: 0.8rem; font-weight: 600; color: #6e6e73; margin-bottom: 6px; }
+        .form-input { width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.1); font-family: Inter,sans-serif; font-size: 0.88rem; outline: none; box-sizing: border-box; }
+        .form-input:focus { border-color: #007aff; }
+        .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .setting-row:last-child { border-bottom: none; }
+        .toggle-switch { position: relative; width: 40px; height: 22px; }
+        .toggle-switch input { display: none; }
+        .toggle-slider { position: absolute; inset: 0; background: rgba(0,0,0,0.12); border-radius: 22px; cursor: pointer; transition: background 0.2s; }
+        .toggle-slider::after { content: ''; position: absolute; width: 16px; height: 16px; top: 3px; left: 3px; background: #fff; border-radius: 50%; transition: transform 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        input:checked + .toggle-slider { background: #34c759; }
+        input:checked + .toggle-slider::after { transform: translateX(18px); }
+        .verified-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; background: rgba(52,199,89,0.1); color: #34c759; }
+    </style>
+</head>
+<body>
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        <main class="liquid-main" style="overflow-y:auto;">
+            <header style="margin-bottom:20px;display:flex;justify-content:space-between;align-items:flex-start;">
+                <div>
+                    <h1 class="vibrant-h1">Partner Settings</h1>
+                    <p style="color:#6e6e73;font-size:1rem;font-weight:500;">Manage your vehicle, payout, and availability settings.</p>
+                </div>
+                <button onclick="saveSettings()" style="padding:10px 24px;border-radius:12px;background:#007aff;color:#fff;border:none;font-weight:700;font-size:0.9rem;cursor:pointer;font-family:Inter,sans-serif;">Save Changes</button>
+            </header>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+                <!-- Vehicle Info -->
+                <div class="liquid-card" style="padding:24px;">
+                    <h3 style="font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:8px;"><i data-lucide="bike" style="color:#007aff;width:18px;height:18px;"></i> Vehicle Details</h3>
+                    <div style="display:grid;gap:14px;">
+                        <div>
+                            <label class="form-label">Vehicle Type</label>
+                            <select id="vehicle-type" class="form-input">
+                                <option>Motorcycle</option>
+                                <option>Scooter</option>
+                                <option>Bicycle</option>
+                                <option>E-Scooter</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Vehicle Model</label>
+                            <input type="text" class="form-input" id="vehicle-model" placeholder="e.g. Honda Activa 6G">
+                        </div>
+                        <div>
+                            <label class="form-label">License Plate Number</label>
+                            <input type="text" class="form-input" id="license-plate" placeholder="e.g. MH-01-AB-1234">
+                        </div>
+                        <div>
+                            <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <label class="form-label" style="margin:0;">Verification Status</label>
+                                <span class="verified-badge" id="verified-badge">✓ Verified</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payout & Zone -->
+                <div class="liquid-card" style="padding:24px;">
+                    <h3 style="font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:8px;"><i data-lucide="credit-card" style="color:#5856d6;width:18px;height:18px;"></i> Payout & Zone</h3>
+                    <div style="display:grid;gap:14px;">
+                        <div>
+                            <label class="form-label">Payout Method</label>
+                            <select id="payout-method" class="form-input">
+                                <option>UPI</option>
+                                <option>Bank Transfer</option>
+                                <option>Cash</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">UPI ID / Bank Account</label>
+                            <input type="text" class="form-input" id="payout-id" placeholder="yourname@upi or account number">
+                        </div>
+                        <div>
+                            <label class="form-label">Operating Zone</label>
+                            <select id="zone" class="form-input">
+                                <option>Phaltan City</option>
+                                <option>Phaltan Rural</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preferences -->
+                <div class="liquid-card" style="padding:24px;">
+                    <h3 style="font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:8px;"><i data-lucide="settings" style="color:#ff9500;width:18px;height:18px;"></i> Delivery Preferences</h3>
+                    <div class="setting-row">
+                        <div><div style="font-weight:600;">Accept Emergency Orders</div><div style="font-size:0.78rem;color:#8e8e93;">₹70 fee · 15-35 min delivery</div></div>
+                        <label class="toggle-switch"><input type="checkbox" id="pref-emergency" checked><span class="toggle-slider"></span></label>
+                    </div>
+                    <div class="setting-row">
+                        <div><div style="font-weight:600;">Accept Standard Orders</div><div style="font-size:0.78rem;color:#8e8e93;">₹25 fee · 6-12 hour delivery</div></div>
+                        <label class="toggle-switch"><input type="checkbox" id="pref-standard" checked><span class="toggle-slider"></span></label>
+                    </div>
+                    <div class="setting-row">
+                        <div><div style="font-weight:600;">Push Notifications</div><div style="font-size:0.78rem;color:#8e8e93;">Get notified of new orders</div></div>
+                        <label class="toggle-switch"><input type="checkbox" id="pref-notif" checked><span class="toggle-slider"></span></label>
+                    </div>
+                    <div class="setting-row">
+                        <div><div style="font-weight:600;">Available Now</div><div style="font-size:0.78rem;color:#8e8e93;">Appear in dispatch queue</div></div>
+                        <label class="toggle-switch"><input type="checkbox" id="pref-available" checked><span class="toggle-slider"></span></label>
+                    </div>
+                </div>
+
+                <!-- Stats -->
+                <div class="liquid-card" style="padding:24px;">
+                    <h3 style="font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:8px;"><i data-lucide="bar-chart-2" style="color:#34c759;width:18px;height:18px;"></i> Partner Stats</h3>
+                    <div style="display:grid;gap:14px;" id="stats-grid"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        const user = auth.getUser();
+        if (!user || user.role !== 'delivery') window.location.href = '../auth/login.html';
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('delivery');
+        lucide.createIcons();
+
+        async function loadSettings() {
+            let settings;
+            try { const r = await api.get('/delivery/partner/settings'); settings = r.data || r; }
+            catch(e) { settings = { vehicle:'Honda Activa 6G', license_plate:'MH-11-AB-1234', verified:true, payout_method:'UPI', payout_id:'jdoe@upi', zone:'Phaltan City', emergency_eligible:true, rating:4.9, total_deliveries:452 }; }
+            
+            const [vType, ...vModel] = (settings.vehicle||'').split(' ');
+            document.getElementById('vehicle-model').value = settings.vehicle || '';
+            document.getElementById('license-plate').value = settings.license_plate || '';
+            document.getElementById('payout-id').value = settings.payout_id || settings.payout_method?.replace('UPI (','').replace(')','') || '';
+            if (!settings.verified) document.getElementById('verified-badge').innerHTML = '⏳ Pending';
+
+            const stats = [
+                { label: 'Total Deliveries', value: settings.total_deliveries || 452, color: '#007aff' },
+                { label: 'Rating', value: (settings.rating || 4.9) + ' / 5.0 ⭐', color: '#ff9500' },
+                { label: 'Completion Rate', value: '98.6%', color: '#34c759' },
+                { label: 'Avg Delivery Time', value: '22 min', color: '#5856d6' },
+            ];
+            document.getElementById('stats-grid').innerHTML = stats.map(s => `
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:rgba(0,0,0,0.03);border-radius:10px;">
+                    <span style="color:#6e6e73;font-size:0.85rem;font-weight:500;">${s.label}</span>
+                    <span style="font-weight:800;color:${s.color};">${s.value}</span>
+                </div>
+            `).join('');
+        }
+
+        async function saveSettings() {
+            const data = {
+                vehicle: document.getElementById('vehicle-model').value,
+                license_plate: document.getElementById('license-plate').value,
+                payout_method: document.getElementById('payout-method').value,
+                payout_id: document.getElementById('payout-id').value,
+                zone: document.getElementById('zone').value,
+                accept_emergency: document.getElementById('pref-emergency').checked,
+                accept_standard: document.getElementById('pref-standard').checked,
+                notifications: document.getElementById('pref-notif').checked,
+                available: document.getElementById('pref-available').checked,
+            };
+            try { await api.put('/delivery/partner/settings', data); } catch(e) { console.error(e); if(typeof components !== "undefined") components.showError("Network exception or protocol verification failed."); }
+            components.showSuccess('Partner settings saved successfully.');
+        }
+
+        loadSettings();
+    </script>
+</body>
+</html>

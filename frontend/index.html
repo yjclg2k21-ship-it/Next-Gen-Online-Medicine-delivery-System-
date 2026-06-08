@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediMitra | Liquid Clinical Ecosystem</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/liquid.css">
+    <style>
+        body { background: #f2f2f7; overflow-x: hidden; height: auto; display: block; }
+        
+        .liquid-nav-landing {
+            position: fixed; top: 32px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 1200px; height: 70px;
+            background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 100px; z-index: 1000;
+            display: flex; align-items: center; justify-content: space-between; padding: 0 32px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+        }
+
+        .hero-section {
+            padding: 160px 40px 100px 40px;
+            display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 60px;
+            max-width: 1300px; margin: 0 auto; min-height: 90vh;
+            align-items: center;
+        }
+
+        .h-pill {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: rgba(0, 122, 255, 0.08); color: var(--primary);
+            padding: 8px 16px; border-radius: 100px; font-weight: 800;
+            font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em;
+            margin-bottom: 16px;
+        }
+
+        .h-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 5rem; font-weight: 800; line-height: 1;
+            letter-spacing: -0.04em; color: #1d1d1f; margin-bottom: 16px;
+        }
+
+        .h-img-mask {
+            height: 600px; border-radius: 60px; overflow: hidden;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.1);
+            border: 10px solid white;
+        }
+
+        /* Bento Grid */
+        .bento-section { max-width: 1300px; margin: 100px auto; padding: 0 40px; }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(2, 300px);
+            gap: 24px;
+        }
+        .bento-item {
+            background: rgba(255, 255, 255, 0.5); border-radius: var(--l-card-r);
+            border: 1px solid rgba(255,255,255,0.6); backdrop-filter: blur(10px);
+            padding: var(--l-card-p); display: flex; flex-direction: column; justify-content: space-between;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); cursor: pointer;
+            height: 100%;
+        }
+        .bento-item:hover { transform: scale(1.02); background: white; box-shadow: 0 20px 60px rgba(0,0,0,0.05); }
+        .bento-1 { grid-column: span 2; background: linear-gradient(135deg, white, #e0f2fe); }
+        .bento-2 { grid-column: span 1; }
+        .bento-3 { grid-column: span 1; background: var(--primary-grad); color: white; border: none; }
+        .bento-4 { grid-column: span 1; }
+        .bento-5 { grid-column: span 3; background: linear-gradient(135deg, #f0fdf4, #dcfce7); }
+    </style>
+</head>
+<body>
+    
+    <!-- Liquid Canvas Background -->
+    <div class="liquid-canvas">
+        <div class="liquid-orb orb-1"></div>
+        <div class="liquid-orb orb-2"></div>
+        <div class="liquid-orb orb-3"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="liquid-nav-landing">
+        <a href="index.html" style="font-weight: 900; font-size: 1.5rem; text-decoration: none; color: #1d1d1f; letter-spacing: -0.03em;">MediMitra</a>
+        <div style="display: flex; gap: 24px; font-weight: 700; font-size: 0.95rem;">
+            <a href="user/medicines-page.html" style="text-decoration: none; color: #6e6e73;">Medicines</a>
+            <a href="user/user-prescriptions.html" style="text-decoration: none; color: #6e6e73;">Upload Prescription</a>
+            <a href="auth/login.html" style="text-decoration: none; color: #6e6e73;">Track Order</a>
+        </div>
+        <div id="auth-gate">
+            <a href="auth/login.html" class="pill-button" style="padding: 12px 28px;">Sign In</a>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero-section">
+        <div class="animate-scale-in">
+            <div class="h-pill"><i data-lucide="shield-check" size="14"></i> Accredited Clinical Ecosystem</div>
+            <h1 class="h-title">Healthcare <br>Reimagined <br><span class="text-gradient-blue">in Fluidity.</span></h1>
+            <p style="font-size: 1.4rem; color: #6e6e73; font-weight: 500; line-height: 1.6; margin-bottom: 20px; max-width: 600px;">
+                Secure pharmaceutical dispatch, verified clinical prescriptions, and reliable medicine delivery. Built with love for healthcare.
+            </p>
+            <div style="display: flex; gap: 24px;">
+                <a href="auth/register.html" class="pill-button" style="padding: 24px 48px; font-size: 1.1rem;">Get Started <i data-lucide="arrow-right"></i></a>
+                <a href="user/user-prescription-flow.html" class="pill-button" style="background: white; color: #1d1d1f; border: 1px solid rgba(0,0,0,0.1); padding: 24px 48px; font-size: 1.1rem;">Upload RX</a>
+            </div>
+        </div>
+        <div class="h-img-mask animate-fade-in" style="animation-delay: 0.3s;">
+            <img src="./assets/images/clinical_hero.png" alt="Clinical Liquid" style="width: 100%; height: 100%; object-fit: cover;">
+        </div>
+    </section>
+
+    <!-- Bento Marketplace -->
+    <section class="bento-section" id="wellness">
+        <h2 class="vibrant-h2" style="font-size: var(--l-h1); margin-bottom: 16px; text-align: center;">Clinical Hub & Wellness</h2>
+        <div class="bento-grid">
+            <div class="bento-item bento-1" onclick="window.location.href='user/medicines-page.html'">
+                <div style="font-size: 3rem;">💊</div>
+                <div>
+                    <h3 style="font-weight: 800; font-size: 1.8rem;">Medicine Depot</h3>
+                    <p style="font-weight: 600; color: #6e6e73; margin-top: 8px;">Explore 50,000+ verified pharmaceutical products.</p>
+                </div>
+            </div>
+            <div class="bento-item bento-2" onclick="window.location.href='user/user-prescriptions.html'">
+                <div style="font-size: 3rem;">📄</div>
+                <div>
+                    <h3 style="font-weight: 800; font-size: 1.4rem;">Vault</h3>
+                    <p style="font-weight: 600; color: #6e6e73;">Secure RX storage.</p>
+                </div>
+            </div>
+            <div class="bento-item bento-3" onclick="window.location.href='user/orders-page.html'">
+                <div style="font-size: 3rem;">📦</div>
+                <div>
+                    <h3 style="font-weight: 800; font-size: 1.4rem;">Orders</h3>
+                    <p style="font-weight: 600; opacity: 0.8;">Track your medicine.</p>
+                </div>
+            </div>
+            <div class="bento-item bento-4" onclick="window.location.href='user/user-profile.html'">
+                <div style="font-size: 3rem;">👤</div>
+                <div>
+                    <h3 style="font-weight: 800; font-size: 1.4rem;">Profile</h3>
+                    <p style="font-weight: 600; color: #6e6e73;">Your account status.</p>
+                </div>
+            </div>
+            <div class="bento-item bento-5" onclick="window.location.href='user/medicines-page.html'">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div style="font-size: 4rem;">🩺</div>
+                    <div style="text-align: right;">
+                        <span style="background: white; padding: 10px 20px; border-radius: 100px; font-weight: 800; color: var(--success); font-size: 0.8rem;">24/7 SUPPORT</span>
+                    </div>
+                </div>
+                <div>
+                    <h3 style="font-weight: 800; font-size: var(--l-h1);">Quick Assistance</h3>
+                    <p style="font-weight: 600; color: #6e6e73; margin-top: 8px; max-width: 400px;">Our pharmacists are available to help you with your prescriptions and medication queries at any time.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats / Store Locator Placeholder -->
+    <section class="d2c-trust" id="stores" style="background: white; padding: 100px 40px; border-radius: 80px; margin: 100px 40px;">
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 40px; max-width: 1200px; margin: 0 auto;">
+            <div style="text-align: center;">
+                <div style="font-size: var(--l-h1); font-weight: 900; color: #1d1d1f; letter-spacing: -0.05em;">24M+</div>
+                <div style="font-weight: 800; color: #6e6e73; font-size: 0.8rem; text-transform: uppercase; margin-top: 8px;">Units Dispatched</div>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-size: var(--l-h1); font-weight: 900; color: var(--primary); letter-spacing: -0.05em;">4.9★</div>
+                <div style="font-weight: 800; color: #6e6e73; font-size: 0.8rem; text-transform: uppercase; margin-top: 8px;">Clinical Rating</div>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-size: var(--l-h1); font-weight: 900; color: #1d1d1f; letter-spacing: -0.05em;">800+</div>
+                <div style="font-weight: 800; color: #6e6e73; font-size: 0.8rem; text-transform: uppercase; margin-top: 8px;">Vendor Network</div>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-size: var(--l-h1); font-weight: 900; color: var(--success); letter-spacing: -0.05em;">24/7</div>
+                <div style="font-weight: 800; color: #6e6e73; font-size: 0.8rem; text-transform: uppercase; margin-top: 8px;">Order Support</div>
+            </div>
+        </div>
+    </section>
+
+    <footer id="blogs" style="padding: 100px 40px; text-align: center; color: #6e6e73; font-weight: 600;">
+        <div style="font-weight: 900; font-size: 1.8rem; color: #1d1d1f; margin-bottom: 16px;">MediMitra Health Blogs</div>
+        <p>&copy; 2026 MediMitra Clinical Intelligence. Optimized for Fluidity.</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/components.js"></script>
+    <script src="assets/js/app.js"></script>
+    <script>
+        lucide.createIcons();
+        
+        // Dynamic Auth Header
+        const user = auth.getUser();
+        if (user) {
+            document.getElementById('auth-gate').innerHTML = `
+                <a href="${user.role}/${user.role}-dashboard.html" class="pill-button" style="padding: 12px 28px;">Go to Dashboard <i data-lucide="layout-grid"></i></a>
+            `;
+            lucide.createIcons();
+        }
+
+        // Global Search Logic
+        const searchInput = document.querySelector('.eco-search-container input');
+        const searchBtn = document.querySelector('.eco-search-btn');
+        if (searchInput && searchBtn) {
+            const doSearch = () => {
+                const q = searchInput.value.trim();
+                if (q) window.location.href = `user/medicines-page.html?q=${encodeURIComponent(q)}`;
+            };
+            searchBtn.addEventListener('click', doSearch);
+            searchInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') doSearch(); });
+        }
+    </script>
+</body>
+</html>

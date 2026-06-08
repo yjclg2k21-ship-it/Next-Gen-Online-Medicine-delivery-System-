@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KYC Verification | Admin | MediMitra</title>
+    <meta name="description" content="Review and verify KYC documents for vendors and delivery partners.">
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <link rel="stylesheet" href="../assets/css/admin-dark.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .kyc-card { background: #fff; border-radius: 16px; padding: 20px; margin-bottom: 12px; display: grid; grid-template-columns: 56px 1fr auto; gap: 16px; align-items: center; border: 1px solid rgba(0,0,0,0.06); transition: box-shadow 0.2s; }
+        .kyc-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .kyc-avatar { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 800; color: #fff; }
+        .doc-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; background: rgba(0,122,255,0.08); color: #007aff; margin: 3px; cursor: pointer; transition: background 0.15s; }
+        .doc-pill:hover { background: rgba(0,122,255,0.15); }
+        .badge-pending  { background: rgba(255,149,0,0.12); color: #ff9500; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+        .badge-approved { background: rgba(52,199,89,0.12); color: #34c759; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+        .badge-rejected { background: rgba(255,59,48,0.12); color: #ff3b30; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+        .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .filter-chip { padding: 6px 16px; border-radius: 20px; border: 1px solid rgba(0,0,0,0.1); font-size: 0.78rem; font-weight: 600; cursor: pointer; background: transparent; transition: all 0.2s; font-family: Inter,sans-serif; }
+        .filter-chip.active, .filter-chip:hover { background: #007aff; color: #fff; border-color: #007aff; }
+    </style>
+</head>
+<body>
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        <main class="liquid-main">
+            <header style="margin-bottom: 20px;">
+                <h1 class="vibrant-h1">KYC Verification</h1>
+                <p style="color: #6e6e73; font-size: 1rem; font-weight: 500;">Review identity & license documents for vendors and partners.</p>
+            </header>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;">
+                <div class="liquid-card" style="text-align:center; padding: 20px;">
+                    <div style="font-size: 2rem; font-weight: 800; color: #ff9500;" id="cnt-pending">—</div>
+                    <div style="font-size: 0.78rem; color: #8e8e93; font-weight: 600; margin-top: 4px;">Pending Review</div>
+                </div>
+                <div class="liquid-card" style="text-align:center; padding: 20px;">
+                    <div style="font-size: 2rem; font-weight: 800; color: #34c759;" id="cnt-approved">—</div>
+                    <div style="font-size: 0.78rem; color: #8e8e93; font-weight: 600; margin-top: 4px;">Approved</div>
+                </div>
+                <div class="liquid-card" style="text-align:center; padding: 20px;">
+                    <div style="font-size: 2rem; font-weight: 800; color: #ff3b30;" id="cnt-rejected">—</div>
+                    <div style="font-size: 0.78rem; color: #8e8e93; font-weight: 600; margin-top: 4px;">Rejected</div>
+                </div>
+            </div>
+
+            <div class="liquid-card" style="padding: 20px;">
+                <div class="filter-bar">
+                    <button class="filter-chip active" onclick="filterKYC('all',this)">All</button>
+                    <button class="filter-chip" onclick="filterKYC('pending',this)">⏳ Pending</button>
+                    <button class="filter-chip" onclick="filterKYC('verified',this)">✅ Approved</button>
+                    <button class="filter-chip" onclick="filterKYC('rejected',this)">❌ Rejected</button>
+                    <button class="filter-chip" onclick="filterKYC('vendor',this)">Vendors</button>
+                    <button class="filter-chip" onclick="filterKYC('delivery',this)">Delivery</button>
+                </div>
+                <div id="kyc-list" style="max-height: 500px; overflow-y: auto;"></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        const user = auth.getUser();
+        if (!user || user.role !== 'admin') window.location.href = '../auth/login.html';
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('admin');
+        lucide.createIcons();
+
+        const colors = ['#007aff','#5856d6','#ff9500','#34c759','#ff3b30','#af52de'];
+        let allKYC = [], filteredKYC = [];
+
+        async function loadKYC() {
+            try {
+                components.showLoader();
+                const res = await api.get('/admin/kyc/pending');
+                allKYC = (res.data && res.data.documents) ? res.data.documents : (res.documents || []);
+                updateStats();
+                renderKYC(allKYC);
+            } catch(e) { 
+                console.error(e);
+                components.showError("Failed to synchronize KYC nodes.");
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('cnt-pending').textContent  = allKYC.filter(k => k.status === 'pending').length;
+            document.getElementById('cnt-approved').textContent = allKYC.filter(k => k.status === 'verified').length;
+            document.getElementById('cnt-rejected').textContent = allKYC.filter(k => k.status === 'rejected').length;
+        }
+
+        function renderKYC(list) {
+            const el = document.getElementById('kyc-list');
+            if (!list.length) { el.innerHTML = '<p style="text-align:center;padding:40px;color:#8e8e93;">No records found in clinical queue.</p>'; return; }
+            
+            el.innerHTML = list.map((k, i) => {
+                const avatarChar = k.user_name ? k.user_name.charAt(0) : '?';
+                const submittedDate = k.created_at ? new Date(k.created_at).toLocaleString() : 'Recent';
+                const docUrl = k.document_image ? `../../backend/storage/private/kyc/${k.document_image}` : null;
+                const viewDocHtml = docUrl ? `
+                    <span class="doc-pill" onclick="window.open('${docUrl}', '_blank')">
+                        <i data-lucide="file-text" style="width:14px;height:14px;"></i> ${k.document_type.toUpperCase()}
+                    </span>
+                ` : `<span style="font-size:0.75rem; color:#ff3b30; font-weight:700;">[NO DOCUMENT ATTACHED]</span>`;
+
+                return `
+                <div class="kyc-card">
+                    <div class="kyc-avatar" style="background:${colors[i%colors.length]}">${avatarChar}</div>
+                    <div>
+                        <div style="font-weight:700;margin-bottom:4px;">${k.user_name} <span style="font-size:0.75rem; color:#8e8e93; font-weight:500; text-transform:capitalize;">(${k.user_role})</span></div>
+                        <div style="font-size:0.78rem;color:#8e8e93;margin-bottom:8px;">Submitted: ${submittedDate}${k.rejection_reason ? ' · <span style="color:#ff3b30">Reason: '+k.rejection_reason+'</span>' : ''}</div>
+                        <div>
+                            ${viewDocHtml}
+                        </div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;">
+                        <span class="badge-${k.status === 'verified' ? 'approved' : k.status}">${k.status.charAt(0).toUpperCase()+k.status.slice(1)}</span>
+                        ${k.status === 'pending' ? `
+                        <div style="display:flex;gap:8px;">
+                            <button onclick="reviewKYC(${k.id},'verified')" style="padding:7px 16px;border-radius:10px;background:#34c759;color:#fff;border:none;font-weight:700;cursor:pointer;font-size:0.78rem;">✓ Verify</button>
+                            <button onclick="reviewKYC(${k.id},'rejected')" style="padding:7px 16px;border-radius:10px;background:#ff3b30;color:#fff;border:none;font-weight:700;cursor:pointer;font-size:0.78rem;">✗ Reject</button>
+                        </div>` : ''}
+                    </div>
+                </div>
+            `}).join('');
+            lucide.createIcons();
+        }
+
+        function filterKYC(mode, btn) {
+            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            
+            let filtered = allKYC;
+            if (mode === 'pending') filtered = allKYC.filter(k => k.status === 'pending');
+            else if (mode === 'verified') filtered = allKYC.filter(k => k.status === 'verified');
+            else if (mode === 'rejected') filtered = allKYC.filter(k => k.status === 'rejected');
+            else if (mode === 'vendor') filtered = allKYC.filter(k => k.user_role === 'vendor');
+            else if (mode === 'delivery') filtered = allKYC.filter(k => k.user_role === 'delivery');
+            
+            renderKYC(filtered);
+        }
+
+        async function reviewKYC(id, decision) {
+            try {
+                components.showLoader();
+                let reason = 'Documents verified by Admin.';
+                if (decision === 'rejected') {
+                    reason = await components.prompt("Reject KYC", "Provide rejection reason:", "Invalid documentation artifact.", "Reject") || "Invalid documentation artifact.";
+                }
+
+                const res = await api.post(`/admin/kyc/${id}/status`, { status: decision, reason: reason });
+                if (res.success) {
+                    components.showSuccess(`KYC node #${id} transitioned to ${decision}.`);
+                    loadKYC();
+                } else {
+                    components.showError(res.message);
+                }
+            } catch(e) { 
+                console.error(e);
+                components.showError("Protocol failure: Unable to transition KYC node.");
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        loadKYC();
+    </script>
+</body>
+</html>

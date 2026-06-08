@@ -1,0 +1,28 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase "/Next%20Gen%20Online%20Medicine%20Delivery%20System/"
+
+    # Prevent directory browsing
+    Options -Indexes
+
+    # REQUIRED: Pass Authorization header to PHP
+    SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Serve KYC files directly from private storage
+    RewriteRule ^api/kyc/file/(.+)$ backend/serve-kyc.php?file=$1 [L,QSA]
+
+    # Route any /api/ request to the backend public index
+    RewriteRule ^api/(.*)$ backend/public/index.php [E=HTTP_AUTHORIZATION:%{HTTP:Authorization},L,QSA]
+
+    # Handle static assets in frontend directly
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^ - [L]
+
+    # Disable Caching for development
+    <IfModule mod_headers.c>
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires 0
+    </IfModule>
+</IfModule>

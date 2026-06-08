@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Logs | Admin | MediMitra</title>
+    <meta name="description" content="View and filter system activity logs for the MediMitra platform.">
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <link rel="stylesheet" href="../assets/css/admin-dark.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .log-row { display: grid; grid-template-columns: 160px 100px 1fr 120px; gap: 12px; align-items: center; padding: 10px 16px; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 0.83rem; font-family: 'JetBrains Mono', monospace, Inter, sans-serif; }
+        .log-row:hover { background: rgba(0,0,0,0.02); }
+        .log-header { display: grid; grid-template-columns: 160px 100px 1fr 120px; gap: 12px; padding: 8px 16px; font-size: 0.72rem; font-weight: 700; color: #8e8e93; text-transform: uppercase; }
+        .log-level { padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; }
+        .level-info  { background: rgba(0,122,255,0.1); color: #007aff; }
+        .level-warn  { background: rgba(255,149,0,0.1); color: #ff9500; }
+        .level-error { background: rgba(255,59,48,0.1); color: #ff3b30; }
+        .level-success { background: rgba(52,199,89,0.1); color: #34c759; }
+        .filter-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+        .filter-chip { padding: 5px 14px; border-radius: 20px; border: 1px solid rgba(0,0,0,0.1); font-size: 0.75rem; font-weight: 600; cursor: pointer; background: transparent; font-family: Inter,sans-serif; transition: all 0.2s; }
+        .filter-chip.active, .filter-chip:hover { background: #1d1d1f; color: #fff; border-color: #1d1d1f; }
+        #log-container { max-height: 480px; overflow-y: auto; }
+        #log-container::-webkit-scrollbar { width: 4px; }
+        #log-container::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        <main class="liquid-main">
+            <header style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <h1 class="vibrant-h1">System Logs</h1>
+                    <p style="color: #6e6e73; font-size: 1rem; font-weight: 500;">Platform-wide event and error log stream.</p>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="loadLogs()" style="padding: 9px 20px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.1); background: transparent; font-weight: 600; font-size: 0.85rem; cursor: pointer; font-family: Inter,sans-serif; display: flex; align-items: center; gap: 6px;"><i data-lucide="refresh-cw" style="width:14px;height:14px;"></i> Refresh</button>
+                    <button onclick="exportLogs()" style="padding: 9px 20px; border-radius: 12px; background: #1d1d1f; color: #fff; border: none; font-weight: 600; font-size: 0.85rem; cursor: pointer; font-family: Inter,sans-serif; display: flex; align-items: center; gap: 6px;"><i data-lucide="download" style="width:14px;height:14px;"></i> Export</button>
+                </div>
+            </header>
+
+            <div style="display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 20px;">
+                <div class="liquid-card" style="padding:14px;text-align:center;"><div style="font-size:1.6rem;font-weight:800;color:#007aff" id="cnt-total">—</div><div style="font-size:0.72rem;color:#8e8e93;font-weight:600;margin-top:3px;">Total Logs</div></div>
+                <div class="liquid-card" style="padding:14px;text-align:center;"><div style="font-size:1.6rem;font-weight:800;color:#ff3b30" id="cnt-errors">—</div><div style="font-size:0.72rem;color:#8e8e93;font-weight:600;margin-top:3px;">Errors</div></div>
+                <div class="liquid-card" style="padding:14px;text-align:center;"><div style="font-size:1.6rem;font-weight:800;color:#ff9500" id="cnt-warns">—</div><div style="font-size:0.72rem;color:#8e8e93;font-weight:600;margin-top:3px;">Warnings</div></div>
+                <div class="liquid-card" style="padding:14px;text-align:center;"><div style="font-size:1.6rem;font-weight:800;color:#34c759" id="cnt-success">—</div><div style="font-size:0.72rem;color:#8e8e93;font-weight:600;margin-top:3px;">Success</div></div>
+            </div>
+
+            <div class="liquid-card" style="padding: 20px;">
+                <div class="filter-bar">
+                    <button class="filter-chip active" onclick="filterLogs('all',this)">All</button>
+                    <button class="filter-chip" onclick="filterLogs('INFO',this)">INFO</button>
+                    <button class="filter-chip" onclick="filterLogs('WARN',this)">WARN</button>
+                    <button class="filter-chip" onclick="filterLogs('ERROR',this)">ERROR</button>
+                    <button class="filter-chip" onclick="filterLogs('SUCCESS',this)">SUCCESS</button>
+                    <select id="log-sort" onchange="applyLogFilters()" style="padding:8px 14px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.8rem; font-weight:600; margin-left:8px;">
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                    </select>
+                    <input type="search" placeholder="Search logs..." id="log-search" onkeyup="applyLogFilters()" style="margin-left:auto;padding:6px 14px;border-radius:20px;border:1px solid rgba(0,0,0,0.1);font-family:Inter,sans-serif;font-size:0.8rem;outline:none;">
+                </div>
+                <div class="log-header"><span>Timestamp</span><span>Level</span><span>Message</span><span>Actor</span></div>
+                <div id="log-container">
+                    <div id="log-list"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        const user = auth.getUser();
+        if (!user || user.role !== 'admin') window.location.href = '../auth/login.html';
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('admin');
+        lucide.createIcons();
+
+        let allLogs = [], currentFilter = 'all';
+
+        async function loadLogs() {
+            try {
+                components.showLoader();
+                const res = await api.get('/admin/logs/activity');
+                const rawLogs = res.data.logs || [];
+                allLogs = rawLogs.map(l => {
+                    return {
+                        level: l.action.includes('ERROR') ? 'ERROR' : (l.action.includes('WARN') ? 'WARN' : (l.action.includes('SUCCESS') ? 'SUCCESS' : 'INFO')),
+                        msg: `${l.action.replace(/_/g, ' ')}: ${l.target_type} #${l.target_id}`,
+                        actor: l.user_name || 'System',
+                        timestamp: new Date(l.created_at).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' }),
+                        created_at: l.created_at
+                    };
+                });
+                updateStats();
+                renderLogs(allLogs);
+            } catch(e) { 
+                console.error(e);
+                components.showError("System activity synchronization failed.");
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('cnt-total').textContent   = allLogs.length;
+            document.getElementById('cnt-errors').textContent  = allLogs.filter(l => l.level === 'ERROR').length;
+            document.getElementById('cnt-warns').textContent   = allLogs.filter(l => l.level === 'WARN').length;
+            document.getElementById('cnt-success').textContent = allLogs.filter(l => l.level === 'SUCCESS').length;
+        }
+
+        function renderLogs(logs) {
+            const el = document.getElementById('log-list');
+            const lvlClass = { INFO:'level-info', WARN:'level-warn', ERROR:'level-error', SUCCESS:'level-success' };
+            if (!logs.length) { el.innerHTML = '<p style="text-align:center;padding:40px;color:#8e8e93;">No logs found.</p>'; return; }
+            el.innerHTML = logs.map(l => {
+                return `
+                    <div class="log-row">
+                        <span style="color:#8e8e93;font-size:0.78rem">${l.timestamp}</span>
+                        <span><span class="log-level ${lvlClass[l.level]||'level-info'}">${l.level}</span></span>
+                        <span style="color:#1d1d1f">${l.msg}</span>
+                        <span style="color:#8e8e93;font-size:0.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.actor}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterLogs(f, btn) {
+            currentFilter = f;
+            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            applyLogFilters();
+        }
+
+        function applyLogFilters() {
+            const q = (document.getElementById('log-search').value || '').toLowerCase();
+            const sort = document.getElementById('log-sort').value;
+
+            let filtered = currentFilter === 'all' ? [...allLogs] : allLogs.filter(l => l.level === currentFilter);
+
+            if (q) {
+                filtered = filtered.filter(l => l.msg.toLowerCase().includes(q) || l.actor.toLowerCase().includes(q));
+            }
+
+            if (sort === 'newest') filtered.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+            else if (sort === 'oldest') filtered.sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+
+            renderLogs(filtered);
+        }
+
+        function searchLogs(q) {
+            applyLogFilters();
+        }
+
+        function exportLogs() {
+            const data = allLogs.map(l => `${l.timestamp} [${l.level}] ${l.msg} — ${l.actor}`).join('\n');
+            const blob = new Blob([data], { type: 'text/plain' });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'system-logs.txt'; a.click();
+        }
+
+        loadLogs();
+    </script>
+</body>
+</html>

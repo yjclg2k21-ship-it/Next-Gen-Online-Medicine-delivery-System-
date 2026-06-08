@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delivery Fleet | Admin | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <link rel="stylesheet" href="../assets/css/admin-dark.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: 'Plus Jakarta Sans', sans-serif; }
+        .fleet-container { background: rgba(255, 255, 255, 0.4); border-radius: var(--l-card-r); padding: var(--l-card-p); border: 1px solid rgba(255, 255, 255, 0.5); flex: 1; overflow-y: auto; max-height: calc(100vh - 200px); }
+        .agent-card-list { display: grid; gap: 16px; }
+        .agent-row { background: rgba(255, 255, 255, 0.3); padding: 16px 24px; border-radius: var(--l-card-r); display: grid; grid-template-columns: 2.5fr 1.5fr 1fr 1fr 1fr 100px; align-items: center; transition: all 0.3s ease; }
+        .agent-row:hover { background: white; transform: scale(1.005); }
+        .status-chip { padding: 6px 14px; border-radius: 100px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; }
+        .status-active { background: rgba(52, 199, 89, 0.1); color: #34c759; }
+        .status-busy { background: rgba(255, 149, 0, 0.1); color: #ff9500; }
+        .status-offline { background: rgba(142, 142, 147, 0.1); color: #8e8e93; }
+        .action-icon { width: 35px; height: 35px; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s; color: #6e6e73; border: 1px solid rgba(0,0,0,0.05); }
+        .action-icon:hover { background: rgba(0,0,0,0.05); color: #1d1d1f; }
+        .stat-card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        <main class="liquid-main">
+            <header style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end;">
+                <div>
+                    <h1 class="vibrant-h1">Logistics Fleet</h1>
+                    <p style="color: #6e6e73; font-size: 1.2rem; font-weight: 500;">Manage your pharmaceutical delivery network and personnel.</p>
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    <a href="admin-fleet-tracking.html" class="pill-button" style="background: rgba(52,199,89,0.1); color: #34c759; border: 1px solid rgba(52,199,89,0.2); text-decoration: none;">📍 Live Fleet Map</a>
+                    <button class="pill-button" onclick="showCreateModal()"><i data-lucide="plus-circle"></i> Add Agent</button>
+                    <div style="background: rgba(255,255,255,0.4); border-radius: var(--l-card-r); padding: 8px 16px; display: flex; align-items: center; gap: 12px; border: 1px solid rgba(255,255,255,0.3);">
+                        <i data-lucide="search" size="18" style="color: #6e6e73;"></i>
+                        <input type="text" id="agent-search" placeholder="Search agent..." style="background: transparent; border: none; outline: none; font-size: 0.95rem; font-weight: 600;">
+                    </div>
+                </div>
+            </header>
+
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
+                <div class="stat-card">
+                    <div style="font-size: 0.75rem; color: #6e6e73; font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">Total Fleet</div>
+                    <div id="stat-total" style="font-size: 1.8rem; font-weight: 800;">0</div>
+                </div>
+                <div class="stat-card">
+                    <div style="font-size: 0.75rem; color: #6e6e73; font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">Active Now</div>
+                    <div id="stat-active" style="font-size: 1.8rem; font-weight: 800; color: #34c759;">0</div>
+                </div>
+                <div class="stat-card">
+                    <div style="font-size: 0.75rem; color: #6e6e73; font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">Avg Rating</div>
+                    <div style="font-size: 1.8rem; font-weight: 800; color: #ff9500;"><span id="stat-rating">0.0</span> <i data-lucide="star" style="display: inline-block; fill: #ff9500; width: 20px;"></i></div>
+                </div>
+                <div class="stat-card">
+                    <div style="font-size: 0.75rem; color: #6e6e73; font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">Deliveries Today</div>
+                    <div id="stat-today" style="font-size: 1.8rem; font-weight: 800; color: var(--primary);">0</div>
+                </div>
+            </div>
+
+            <div class="fleet-container">
+                <div style="display: grid; grid-template-columns: 2.5fr 1.5fr 1fr 1fr 1fr 100px; padding: 0 24px 16px 24px; color: #6e6e73; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em;">
+                    <span>Delivery Partner</span>
+                    <span>Vehicle Details</span>
+                    <span>Status</span>
+                    <span>Today</span>
+                    <span>Rating</span>
+                    <span>Actions</span>
+                </div>
+                <div class="agent-card-list" id="agent-list">
+                    <div style="padding: 60px; text-align: center; color: #6e6e73; font-weight: 600;">Scanning fleet nodes...</div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Create Modal -->
+    <div id="create-modal" class="liquid-modal-overlay">
+        <div class="liquid-modal-card">
+            <div class="modal-header">
+                <h2 class="vibrant-h2" style="font-size: 1.5rem;">Onboard New Agent</h2>
+                <button class="modal-close" onclick="hideCreateModal()">&times;</button>
+            </div>
+            <form id="create-agent-form" style="margin-top: 24px;">
+                <label class="field-label">Agent Name</label>
+                <div class="input-card" style="margin-bottom: 16px;">
+                    <input type="text" id="new-name" class="field-input" placeholder="e.g. Rahul Sharma" required>
+                </div>
+                <label class="field-label">Email Address</label>
+                <div class="input-card" style="margin-bottom: 16px;">
+                    <input type="email" id="new-email" class="field-input" placeholder="rahul@medimitra.com" required>
+                </div>
+                <label class="field-label">Temporary Password</label>
+                <div class="input-card" style="margin-bottom: 16px;">
+                    <input type="password" id="new-password" class="field-input" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="pill-button" style="width: 100%; justify-content: center;">Register Agent</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        const user = auth.getUser();
+        if (!user || user.role !== 'admin') { window.location.href = '../auth/login.html'; }
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('admin');
+        lucide.createIcons();
+
+        let allAgents = [];
+
+        async function loadAgents() {
+            try {
+                components.showLoader();
+                const res = await api.get('/admin/agents');
+                allAgents = res.data.agents || [];
+                const stats = res.data.fleet_stats || {};
+                
+                renderAgents(allAgents);
+                
+                // Update Stats with Real-time Data
+                document.getElementById('stat-total').innerText = stats.total_fleet || 0;
+                document.getElementById('stat-active').innerText = stats.active_fleet || 0;
+                document.getElementById('stat-rating').innerText = (stats.avg_rating || 0).toFixed(1);
+                document.getElementById('stat-today').innerText = stats.deliveries_today || 0;
+                
+            } catch (err) {
+                console.error('Failed to load fleet dossier:', err);
+                renderAgents([]);
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        function renderAgents(agents) {
+            const container = document.getElementById('agent-list');
+            if (agents.length === 0) {
+                container.innerHTML = '<div style="padding:60px; text-align:center; color:#8e8e93; font-weight:600;">No active fleet nodes detected.</div>';
+                return;
+            }
+            container.innerHTML = agents.map(a => {
+                const initials = a.name.split(' ').map(n => n[0]).join('').toUpperCase();
+                const statusClass = a.status === 'active' ? 'status-active' : (a.status === 'busy' ? 'status-busy' : 'status-offline');
+                const statusLabel = a.status === 'active' ? 'Online' : (a.status === 'busy' ? 'In Delivery' : 'Offline');
+                const ratingStars = (a.rating || 0).toFixed(1);
+                const todayCount = a.deliveries_today || 0;
+                
+                return `
+                    <div class="agent-row" id="agent-${a.id}">
+                        <div style="display: flex; align-items: center; gap: 20px;">
+                            <div style="width: 42px; height: 42px; background: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #007aff; border: 1px solid rgba(0,0,0,0.05);">${initials}</div>
+                            <div>
+                                <div style="font-weight: 800; color: #1d1d1f; font-size: 0.95rem;">${a.name}</div>
+                                <div style="font-size: 0.72rem; color: #8e8e93; font-weight: 500;">${a.email || ''}</div>
+                                <div style="font-size: 0.72rem; color: #6e6e73; font-weight: 600;">${a.phone || 'No phone'}</div>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="font-weight: 700; font-size: 0.9rem;">${a.vehicle || 'Not assigned'}</div>
+                            <div style="font-size: 0.72rem; color: #8e8e93; font-weight: 500;">${a.deliveries} total deliveries</div>
+                        </div>
+                        <div><span class="status-chip ${statusClass}">${statusLabel}</span></div>
+                        <div style="font-weight: 800; font-size: 0.95rem; color: var(--primary);">${todayCount} <span style="font-size:0.7rem; color:#8e8e93; font-weight:600;">drops</span></div>
+                        <div style="font-weight: 800; font-size: 0.95rem; color: #ff9500;">${ratingStars} <span style="font-size:0.7rem;">★</span></div>
+                        <div style="display: flex; gap: 6px;">
+                            <div class="action-icon" onclick="viewAgent(${a.id})"><i data-lucide="eye" size="16"></i></div>
+                            <div class="action-icon" style="color: var(--danger);" onclick="toggleAgent(${a.id}, '${a.status}', '${a.name}')"><i data-lucide="power" size="16"></i></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function showCreateModal() { document.getElementById('create-modal').classList.add('show'); }
+        function hideCreateModal() { document.getElementById('create-modal').classList.remove('show'); }
+
+        document.getElementById('create-agent-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = {
+                name: document.getElementById('new-name').value,
+                email: document.getElementById('new-email').value,
+                password: document.getElementById('new-password').value,
+                role: 'delivery'
+            };
+            try {
+                components.showLoader();
+                await api.post('/admin/users/create', payload);
+                components.showSuccess('Fleet agent onboarded.');
+                hideCreateModal();
+                loadAgents();
+            } catch (err) { components.showError(err.message); } finally { components.hideLoader(); }
+        });
+
+        document.getElementById('agent-search').addEventListener('input', (e) => {
+            const q = e.target.value.toLowerCase();
+            const filtered = allAgents.filter(a => a.name.toLowerCase().includes(q) || a.email.toLowerCase().includes(q));
+            renderAgents(filtered);
+        });
+
+        function viewAgent(id) {
+            window.location.href = `admin-user-detail.html?id=${id}`;
+        }
+
+        async function toggleAgent(id, currentStatus, name) {
+            const isActive = currentStatus === 'active';
+            const action = isActive ? 'block' : 'unblock';
+            const confirmed = await components.confirm(
+                isActive ? 'Suspend Agent' : 'Activate Agent',
+                `Are you sure you want to ${isActive ? 'suspend' : 'activate'} ${name}?`,
+                isActive ? 'Yes, Suspend' : 'Yes, Activate'
+            );
+            if (!confirmed) return;
+            try {
+                components.showLoader();
+                await api.post(`/admin/users/${id}/${action}`);
+                components.showSuccess(`Agent ${isActive ? 'suspended' : 'activated'} successfully.`);
+                loadAgents();
+            } catch (err) {
+                components.showError(err.message || 'Failed to update agent status.');
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        loadAgents();
+    </script>
+</body>
+</html>

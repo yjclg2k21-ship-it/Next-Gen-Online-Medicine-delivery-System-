@@ -1,0 +1,29 @@
+name: MediMitra CI/CD Platform
+
+on:
+  push:
+    branches: [ "main", "dev" ]
+  pull_request:
+    branches: [ "main", "dev" ]
+
+jobs:
+  test-and-lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        extensions: pdo_mysql, curl, mbstring
+        tools: composer:v2
+
+    - name: Syntax Linting Core
+      run: |
+        find backend/app -name "*.php" -print0 | xargs -0 -n1 php -l
+        find backend/app/Core -name "*.php" -print0 | xargs -0 -n1 php -l
+
+    - name: Execute Smoke Tests
+      run: php backend/tests/SmokeTest.php

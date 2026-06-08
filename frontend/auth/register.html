@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow-y: auto; padding: 20px 10px; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        .auth-glass-card {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(30px) saturate(200%);
+            -webkit-backdrop-filter: blur(30px) saturate(200%);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 60px;
+            padding: var(--l-card-p);
+            width: 100%;
+            max-width: 700px;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.1);
+            text-align: center;
+            z-index: 10;
+            box-sizing: border-box;
+        }
+
+        .auth-input {
+            width: 100%; padding: 22px 24px; border-radius: 18px;
+            border: 1px solid rgba(0,0,0,0.05); background: white;
+            font-weight: 600; font-size: 1rem; color: #1d1d1f;
+            margin-bottom: 20px; transition: all 0.3s; box-sizing: border-box;
+        }
+
+        .role-pill-group {
+            display: flex; gap: 8px; margin-bottom: 32px; background: rgba(0,0,0,0.03); padding: 8px; border-radius: 100px;
+        }
+        .role-pill {
+            flex: 1; padding: 12px; border-radius: 100px; font-weight: 800; font-size: 0.8rem;
+            cursor: pointer; transition: all 0.3s; color: #6e6e73; text-align: center;
+        }
+        .role-pill.active { background: white; color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+
+        .form-section {
+            text-align: left;
+            margin-bottom: 32px;
+            display: none;
+            animation: slideUp 0.4s ease-out;
+        }
+        .form-section.active { display: block; }
+
+        .section-title {
+            font-size: 0.75rem;
+            font-weight: 900;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 16px;
+            padding-left: 4px;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .auth-input:focus { border-color: var(--primary); transform: scale(1.01); }
+        .auth-input.valid { border-color: #34c759 !important; background: rgba(52, 199, 89, 0.05); }
+        .auth-input.invalid { border-color: #ff3b30 !important; background: rgba(255, 59, 48, 0.05); }
+
+        .preview-container {
+            margin-top: 10px; display: none; position: relative;
+            width: 80px; height: 80px; border-radius: 12px; overflow: hidden;
+            border: 2px solid rgba(0,0,0,0.1);
+        }
+        .preview-container img { width: 100%; height: 100%; object-fit: cover; }
+
+        .map-search-box {
+            position: absolute; top: 15px; left: 15px; z-index: 1000;
+            width: 70%; display: flex; gap: 8px;
+        }
+
+        .reg-progress-container {
+            height: 4px; background: rgba(0,0,0,0.05); border-radius: 2px;
+            margin-bottom: 30px; overflow: hidden;
+        }
+        .reg-progress-bar {
+            height: 100%; width: 0%; background: var(--primary);
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        #camera-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 9999; display: none;
+            flex-direction: column; align-items: center; justify-content: center;
+        }
+        #camera-stream { width: 90%; max-width: 500px; border-radius: 20px; }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 16px 8px;
+            }
+            .auth-glass-card {
+                border-radius: 28px;
+                padding: 32px 20px;
+            }
+            .auth-glass-card h1 {
+                font-size: 2rem !important;
+            }
+            .auth-input {
+                padding: 16px 20px;
+                font-size: 0.95rem;
+                margin-bottom: 16px;
+                border-radius: 16px;
+            }
+            #registerForm div[style*="display: grid"],
+            #registerForm div[style*="display:grid"] {
+                grid-template-columns: 1fr !important;
+                gap: 12px !important;
+            }
+            .role-pill-group {
+                flex-direction: column;
+                border-radius: 20px;
+                padding: 10px;
+                gap: 6px;
+                margin-bottom: 24px;
+            }
+            .role-pill {
+                padding: 10px;
+                font-size: 0.85rem;
+            }
+            #social-auth-section > div {
+                flex-direction: column;
+                gap: 10px !important;
+            }
+            .social-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            .map-search-box {
+                width: calc(100% - 30px);
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="liquid-canvas">
+        <div class="liquid-orb orb-1"></div>
+        <div class="liquid-orb orb-2"></div>
+        <div class="liquid-orb orb-3"></div>
+    </div>
+
+    <div class="auth-glass-card animate-scale-in">
+        <div style="font-size: 3rem; margin-bottom: 16px;">✦</div>
+        <h1 class="vibrant-h1" style="font-size: 2.5rem; margin-bottom: 8px;">Create Account</h1>
+        <p style="color: #6e6e73; font-weight: 600; margin-bottom: 20px;">Sign up for a MediMitra account to get started.</p>
+
+        <div class="reg-progress-container">
+            <div id="formProgress" class="reg-progress-bar"></div>
+        </div>
+
+        <div class="role-pill-group">
+            <div class="role-pill active" data-role="user">Patient</div>
+            <div class="role-pill" data-role="vendor">Provider (Pharmacy)</div>
+            <div class="role-pill" data-role="delivery">Logistics (Delivery)</div>
+        </div>
+
+        <!-- SOCIAL LOGIN (Only for Patient) -->
+        <div id="social-auth-section" style="margin-bottom: 30px;">
+            <p style="font-size: 0.8rem; color: #8e8e93; font-weight: 700; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 0.05em;">Or sign up with</p>
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button type="button" class="social-btn" style="background: white; border: 1px solid rgba(0,0,0,0.1); padding: 12px 25px; border-radius: 12px; font-weight: 700; display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="20" alt="Google"> Google
+                </button>
+                <button type="button" class="social-btn" style="background: #1877F2; color: white; border: none; padding: 12px 25px; border-radius: 12px; font-weight: 700; display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg" width="20" alt="FB"> Facebook
+                </button>
+            </div>
+        </div>
+
+        <form id="registerForm">
+            <!-- COMMON FIELDS -->
+            <div class="form-section active" style="display: block !important;">
+                <div class="section-title">Personal Details</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <label class="auth-label">Full Name</label>
+                        <input type="text" class="auth-input" id="name" placeholder="John Doe" required>
+                    </div>
+                    <div>
+                        <label class="auth-label">Mobile Number</label>
+                        <input type="tel" class="auth-input" id="phone" placeholder="9876543210" required>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <label class="auth-label">Email Address</label>
+                        <input type="email" class="auth-input" id="email" placeholder="name@example.com" required>
+                    </div>
+                    <div>
+                        <label class="auth-label">Date of Birth</label>
+                        <input type="date" class="auth-input" id="dob" required>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <label class="auth-label">Password</label>
+                        <input type="password" class="auth-input" id="password" placeholder="••••••••" required>
+                    </div>
+                    <div>
+                        <label class="auth-label">Confirm Password</label>
+                        <input type="password" class="auth-input" id="confirmPassword" placeholder="••••••••" required>
+                    </div>
+                </div>
+
+                <!-- PATIENT SPECIFIC (Internal) -->
+                <div id="patient-only-fields" style="display: block;">
+                    <div>
+                        <label class="auth-label">Gender</label>
+                        <select class="auth-input" id="gender">
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="section-title">Primary Residence</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 20px;">
+                        <div>
+                            <label class="auth-label">House/Flat No</label>
+                            <input type="text" class="auth-input" id="user_house_no" placeholder="Flat 101">
+                        </div>
+                        <div>
+                            <label class="auth-label">Area / Locality</label>
+                            <input type="text" class="auth-input" id="user_area" placeholder="Green Valley, Camp">
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div>
+                            <label class="auth-label">City</label>
+                            <input type="text" class="auth-input" id="user_city" placeholder="Phaltan" value="Phaltan">
+                        </div>
+                        <div>
+                            <label class="auth-label">Pincode / Zone</label>
+                            <select class="auth-input" id="user_pincode" style="padding: 16px; border-radius: 12px; background: white; border: 1px solid rgba(0,0,0,0.1); width: 100%; font-weight: 600;">
+                                <option value="415523">415523 - Central Phaltan Zone (City, Kolki, Market Yard)</option>
+                                <option value="415537">415537 - North / NE Zone (Kurvali Khurd side, Rural)</option>
+                                <option value="415528">415528 - East / SE Zone (Pimparad side, Agr. villages)</option>
+                                <option value="415521">415521 - West / NW Zone (Saswad side, Canal belt)</option>
+                                <option value="415509">415509 - Outer Rural / Satara-side Connection</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VENDOR SPECIFIC -->
+            <div id="vendor-fields" class="form-section">
+                <div class="section-title">Pharmacy Details</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <label class="auth-label">Pharmacy Shop Name</label>
+                        <input type="text" class="auth-input" id="pharmacy_name" placeholder="MediCare Pharmacy">
+                    </div>
+                    <div>
+                        <label class="auth-label">Pharmacist/Owner Name</label>
+                        <input type="text" class="auth-input" id="owner_name" placeholder="Full Name">
+                    </div>
+                    <div>
+                        <label class="auth-label">Drug License Number</label>
+                        <input type="text" class="auth-input" id="license_number" placeholder="DL-12345678">
+                    </div>
+                    <div>
+                        <label class="auth-label">Pharmacist Reg. Number</label>
+                        <input type="text" class="auth-input" id="pharmacist_reg_number" placeholder="PR-999999">
+                    </div>
+                    <div>
+                        <label class="auth-label">PAN Card Number</label>
+                        <input type="text" class="auth-input" id="v_pan_card" placeholder="ABCDE1234F">
+                    </div>
+                    <div>
+                        <label class="auth-label">Aadhaar Number</label>
+                        <input type="text" class="auth-input" id="v_aadhaar" placeholder="1234 5678 9012">
+                    </div>
+                    <div>
+                        <label class="auth-label">GST Number (Optional)</label>
+                        <input type="text" class="auth-input" id="gst_number" placeholder="27AAAAA0000A1Z5">
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <label class="auth-label">Drug License (PDF/Img)</label>
+                        <input type="file" class="auth-input preview-trigger" id="v_license_file" accept=".pdf,image/*">
+                        <div class="preview-container" id="v_license_file_preview"></div>
+                    </div>
+                    <div>
+                        <label class="auth-label">Owner ID Proof (Img)</label>
+                        <input type="file" class="auth-input preview-trigger" id="v_id_proof" accept="image/*">
+                        <div class="preview-container" id="v_id_proof_preview"></div>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <label class="auth-label">Opening Time</label>
+                        <input type="time" class="auth-input" id="opening_time" value="09:00">
+                    </div>
+                    <div>
+                        <label class="auth-label">Closing Time</label>
+                        <input type="time" class="auth-input" id="closing_time" value="21:00">
+                    </div>
+                </div>
+                <div>
+                    <label class="auth-label">Full Shop Address</label>
+                    <textarea class="auth-input" id="address" placeholder="Shop No, Area, Landmark, City, PIN" style="min-height: 100px; resize: none;"></textarea>
+                </div>
+
+                <!-- 🗺️ MAP PINPOINT WIDGET -->
+                <div id="map-section" style="margin-bottom: 20px;">
+                    <div class="section-title" style="display: flex; align-items: center; gap: 8px;">
+                        📍 Pin Your Store on Map
+                    </div>
+                    <div id="vendor-map" style="height: 280px; border-radius: 18px; border: 2px solid rgba(0,122,255,0.2); overflow: hidden; margin-bottom: 12px; z-index: 0; position: relative;">
+                        <div class="map-search-box">
+                            <input type="text" id="mapSearch" class="auth-input" placeholder="Search locality..." style="margin-bottom: 0; padding: 12px 18px; font-size: 0.9rem; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.1);">
+                            <button type="button" onclick="searchLocation()" class="pill-button" style="padding: 12px; width: auto; border-radius: 12px;">
+                                <i data-lucide="search"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                        <button type="button" id="gps-btn" onclick="useMyLocation()" style="padding: 10px 20px; border-radius: 100px; border: none; background: linear-gradient(135deg, #007aff, #00c6ff); color: white; font-weight: 800; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                            📍 Use My Location
+                        </button>
+                        <span id="coords-display" style="font-size: 0.78rem; color: #8e8e93; font-weight: 600;">Click on map to pin your store</span>
+                    </div>
+                    <input type="hidden" id="store_lat" value="">
+                    <input type="hidden" id="store_lng" value="">
+                </div>
+                
+                <div class="section-title">Bank Details (for Payouts)</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <input type="text" class="auth-input" id="v_bank_name" placeholder="Bank Name">
+                    <input type="text" class="auth-input" id="v_ifsc_code" placeholder="IFSC Code">
+                </div>
+                <input type="text" class="auth-input" id="v_account_number" placeholder="Account Number">
+            </div>
+
+            <!-- DELIVERY SPECIFIC -->
+            <div id="delivery-fields" class="form-section">
+                <div class="section-title">Delivery Rider Details</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <label class="auth-label">Aadhaar Number</label>
+                        <input type="text" class="auth-input" id="d_aadhaar" placeholder="1234 5678 9012">
+                    </div>
+                    <div>
+                        <label class="auth-label">PAN Number</label>
+                        <input type="text" class="auth-input" id="d_pan" placeholder="ABCDE1234F">
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <label class="auth-label">Driving License Number</label>
+                        <input type="text" class="auth-input" id="d_license_number" placeholder="DL-99999999">
+                    </div>
+                    <div>
+                        <label class="auth-label">Vehicle Number</label>
+                        <input type="text" class="auth-input" id="vehicle_number" placeholder="MH 12 AB 1234">
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <label class="auth-label">Vehicle Type</label>
+                        <select class="auth-input" id="vehicle_type">
+                            <option value="bike">Bike</option>
+                            <option value="scooter">Scooter</option>
+                            <option value="cycle">Cycle</option>
+                            <option value="car">Car</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="auth-label">Primary Dispatch Zone</label>
+                        <select class="auth-input" id="zone" style="padding: 16px; border-radius: 12px; background: white; border: 1px solid rgba(0,0,0,0.1); width: 100%; font-weight: 600;">
+                            <option value="415523 - Central Phaltan Zone">Central Phaltan Zone (415523 - City, Kolki)</option>
+                            <option value="415537 - North / NE Zone">North / North-East Zone (415537 - Kurvali Khurd)</option>
+                            <option value="415528 - East / SE Zone">East / South-East Zone (415528 - Pimparad)</option>
+                            <option value="415521 - West / NW Zone">West / North-West Zone (415521 - Saswad)</option>
+                            <option value="415509 - Outer Connection Zone">Outer Rural / Satara-side Connection (415509)</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <label class="auth-label">License Copy (Upload)</label>
+                        <input type="file" class="auth-input preview-trigger" id="d_license_file" accept=".pdf,image/*">
+                        <div class="preview-container" id="d_license_file_preview"></div>
+                    </div>
+                    <div>
+                        <label class="auth-label">ID Proof (Aadhaar/PAN)</label>
+                        <input type="file" class="auth-input preview-trigger" id="d_id_proof" accept="image/*">
+                        <div class="preview-container" id="d_id_proof_preview"></div>
+                    </div>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label class="auth-label">Selfie Photo (Upload or Capture)</label>
+                    <div style="display: flex; gap: 10px; align-items: flex-start;">
+                        <div style="flex: 1;">
+                            <input type="file" class="auth-input preview-trigger" id="d_selfie" accept="image/*">
+                        </div>
+                        <button type="button" onclick="openCamera()" class="pill-button" style="padding: 18px; width: auto; background: #5856d6;">
+                            <i data-lucide="camera"></i>
+                        </button>
+                    </div>
+                    <div class="preview-container" id="d_selfie_preview"></div>
+                </div>
+                <div>
+                    <label class="auth-label">Current Address</label>
+                    <input type="text" class="auth-input" id="current_address" placeholder="Residential Area, City">
+                </div>
+                <div>
+                    <label class="auth-label">Permanent Address</label>
+                    <input type="text" class="auth-input" id="permanent_address" placeholder="Home Town Address">
+                </div>
+
+                <div class="section-title">Bank Details (for Payouts)</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <input type="text" class="auth-input" id="d_bank_name" placeholder="Bank Name">
+                    <input type="text" class="auth-input" id="d_ifsc_code" placeholder="IFSC Code">
+                </div>
+                <input type="text" class="auth-input" id="d_account_number" placeholder="Account Number">
+            </div>
+
+            <button type="submit" class="pill-button" style="width: 100%; justify-content: center; padding: 22px; font-size: 1.1rem; margin-top: 20px;">
+                Sign Up <i data-lucide="sparkles"></i>
+            </button>
+        </form>
+
+        <div style="margin-top: 40px; color: #6e6e73; font-weight: 600; font-size: 0.9rem;">
+            Already have an account? <a href="login.html" style="color: var(--primary); text-decoration: none; font-weight: 800;">Sign In</a>
+        </div>
+    </div>
+
+    <!-- CAMERA MODAL -->
+    <div id="camera-modal">
+        <video id="camera-stream" autoplay playsinline></video>
+        <div style="display: flex; gap: 20px; margin-top: 30px;">
+            <button onclick="closeCamera()" class="pill-button" style="background: rgba(255,255,255,0.2);">Cancel</button>
+            <button onclick="takeSnapshot()" class="pill-button" style="background: #ff2d55; padding: 18px 40px;">Capture 📸</button>
+        </div>
+        <canvas id="snapshot-canvas" style="display: none;"></canvas>
+    </div>
+
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script>
+        lucide.createIcons();
+
+        // Role Selection Logic
+        const pills = document.querySelectorAll('.role-pill');
+        const vendorFields = document.getElementById('vendor-fields');
+        const deliveryFields = document.getElementById('delivery-fields');
+
+        pills.forEach(pill => {
+            pill.addEventListener('click', () => {
+                pills.forEach(p => p.classList.remove('active'));
+                pill.classList.add('active');
+
+                const role = pill.dataset.role;
+                vendorFields.classList.remove('active');
+                deliveryFields.classList.remove('active');
+                
+                const patientFields = document.getElementById('patient-only-fields');
+                const mapSection = document.getElementById('map-section');
+                const socialSection = document.getElementById('social-auth-section');
+
+                if (role === 'user') {
+                    patientFields.style.display = 'block';
+                    mapSection.style.display = 'block';
+                    socialSection.style.display = 'block';
+                    setTimeout(() => initVendorMap(), 200);
+                } else {
+                    socialSection.style.display = 'none';
+                    // Hidden for delivery, shown for vendor
+                    if (role === 'vendor') {
+                        mapSection.style.display = 'block';
+                        setTimeout(() => initVendorMap(), 200);
+                    } else {
+                        mapSection.style.display = 'none';
+                    }
+                    patientFields.style.display = 'none';
+                }
+
+                if (role === 'vendor') {
+                    vendorFields.classList.add('active');
+                }
+                if (role === 'delivery') deliveryFields.classList.add('active');
+                
+                // Update required status
+                updateRequiredFields(role);
+            });
+        });
+
+        // ========== LEAFLET MAP LOGIC ==========
+        let vendorMap = null;
+        let vendorMarker = null;
+
+        function initVendorMap() {
+            const mapEl = document.getElementById('vendor-map');
+            if (!mapEl) return;
+
+            if (vendorMap) {
+                // Force Leaflet to recalculate size since container visibility changed
+                setTimeout(() => vendorMap.invalidateSize(), 100);
+                return;
+            }
+
+            // Default center: Phaltan, Maharashtra
+            vendorMap = L.map('vendor-map').setView([17.9868, 74.4379], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap',
+                maxZoom: 19
+            }).addTo(vendorMap);
+
+            // Click to drop pin
+            vendorMap.on('click', function(e) {
+                placeVendorPin(e.latlng.lat, e.latlng.lng);
+            });
+        }
+
+        function placeVendorPin(lat, lng) {
+            if (vendorMarker) vendorMap.removeLayer(vendorMarker);
+            vendorMarker = L.marker([lat, lng], { draggable: true }).addTo(vendorMap);
+            vendorMap.setView([lat, lng], 16);
+
+            document.getElementById('store_lat').value = lat.toFixed(8);
+            document.getElementById('store_lng').value = lng.toFixed(8);
+            document.getElementById('coords-display').textContent = `Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`;
+            document.getElementById('coords-display').style.color = '#34c759';
+
+            // 📍 REVERSE GEOCODING (Placeholder logic)
+            // In a real app, you'd call Nominatim or Google Maps API here
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                .then(res => res.json())
+                .then(data => {
+                    const addr = data.address;
+                    const role = document.querySelector('.role-pill.active').dataset.role;
+                    if (role === 'user') {
+                        if (addr.suburb || addr.neighbourhood || addr.suburb) {
+                            document.getElementById('user_area').value = addr.suburb || addr.neighbourhood || addr.suburb || '';
+                        }
+                        if (addr.city || addr.town || addr.village) {
+                            document.getElementById('user_city').value = addr.city || addr.town || addr.village || '';
+                        }
+                        if (addr.postcode) {
+                            const code = addr.postcode.replace(/\s+/g, '');
+                            const selectEl = document.getElementById('user_pincode');
+                            if (selectEl.querySelector(`option[value="${code}"]`)) {
+                                selectEl.value = code;
+                            } else {
+                                selectEl.value = '415523';
+                            }
+                        }
+                    } else if (role === 'vendor') {
+                        document.getElementById('address').value = data.display_name;
+                    }
+                });
+
+            // Allow drag to adjust
+            vendorMarker.on('dragend', function(e) {
+                const pos = e.target.getLatLng();
+                placeVendorPin(pos.lat, pos.lng);
+            });
+        }
+
+        async function searchLocation() {
+            const query = document.getElementById('mapSearch').value;
+            if (!query) return;
+            
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&countrycodes=in`);
+                const data = await res.json();
+                if (data.length > 0) {
+                    const loc = data[0];
+                    placeVendorPin(parseFloat(loc.lat), parseFloat(loc.lon));
+                } else {
+                    components.showError("Location not found within coverage area.");
+                }
+            } catch (e) { console.error("Search failed:", e); }
+        }
+
+        function useMyLocation() {
+            const btn = document.getElementById('gps-btn');
+            btn.textContent = '⏳ Detecting...';
+            btn.disabled = true;
+
+            if (!navigator.geolocation) {
+                components.showError('GPS not supported in this browser.');
+                btn.textContent = '📍 Use My Location';
+                btn.disabled = false;
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+                    if (!vendorMap) initVendorMap();
+                    placeVendorPin(lat, lng);
+                    btn.textContent = '✅ Location Set';
+                    btn.disabled = false;
+                },
+                (err) => {
+                    components.showError('Location access denied. Please pin manually on the map.');
+                    btn.textContent = '📍 Use My Location';
+                    btn.disabled = false;
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        }
+
+        function updateRequiredFields(role) {
+            // Reset all
+            const allExtraInputs = [...vendorFields.querySelectorAll('input, textarea, select'), ...deliveryFields.querySelectorAll('input, textarea, select'), ...document.getElementById('patient-only-fields').querySelectorAll('input')];
+            allExtraInputs.forEach(input => input.required = false);
+
+            if (role === 'user') {
+                document.getElementById('dob').required = true;
+                document.getElementById('user_house_no').required = true;
+                document.getElementById('user_area').required = true;
+            } else if (role === 'vendor') {
+                document.getElementById('dob').required = true;
+                document.getElementById('pharmacy_name').required = true;
+                document.getElementById('license_number').required = true;
+                document.getElementById('pharmacist_reg_number').required = true;
+                document.getElementById('v_pan_card').required = true;
+                document.getElementById('address').required = true;
+            } else if (role === 'delivery') {
+                document.getElementById('dob').required = true;
+                document.getElementById('vehicle_number').required = true;
+                document.getElementById('d_license_number').required = true;
+                // Aadhaar or PAN logic handled in submit validation
+            }
+        }
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerHTML;
+            
+            const role = document.querySelector('.role-pill.active').dataset.role;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (password !== confirmPassword) {
+                components.showError("Validation Error: Passwords do not match.");
+                return;
+            }
+
+            // Password strength validation
+            if (password.length < 8) {
+                components.showError("Validation Error: Password must be at least 8 characters.");
+                return;
+            }
+            if (!/[A-Z]/.test(password)) {
+                components.showError("Validation Error: Password must contain at least one uppercase letter.");
+                return;
+            }
+            if (!/[0-9]/.test(password)) {
+                components.showError("Validation Error: Password must contain at least one number.");
+                return;
+            }
+            if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+                components.showError("Validation Error: Password must contain at least one special character (!@#$%^&*).");
+                return;
+            }
+
+            // Name validation
+            const nameVal = document.getElementById('name').value.trim();
+            if (nameVal.length < 3) {
+                components.showError("Validation Error: Name must be at least 3 characters.");
+                document.getElementById('name').classList.add('invalid');
+                return;
+            }
+
+            // Email format validation
+            const emailVal = document.getElementById('email').value.trim();
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) {
+                components.showError("Validation Error: Please enter a valid email address.");
+                document.getElementById('email').classList.add('invalid');
+                return;
+            }
+
+            // Highlight all empty required fields
+            let hasEmpty = false;
+            document.querySelectorAll('.form-section.active input[required], .form-section[style*="display: block"] input[required]').forEach(input => {
+                if (!input.value.trim()) {
+                    input.classList.add('invalid');
+                    hasEmpty = true;
+                } else {
+                    input.classList.remove('invalid');
+                }
+            });
+            if (hasEmpty) {
+                components.showError("Validation Error: Please fill all required fields (highlighted in red).");
+                return;
+            }
+
+            const dobValue = document.getElementById('dob').value;
+            if (dobValue) {
+                const dob = new Date(dobValue);
+                const today = new Date();
+                let age = today.getFullYear() - dob.getFullYear();
+                const m = today.getMonth() - dob.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+                    age--;
+                }
+                
+                if (age < 18 && (role === 'vendor' || role === 'delivery')) {
+                    components.showError("Validation Error: You must be 18+ to register as a Pharmacy or Delivery Partner.");
+                    return;
+                }
+            }
+
+            // 📋 FORMAT VALIDATIONS
+            const phone = document.getElementById('phone').value;
+            if (!/^\d{10}$/.test(phone)) {
+                components.showError("Validation Error: Mobile number must be exactly 10 digits.");
+                return;
+            }
+
+            if (role === 'vendor') {
+                const pan = document.getElementById('v_pan_card').value;
+                if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(pan)) {
+                    components.showError("Validation Error: Invalid PAN Card format (e.g. ABCDE1234F).");
+                    return;
+                }
+                const aadhaar = document.getElementById('v_aadhaar').value;
+                if (aadhaar && !/^\d{12}$/.test(aadhaar)) {
+                    components.showError("Validation Error: Aadhaar must be 12 digits.");
+                    return;
+                }
+            }
+
+            if (role === 'delivery') {
+                const aadhaar = document.getElementById('d_aadhaar').value;
+                const pan = document.getElementById('d_pan').value;
+                if (!aadhaar && !pan) {
+                    components.showError("Verification Required: Please provide either Aadhaar or PAN number.");
+                    return;
+                }
+                if (aadhaar && !/^\d{12}$/.test(aadhaar)) {
+                    components.showError("Validation Error: Aadhaar must be 12 digits.");
+                    return;
+                }
+                if (pan && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(pan)) {
+                    components.showError("Validation Error: Invalid PAN Card format.");
+                    return;
+                }
+            }
+
+            try {
+                btn.innerHTML = 'Creating Account...';
+                btn.disabled = true;
+                
+                const formData = new FormData();
+                formData.append('role', role);
+                formData.append('name', document.getElementById('name').value);
+                formData.append('email', document.getElementById('email').value);
+                formData.append('phone', document.getElementById('phone').value);
+                formData.append('password', password);
+                formData.append('dob', dobValue);
+
+                if (role === 'user') {
+                    formData.append('gender', document.getElementById('gender').value);
+                    formData.append('house_no', document.getElementById('user_house_no').value);
+                    formData.append('area', document.getElementById('user_area').value);
+                    formData.append('address', document.getElementById('user_house_no').value + ', ' + document.getElementById('user_area').value);
+                    formData.append('city', document.getElementById('user_city').value);
+                    formData.append('pincode', document.getElementById('user_pincode').value);
+                    formData.append('latitude', document.getElementById('store_lat').value);
+                    formData.append('longitude', document.getElementById('store_lng').value);
+                }
+
+                // Add Role Specific Data
+                if (role === 'vendor') {
+                    formData.append('pharmacy_name', document.getElementById('pharmacy_name').value);
+                    formData.append('owner_name', document.getElementById('owner_name').value);
+                    formData.append('license_number', document.getElementById('license_number').value);
+                    formData.append('pharmacist_reg_number', document.getElementById('pharmacist_reg_number').value);
+                    formData.append('pan_card_number', document.getElementById('v_pan_card').value);
+                    formData.append('aadhaar_number', document.getElementById('v_aadhaar').value);
+                    formData.append('gst_number', document.getElementById('gst_number').value);
+                    formData.append('address', document.getElementById('address').value);
+                    formData.append('opening_time', document.getElementById('opening_time').value);
+                    formData.append('closing_time', document.getElementById('closing_time').value);
+                    formData.append('latitude', document.getElementById('store_lat').value);
+                    formData.append('longitude', document.getElementById('store_lng').value);
+                    formData.append('bank_name', document.getElementById('v_bank_name').value);
+                    formData.append('account_number', document.getElementById('v_account_number').value);
+                    formData.append('ifsc_code', document.getElementById('v_ifsc_code').value);
+                    
+                    const licenseFile = document.getElementById('v_license_file').files[0];
+                    if (licenseFile) formData.append('license_copy', licenseFile);
+
+                    const idFile = document.getElementById('v_id_proof').files[0];
+                    if (idFile) formData.append('id_proof', idFile);
+                } else if (role === 'delivery') {
+                    formData.append('vehicle_type', document.getElementById('vehicle_type').value);
+                    formData.append('vehicle_number', document.getElementById('vehicle_number').value);
+                    formData.append('zone', document.getElementById('zone').value);
+                    formData.append('license_number', document.getElementById('d_license_number').value);
+                    formData.append('aadhaar_number', document.getElementById('d_aadhaar').value);
+                    formData.append('pan_number', document.getElementById('d_pan').value);
+                    formData.append('current_address', document.getElementById('current_address').value);
+                    formData.append('permanent_address', document.getElementById('permanent_address').value);
+                    formData.append('bank_name', document.getElementById('d_bank_name').value);
+                    formData.append('account_number', document.getElementById('d_account_number').value);
+                    formData.append('ifsc_code', document.getElementById('d_ifsc_code').value);
+                    
+                    const licenseFile = document.getElementById('d_license_file').files[0];
+                    if (licenseFile) formData.append('license_copy', licenseFile);
+
+                    const idFile = document.getElementById('d_id_proof').files[0];
+                    if (idFile) formData.append('id_proof', idFile);
+
+                    const selfieFile = document.getElementById('d_selfie').files[0];
+                    if (selfieFile) formData.append('selfie', selfieFile);
+                }
+
+                const response = await api.post('/auth/register', formData);
+                if (response.success) {
+                    components.showSuccess('Account Created Successfully. Please Sign In.');
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 1500);
+                }
+            } catch (err) {
+                console.error(err);
+                components.showError(err.message || 'Network anomaly detected.');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
+
+        // 📊 PROGRESS & VALIDATION LOGIC
+        function updateProgress() {
+            const currentRole = document.querySelector('.role-pill.active').dataset.role;
+            const requiredFields = [...document.querySelectorAll('input[required]')];
+            if (currentRole === 'vendor') {
+                requiredFields.push(...vendorFields.querySelectorAll('input[required], textarea[required]'));
+            } else if (currentRole === 'delivery') {
+                requiredFields.push(...deliveryFields.querySelectorAll('input[required]'));
+            }
+            
+            const filled = requiredFields.filter(f => f.value.trim() !== '').length;
+            const percent = (filled / requiredFields.length) * 100;
+            document.getElementById('formProgress').style.width = percent + '%';
+        }
+
+        // Real-time Format Check
+        function validateInput(input, regex) {
+            if (input.value === '') {
+                input.classList.remove('valid', 'invalid');
+            } else if (regex.test(input.value)) {
+                input.classList.add('valid');
+                input.classList.remove('invalid');
+            } else {
+                input.classList.add('invalid');
+                input.classList.remove('valid');
+            }
+            updateProgress();
+        }
+
+        document.getElementById('phone').addEventListener('input', e => validateInput(e.target, /^\d{10}$/));
+        document.getElementById('email').addEventListener('input', e => validateInput(e.target, /^[^\s@]+@[^\s@]+\.[^\s@]+$/));
+        document.getElementById('name').addEventListener('input', e => validateInput(e.target, /^.{3,}$/));
+        document.getElementById('password').addEventListener('input', e => {
+            const val = e.target.value;
+            const strong = val.length >= 8 && /[A-Z]/.test(val) && /[0-9]/.test(val) && /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(val);
+            if (val === '') { e.target.classList.remove('valid', 'invalid'); }
+            else if (strong) { e.target.classList.add('valid'); e.target.classList.remove('invalid'); }
+            else { e.target.classList.add('invalid'); e.target.classList.remove('valid'); }
+            updateProgress();
+        });
+        document.getElementById('confirmPassword').addEventListener('input', e => {
+            const pass = document.getElementById('password').value;
+            if (e.target.value === '') { e.target.classList.remove('valid', 'invalid'); }
+            else if (e.target.value === pass) { e.target.classList.add('valid'); e.target.classList.remove('invalid'); }
+            else { e.target.classList.add('invalid'); e.target.classList.remove('valid'); }
+            updateProgress();
+        });
+        document.getElementById('v_pan_card')?.addEventListener('input', e => validateInput(e.target, /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/));
+        document.getElementById('d_pan')?.addEventListener('input', e => validateInput(e.target, /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/));
+        document.getElementById('v_aadhaar')?.addEventListener('input', e => validateInput(e.target, /^\d{12}$/));
+        document.getElementById('d_aadhaar')?.addEventListener('input', e => validateInput(e.target, /^\d{12}$/));
+        document.getElementById('d_license_number')?.addEventListener('input', e => validateInput(e.target, /^.{5,}$/));
+        document.getElementById('vehicle_number')?.addEventListener('input', e => validateInput(e.target, /^[A-Z]{2}[\s-]?\d{2}[\s-]?[A-Z]{1,2}[\s-]?\d{4}$/i));
+        document.getElementById('license_number')?.addEventListener('input', e => validateInput(e.target, /^.{5,}$/));
+        document.getElementById('pharmacist_reg_number')?.addEventListener('input', e => validateInput(e.target, /^.{4,}$/));
+        document.getElementById('v_bank_name')?.addEventListener('input', e => validateInput(e.target, /^.{3,}$/));
+        document.getElementById('v_ifsc_code')?.addEventListener('input', e => validateInput(e.target, /^[A-Z]{4}0[A-Z0-9]{6}$/i));
+        document.getElementById('v_account_number')?.addEventListener('input', e => validateInput(e.target, /^\d{9,18}$/));
+        document.getElementById('d_bank_name')?.addEventListener('input', e => validateInput(e.target, /^.{3,}$/));
+        document.getElementById('d_ifsc_code')?.addEventListener('input', e => validateInput(e.target, /^[A-Z]{4}0[A-Z0-9]{6}$/i));
+        document.getElementById('d_account_number')?.addEventListener('input', e => validateInput(e.target, /^\d{9,18}$/));
+        document.getElementById('gst_number')?.addEventListener('input', e => { if(e.target.value) validateInput(e.target, /^\d{2}[A-Z]{5}\d{4}[A-Z]{1}[A-Z\d]{1}[Z]{1}[A-Z\d]{1}$/); });
+        document.getElementById('pharmacy_name')?.addEventListener('input', e => validateInput(e.target, /^.{3,}$/));
+        document.getElementById('owner_name')?.addEventListener('input', e => validateInput(e.target, /^.{3,}$/));
+        document.getElementById('current_address')?.addEventListener('input', e => validateInput(e.target, /^.{5,}$/));
+        document.getElementById('permanent_address')?.addEventListener('input', e => validateInput(e.target, /^.{5,}$/));
+        
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('change', updateProgress);
+            input.addEventListener('input', updateProgress);
+        });
+
+        // 🖼️ IMAGE PREVIEW LOGIC
+        document.querySelectorAll('.preview-trigger').forEach(input => {
+            input.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                const previewContainer = document.getElementById(e.target.id + '_preview');
+                if (file && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        previewContainer.innerHTML = `<img src="${event.target.result}">`;
+                        previewContainer.style.display = 'block';
+                    }
+                    reader.readAsDataURL(file);
+                } else {
+                    previewContainer.style.display = 'none';
+                }
+                updateProgress();
+            });
+        });
+        // 📷 CAMERA LOGIC
+        let stream = null;
+        async function openCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+                document.getElementById('camera-stream').srcObject = stream;
+                document.getElementById('camera-modal').style.display = 'flex';
+            } catch (err) {
+                components.showError("Camera Access Denied or Unavailable.");
+            }
+        }
+
+        function closeCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            document.getElementById('camera-modal').style.display = 'none';
+        }
+
+        function takeSnapshot() {
+            const video = document.getElementById('camera-stream');
+            const canvas = document.getElementById('snapshot-canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            
+            const dataUrl = canvas.toDataURL('image/jpeg');
+            const preview = document.getElementById('d_selfie_preview');
+            preview.innerHTML = `<img src="${dataUrl}">`;
+            preview.style.display = 'block';
+            
+            // Convert to Blob for upload
+            fetch(dataUrl).then(res => res.blob()).then(blob => {
+                const file = new File([blob], "selfie.jpg", { type: "image/jpeg" });
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                document.getElementById('d_selfie').files = dataTransfer.files;
+                updateProgress();
+            });
+
+            closeCamera();
+        }
+
+        // Initial setup
+        updateRequiredFields('user');
+        setTimeout(() => initVendorMap(), 200);
+    </script>
+</body>
+</html>

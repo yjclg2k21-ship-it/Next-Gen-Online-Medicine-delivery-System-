@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Detail | Admin | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <link rel="stylesheet" href="../assets/css/admin-dark.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .audit-hero { background: #fbfbfd; border-radius: 20px; padding: 24px; margin-bottom: 24px; border: 1px solid rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: center; }
+        .diff-container { background: #1d1d1f; color: #fff; padding: 20px; border-radius: 16px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.82rem; overflow-x: auto; white-space: pre-wrap; line-height: 1.6; }
+        .diff-added { color: #34c759; background: rgba(52,199,89,0.1); }
+        .diff-removed { color: #ff3b30; background: rgba(255,59,48,0.1); }
+        .info-label { font-size: 0.72rem; font-weight: 800; color: #8e8e93; text-transform: uppercase; margin-bottom: 4px; }
+        .info-val { font-weight: 700; font-size: 1rem; color: #1d1d1f; }
+    </style>
+</head>
+<body>
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        <main class="liquid-main" style="overflow-y:auto;">
+            <header style="margin-bottom:20px;display:flex;align-items:center;gap:14px;">
+                <a href="admin-system-logs.html" style="width:40px;height:40px;border-radius:12px;border:1px solid rgba(0,0,0,0.1);display:flex;align-items:center;justify-content:center;text-decoration:none;color:#1d1d1f;"><i data-lucide="arrow-left" style="width:18px;height:18px;"></i></a>
+                <div>
+                    <h1 class="vibrant-h1" style="margin-bottom:0;">Audit Record Detail</h1>
+                    <p style="color:#6e6e73;font-size:1rem;font-weight:500;" id="event-id">Loading Log #...</p>
+                </div>
+            </header>
+
+            <div class="audit-hero">
+                <div>
+                    <div class="info-label">Action Performed</div>
+                    <div class="info-val" id="event-action" style="color:#007aff;">UPDATE_VENDOR_STATUS</div>
+                </div>
+                <div style="text-align:right;">
+                    <div class="info-label">Timestamp (IST)</div>
+                    <div class="info-val" id="event-time">14 Apr 2026, 11:22:45 AM</div>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+                <div class="liquid-card" style="padding:20px;">
+                    <h3 style="font-weight:800; margin-bottom:16px; display:flex; align-items:center; gap:8px;"><i data-lucide="user" style="width:16px;height:16px;color:#5856d6;"></i> Originating Actor</h3>
+                    <div style="display:grid; gap:12px;">
+                        <div><div class="info-label">Admin Name</div><div class="info-val">Jayesh Divgi</div></div>
+                        <div><div class="info-label">Source IP Address</div><div class="info-val" style="font-family:monospace;">192.168.1.44</div></div>
+                        <div><div class="info-label">User Agent</div><div class="info-val" style="font-size:0.75rem; color:#6e6e73;">Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36...</div></div>
+                    </div>
+                </div>
+                <div class="liquid-card" style="padding:20px;">
+                    <h3 style="font-weight:800; margin-bottom:16px; display:flex; align-items:center; gap:8px;"><i data-lucide="target" style="width:16px;height:16px;color:#ff9500;"></i> Impacted Resource</h3>
+                    <div style="display:grid; gap:12px;">
+                        <div><div class="info-label">Resource Type</div><div class="info-val">Vendor Account</div></div>
+                        <div><div class="info-label">Resource ID</div><div class="info-val" style="font-family:monospace;">VENDOR_9021</div></div>
+                        <div><div class="info-label">Current Status</div><div class="info-val"><span style="background:rgba(52,199,89,0.1);color:#34c759;padding:2px 8px;border-radius:10px;font-size:0.75rem;">VERIFIED</span></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="liquid-card" style="padding:24px;">
+                <h3 style="font-weight:800; margin-bottom:16px; display:flex; align-items:center; gap:8px;"><i data-lucide="code" style="width:16px;height:16px;color:#af52de;"></i> Data Changes (JSON Diff)</h3>
+                <div class="diff-container">
+{
+  "resource": "vendor_9021",
+  "changes": {
+<span class="diff-removed">-   "kyc_status": "pending",</span>
+<span class="diff-removed">-   "can_sell": false,</span>
+<span class="diff-added">+   "kyc_status": "verified",</span>
+<span class="diff-added">+   "can_sell": true,</span>
+<span class="diff-added">+   "verified_at": "2026-04-14T11:22:45Z",</span>
+<span class="diff-added">+   "verified_by": 101</span>
+  },
+  "metadata": {
+    "module": "admin_compliance",
+    "trigger": "manual_review"
+  }
+}
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        const user = auth.getUser();
+        if (!user || user.role !== 'admin') window.location.href = '../auth/login.html';
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('admin');
+        lucide.createIcons();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const logId = urlParams.get('id');
+        
+        async function loadAuditDetail() {
+            if (!logId) {
+                components.showError("No log identifier provided.");
+                return;
+            }
+
+            try {
+                components.showLoader();
+                // Note: The /admin/audit/{id} endpoint might be /admin/logs/activity detail in some contexts
+                // but here we match the implementation plan's API structure.
+                const data = await api.get(`/admin/audit/${logId}`);
+                const log = data.data.log;
+
+                document.getElementById('event-id').textContent = `Log Record #${log.id}`;
+                document.getElementById('event-action').textContent = log.action;
+                document.getElementById('event-time').textContent = new Date(log.created_at).toLocaleString();
+                
+                // Update Originating Actor (Using response data)
+                const actorDivs = document.querySelectorAll('.liquid-card:first-of-type .info-val');
+                actorDivs[0].textContent = log.admin || 'System Automated';
+                actorDivs[1].textContent = log.ip_address || 'Internal Router';
+                actorDivs[2].textContent = log.user_agent || 'MediFlow-Core/1.0';
+
+                // Update Impacted Resource
+                const resourceDivs = document.querySelectorAll('.liquid-card:last-of-type .info-val');
+                resourceDivs[0].textContent = log.target_type || 'Unknown';
+                resourceDivs[1].textContent = log.target_id || 'Global';
+                
+                // Diff payload
+                document.querySelector('.diff-container').textContent = JSON.stringify(log.payload || {}, null, 2);
+
+            } catch (err) {
+                console.error(err);
+                document.querySelector('main').innerHTML = `
+                    <div style="padding:100px; text-align:center;">
+                        <i data-lucide="alert-triangle" style="width:48px;height:48px;color:var(--danger);margin-bottom:20px;"></i>
+                        <h2 style="font-weight:800;">Dossier Not Found</h2>
+                        <p style="color:#6e6e73;">The requested audit node could not be retrieved from the clinical ledger.</p>
+                        <a href="admin-dashboard.html" class="pill-button" style="margin-top:20px; display:inline-flex;">Return to Safety</a>
+                    </div>
+                `;
+                lucide.createIcons();
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        loadAuditDetail();
+    </script>
+</body>
+</html>

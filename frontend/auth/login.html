@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow-y: auto; padding: 20px; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        .auth-glass-card {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(30px) saturate(200%);
+            -webkit-backdrop-filter: blur(30px) saturate(200%);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 60px;
+            padding: var(--l-card-p);
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.1);
+            text-align: center;
+            position: relative;
+            z-index: 1000;
+            box-sizing: border-box;
+        }
+
+        .auth-input {
+            width: 100%; padding: 24px 24px; border-radius: var(--l-card-r);
+            border: 1px solid rgba(0,0,0,0.05); background: white;
+            font-weight: 600; font-size: 1rem; color: #1d1d1f;
+            margin-bottom: 20px; transition: all 0.3s; box-sizing: border-box;
+        }
+        .auth-input:focus { border-color: var(--primary); transform: scale(1.01); }
+        .auth-input.input-error { border-color: #ff3b30; background: rgba(255,59,48,0.03); }
+
+        .auth-label {
+            display: block; text-align: left; font-size: 0.75rem;
+            font-weight: 800; color: #6e6e73; text-transform: uppercase;
+            margin-bottom: 8px; letter-spacing: 0.05em; padding-left: 4px;
+        }
+
+        .field-error {
+            display: none; text-align: left; font-size: 0.75rem;
+            color: #ff3b30; font-weight: 600; margin-top: -14px;
+            margin-bottom: 12px; padding-left: 4px;
+        }
+        .field-error.visible { display: block; }
+
+        .password-toggle-btn {
+            position: absolute; right: 24px; top: 48px; color: #6e6e73; cursor: pointer; display: flex; align-items: center; height: 50px;
+        }
+
+        @media (max-width: 576px) {
+            body {
+                padding: 16px;
+            }
+            .auth-glass-card {
+                border-radius: 28px;
+                padding: 32px 20px;
+            }
+            .auth-glass-card h1 {
+                font-size: 2rem !important;
+            }
+            .auth-input {
+                padding: 16px 20px;
+                font-size: 0.95rem;
+                margin-bottom: 16px;
+                border-radius: 16px;
+            }
+            .auth-label {
+                margin-bottom: 6px;
+                font-size: 0.7rem;
+            }
+            .password-toggle-btn {
+                right: 20px;
+                top: 40px;
+                height: 44px;
+            }
+            .pill-button {
+                padding: 16px !important;
+                font-size: 1rem !important;
+            }
+            .field-error {
+                margin-top: -10px;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Liquid Canvas Background -->
+    <div class="liquid-canvas">
+        <div class="liquid-orb orb-1"></div>
+        <div class="liquid-orb orb-2"></div>
+        <div class="liquid-orb orb-3"></div>
+    </div>
+
+    <div class="auth-glass-card animate-scale-in">
+        <div style="font-size: 3rem; margin-bottom: 16px;">✦</div>
+        <h1 class="vibrant-h1" style="font-size: 2.5rem; margin-bottom: 8px;">Sign In</h1>
+        <p style="color: #6e6e73; font-weight: 600; margin-bottom: 16px;">Sign in to your MediMitra account to continue.</p>
+
+        <form id="loginForm" novalidate>
+            <div>
+                <label class="auth-label" for="email">Email Address</label>
+                <input type="email" class="auth-input" id="email" name="email" placeholder="name@example.com" autocomplete="email" required aria-describedby="email-error">
+                <p class="field-error" id="email-error" role="alert"></p>
+            </div>
+            <div style="position: relative;">
+                <label class="auth-label" for="password">Password</label>
+                <input type="password" class="auth-input" id="password" name="password" placeholder="••••••••" autocomplete="current-password" required minlength="6" aria-describedby="password-error">
+                <span id="togglePass" class="password-toggle-btn" role="button" aria-label="Toggle password visibility" tabindex="0">
+                    <i data-lucide="eye"></i>
+                </span>
+                <p class="field-error" id="password-error" role="alert"></p>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin: 10px 0 32px 0;">
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 700; color: #1d1d1f; cursor: pointer;">
+                    <input type="checkbox" style="accent-color: var(--primary);"> Remember Me
+                </label>
+                <a href="forgot-password.html" style="font-size: 0.85rem; color: var(--primary); text-decoration: none; font-weight: 800;">Forgot Password?</a>
+            </div>
+
+            <button type="submit" class="pill-button" style="width: 100%; justify-content: center; padding: 22px; font-size: 1.1rem;">
+                Sign In <i data-lucide="log-in"></i>
+            </button>
+        </form>
+
+        <div style="margin-top: 40px; color: #6e6e73; font-weight: 600; font-size: 0.9rem;">
+            New to MediMitra? <a href="register.html" style="color: var(--primary); text-decoration: none; font-weight: 800;">Create Account</a>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script>
+        lucide.createIcons();
+        
+        // Toggle Password Visibility
+        const toggleBtn = document.getElementById('togglePass');
+        if (toggleBtn) {
+            const togglePassword = function() {
+                const passInput = document.getElementById('password');
+                const isPass = passInput.getAttribute('type') === 'password';
+                passInput.setAttribute('type', isPass ? 'text' : 'password');
+                this.innerHTML = `<i data-lucide="${isPass ? 'eye-off' : 'eye'}"></i>`;
+                this.setAttribute('aria-label', isPass ? 'Hide password' : 'Show password');
+                lucide.createIcons();
+            };
+            toggleBtn.addEventListener('click', togglePassword);
+            toggleBtn.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); togglePassword.call(this); }
+            });
+        }
+
+        // Client-side validation
+        function showFieldError(inputId, errorId, message) {
+            const input = document.getElementById(inputId);
+            const error = document.getElementById(errorId);
+            input.classList.add('input-error');
+            error.textContent = message;
+            error.classList.add('visible');
+        }
+
+        function clearFieldError(inputId, errorId) {
+            const input = document.getElementById(inputId);
+            const error = document.getElementById(errorId);
+            input.classList.remove('input-error');
+            error.textContent = '';
+            error.classList.remove('visible');
+        }
+
+        // Clear errors on input
+        document.getElementById('email').addEventListener('input', () => clearFieldError('email', 'email-error'));
+        document.getElementById('password').addEventListener('input', () => clearFieldError('password', 'password-error'));
+
+        // Rate limiting
+        let loginAttempts = 0;
+        let lockoutUntil = 0;
+    </script>
+
+</body>
+</html>

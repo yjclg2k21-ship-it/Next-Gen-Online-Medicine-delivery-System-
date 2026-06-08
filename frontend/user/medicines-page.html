@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medicines Catalog | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        body { 
+            background: #f4f7fa; 
+            margin: 0; padding: 0; 
+            width: 100vw; height: 100vh; 
+            overflow: hidden; 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+        }
+        .squircle-card { width: 100%; height: 100%; border-radius: 0; display: flex; overflow: hidden; }
+        
+        .medicine-grid { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 16px; 
+            grid-auto-rows: max-content; /* Prevents cards from stretching vertically */
+            overflow-y: auto; 
+            height: calc(100vh - 150px); 
+            padding: 16px 0 16px 10px; 
+            scrollbar-width: thin; 
+        }
+
+        @media (max-width: 1200px) { .medicine-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 992px) { 
+            .medicine-grid { grid-template-columns: repeat(2, 1fr); height: auto; overflow: visible; } 
+            .squircle-card { flex-direction: column; overflow-y: auto; height: auto; }
+            body { overflow: auto; }
+        }
+        @media (max-width: 576px) { .medicine-grid { grid-template-columns: repeat(1, 1fr); } }
+
+        
+        .medicine-card { 
+            background: white;
+            border-radius: 16px; 
+            overflow: hidden; 
+            border: 1px solid rgba(0, 0, 0, 0.08); 
+            transition: all 0.3s ease; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100%;
+            min-height: 280px; 
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+        .medicine-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.08); }
+        
+        .medicine-clickable { cursor: pointer; flex: 1; display: flex; flex-direction: column; }
+        
+        .medicine-img-wrapper { 
+            height: 140px; 
+            background: #ffffff;
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            position: relative;
+            overflow: hidden;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            padding: 0;
+        }
+        .medicine-img-wrapper img {
+            width: 100%; height: 100%; object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        .medicine-card:hover .medicine-img-wrapper img { transform: scale(1.05); }
+
+        .wish-heart { 
+            position: absolute; top: 10px; right: 10px; 
+            width: 32px; height: 32px; 
+            border-radius: 50%; 
+            background: rgba(255, 255, 255, 0.95); 
+            display: flex; align-items: center; justify-content: center; 
+            border: 1px solid rgba(0,0,0,0.05); 
+            cursor: pointer; transition: all 0.2s; 
+            color: #94a3b8; z-index: 10; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .wish-heart.active { color: #ef4444; }
+        
+        /* Heart Pop Animation */
+        @keyframes heartPop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.4); }
+            100% { transform: scale(1); }
+        }
+        .wish-heart.pop { animation: heartPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+        
+        .medicine-info { padding: 6px 8px; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        
+        .variant-select {
+            font-size: 0.55rem; font-weight: 800; padding: 0 16px 0 6px; border-radius: 4px; text-transform: uppercase;
+            width: fit-content; height: 20px; line-height: 18px; margin-bottom: 4px;
+            border: 1px solid rgba(0,0,0,0.1); outline: none; cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23000000%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat; background-position: right 4px center; background-size: 7px auto;
+        }
+        .type-Generic { background-color: #f0fdf4; color: #166534; border-color: #bbf7d0; }
+        .type-MNC { background-color: #eff6ff; color: #1e40af; border-color: #bfdbfe; }
+        .type-Local { background-color: #fef3c7; color: #b45309; border-color: #fde68a; }
+        .type-Ayurvedic { background-color: #dcfce7; color: #15803d; border-color: #bbf7d0; }
+
+        .medicine-name { font-size: 0.8rem; font-weight: 800; color: #0f172a; line-height: 1.1; margin: 0; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; min-height: 2.2em; }
+        .medicine-salt { font-size: 0.65rem; color: #64748b; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: none; }
+        
+        .meta-row { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; padding-top: 4px; border-top: 1px solid rgba(0,0,0,0.05); }
+        .meta-item { display: flex; align-items: center; gap: 3px; font-size: 0.6rem; font-weight: 700; color: #475569; }
+        .meta-item.rating { color: #f59e0b; }
+        
+        .price-cart-row { display: flex; align-items: center; justify-content: space-between; gap: 4px; margin-top: auto; padding: 4px 8px 10px 8px; }
+        .medicine-price { font-size: 0.9rem; font-weight: 800; color: #0f172a; flex-shrink: 0; }
+        
+        .qty-mini { display: flex; align-items: center; background: #f1f5f9; border-radius: 4px; padding: 2px 4px; gap: 4px; font-size: 0.75rem; font-weight: 800; }
+        .qty-btn { border: none; background: none; cursor: pointer; color: #1e293b; padding: 2px 4px; font-weight: 800; font-size: 0.85rem; transition: transform 0.2s; }
+        .qty-btn:active { transform: scale(0.85); }
+
+        .btn-add-main { 
+            flex: 1; 
+            height: 28px; 
+            font-size: 0.7rem;
+            border-radius: 100px; 
+            background: var(--primary-grad); 
+            color: white; 
+            border: none; 
+            font-weight: 800; 
+            font-size: 0.85rem; 
+            cursor: pointer; 
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 20px rgba(0, 122, 255, 0.2);
+        }
+        .btn-add-main:hover { 
+            transform: scale(1.05) translateY(-2px); 
+            box-shadow: 0 15px 30px rgba(0, 122, 255, 0.4);
+            filter: brightness(1.1);
+        }
+        .btn-add-main:active { transform: scale(0.95); }
+
+        .filter-sidebar { background: white; border-radius: 12px; padding: 10px; border: 1px solid rgba(0,0,0,0.05); height: fit-content; min-width: 140px; margin: 8px 0 8px 4px; }
+    </style>
+</head>
+<body>
+    <div class="squircle-card">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        
+        <main class="liquid-main" style="background: #f8fafc; flex: 1; overflow: hidden;">
+            <header class="catalog-header" style="padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; background: white; border-bottom: 1px solid rgba(0,0,0,0.05); flex-wrap: wrap; gap: 12px;">
+                <h1 class="vibrant-h1" style="font-size: 1.3rem; margin: 0;">Medicines Catalog</h1>
+                <div class="search-wrapper" style="position: relative; width: 320px; max-width: 100%;">
+                    <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; width: 16px;"></i>
+                    <input type="text" id="medicine-search" placeholder="Search medicines..." style="width: 100%; padding: 8px 12px 8px 40px; border-radius: 10px; border: 1px solid #e2e8f0; font-weight: 600; outline: none; font-size: 0.85rem;">
+                </div>
+            </header>
+
+            <div class="content-wrapper" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <aside class="filter-sidebar" style="margin: 8px; flex-shrink: 0;">
+                    <label style="display:block; font-size: 0.65rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px;">Category</label>
+                    <select id="f-cat" class="liquid-select" onchange="applyFilters()" style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #e2e8f0; font-weight: 700; font-size: 0.8rem; margin-bottom: 16px;">
+                        <option value="all">All Items</option>
+                    </select>
+
+
+                    <label style="display:block; font-size: 0.65rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px;">Max Price</label>
+                    <input type="range" id="f-price" min="0" max="5000" value="5000" style="width: 100%;" oninput="document.getElementById('p-val').innerText = '₹' + this.value; applyFilters()">
+                    <div id="p-val" style="text-align: right; font-weight: 800; color: var(--primary); font-size: 0.8rem;">₹5000</div>
+
+                    <label style="display:block; font-size: 0.65rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px; margin-top: 16px;">Sort By</label>
+                    <select id="f-sort" class="liquid-select" onchange="applyFilters()" style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #e2e8f0; font-weight: 700; font-size: 0.8rem; margin-bottom: 16px;">
+                        <option value="default">Default</option>
+                        <option value="price_low">Price: Low → High</option>
+                        <option value="price_high">Price: High → Low</option>
+                        <option value="name_az">Name: A → Z</option>
+                        <option value="name_za">Name: Z → A</option>
+                        <option value="newest">Newest First</option>
+                    </select>
+
+                    <button class="pill-button btn-outline" style="width: 100%; justify-content: center; margin-top: 20px; height: 36px; font-weight: 700;" onclick="resetFilters()">Reset</button>
+                </aside>
+
+                <div id="medicines-container" class="medicine-grid" style="flex: 1;">
+                    <!-- Items -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        const user = auth.getUser();
+        if (!user) window.location.href = '../auth/login.html';
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('user');
+        lucide.createIcons();
+
+        let allMedicines = [];
+        let quantities = {};
+
+        async function init() {
+            await fetchCategories();
+            await loadMedicines();
+            document.getElementById('medicine-search').addEventListener('input', () => applyFilters());
+        }
+
+        async function fetchCategories() {
+            try {
+                const res = await api.get('/categories');
+                const categories = res.data.categories || (Array.isArray(res.data) ? res.data : []);
+                const select = document.getElementById('f-cat');
+                categories.forEach(cat => {
+                    const opt = document.createElement('option');
+                    opt.value = cat.name.toLowerCase();
+                    opt.textContent = cat.name;
+                    select.appendChild(opt);
+                });
+            } catch (err) { console.error(err); }
+        }
+
+        async function loadMedicines() {
+            try {
+                const res = await api.get('/medicines');
+                let rawData = res.data?.medicines || res.data || [];
+                allMedicines = Array.isArray(rawData) ? rawData : Object.values(rawData);
+                applyFilters();
+            } catch (err) { console.error(err); }
+        }
+
+        function applyFilters() {
+            const query = document.getElementById('medicine-search').value.toLowerCase();
+            const category = document.getElementById('f-cat').value;
+            const maxPrice = parseFloat(document.getElementById('f-price').value);
+            const sort = document.getElementById('f-sort').value;
+
+            let filtered = allMedicines.filter(m => {
+                const matchesSearch = (m.name || '').toLowerCase().includes(query) || (m.salt || '').toLowerCase().includes(query);
+                const matchesCategory = category === 'all' || (m.category_name || '').toLowerCase() === category;
+                const matchesPrice = parseFloat(m.price || 0) <= maxPrice;
+                return matchesSearch && matchesCategory && matchesPrice;
+            });
+
+            if (sort === 'price_low') filtered.sort((a, b) => parseFloat(a.price || 0) - parseFloat(b.price || 0));
+            else if (sort === 'price_high') filtered.sort((a, b) => parseFloat(b.price || 0) - parseFloat(a.price || 0));
+            else if (sort === 'name_az') filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            else if (sort === 'name_za') filtered.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+            else if (sort === 'newest') filtered.sort((a, b) => parseInt(b.id || 0) - parseInt(a.id || 0));
+
+            renderMedicines(filtered);
+        }
+
+        function renderMedicines(list) {
+            const container = document.getElementById('medicines-container');
+            if (list.length === 0) { container.innerHTML = '<p style="grid-column:1/-1;text-align:center;padding:100px;font-weight:700;color:#94a3b8;">No medicines found.</p>'; return; }
+
+            // Group variants by base name
+            const grouped = {};
+            list.forEach(m => {
+                if (!grouped[m.name]) grouped[m.name] = [];
+                grouped[m.name].push(m);
+            });
+
+            container.innerHTML = Object.values(grouped).map(variants => {
+                variants.sort((a,b) => {
+                    if (a.brand_type === 'MNC') return -1;
+                    if (b.brand_type === 'MNC') return 1;
+                    return parseFloat(a.price) - parseFloat(b.price);
+                });
+                
+                const med = variants[0];
+                if (!quantities[med.id]) quantities[med.id] = 1;
+                const isWish = med.is_wishlisted || false;
+                
+                // Use DB image with fallback
+                let displayImg = '../assets/images/medicines/tablet_blister.png';
+                if (med.image) {
+                    if (med.image.startsWith('assets/')) {
+                        displayImg = `../${med.image}`;
+                    } else {
+                        displayImg = `../assets/images/medicines/${med.image}`;
+                    }
+                }
+                
+                // Generate dropdown options
+                const options = variants.map(v => {
+                    const type = v.brand_type || 'MNC';
+                    return `<option value="${v.id}" data-price="${v.price}" data-stock="${v.stock}">${type}</option>`;
+                }).join('');
+
+                return `
+                <div class="medicine-card">
+                    <button class="wish-heart ${isWish ? 'active' : ''}" onclick="toggleWishlist(${med.id}, event)">
+                        <i data-lucide="heart" style="width: 16px; height: 16px;" ${isWish ? 'fill="currentColor"' : ''}></i>
+                    </button>
+                    <div class="medicine-clickable" onclick="window.location.href='medicine-details.html?id=' + document.getElementById('variant-select-${med.id}').value">
+                        <div class="medicine-img-wrapper">
+                            <img src="${displayImg}" onerror="this.src='../assets/images/medicines/tablet_blister.png'">
+                        </div>
+                        <div class="medicine-info">
+                            <select id="variant-select-${med.id}" class="variant-select type-${med.brand_type || 'MNC'}" onclick="event.stopPropagation()" onchange="changeVariant(${med.id}, this)">
+                                ${options}
+                            </select>
+                            <h3 class="medicine-name">${med.name}</h3>
+                            <div class="medicine-salt">${(med.salt && med.salt.toLowerCase().includes(med.name.toLowerCase())) ? '' : (med.salt || '')}</div>
+                            <div class="meta-row">
+                                <div class="meta-item"><i data-lucide="truck" style="width:10px; color: #10b981;"></i> 30 mins</div>
+                                <div class="meta-item"><i data-lucide="map-pin" style="width:10px;"></i> ${med.distance || '1.2'}km</div>
+                            </div>
+                            <div class="meta-row" style="border:none; margin:0; padding:0;">
+                                <div class="meta-item rating"><i data-lucide="star" style="width:10px; fill:currentColor;"></i> ${med.rating || '4.5'}</div>
+                                <div class="meta-item"><i data-lucide="package" style="width:10px;"></i> <span id="stock-${med.id}">${med.stock || '50'}</span> left</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="price-cart-row">
+                        <div class="medicine-price" id="price-${med.id}">₹${parseFloat(med.price || 0).toFixed(0)}</div>
+                        <div class="qty-mini">
+                            <button class="qty-btn" onclick="updateQty(${med.id}, -1)">-</button>
+                            <span id="qty-${med.id}">${quantities[med.id]}</span>
+                            <button class="qty-btn" onclick="updateQty(${med.id}, 1)">+</button>
+                        </div>
+                        <button onclick="addVariantToCart(${med.id}, event)" class="btn-add-main">Add</button>
+                    </div>
+                </div>`;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        window.updateQty = (id, change) => {
+            if (quantities[id] + change >= 1) {
+                quantities[id] += change;
+                const el = document.getElementById(`qty-${id}`);
+                if (el) el.innerText = quantities[id];
+            }
+        };
+
+        window.addToCart = async (id, event) => {
+            event.stopPropagation();
+            try {
+                await api.post('/cart/add', { medicine_id: id, qty: quantities[id] || 1 });
+                components.showSuccess('Added to cart');
+            } catch (e) {
+                components.showError('Failed to add to cart');
+            }
+        };
+
+        window.addVariantToCart = async (groupId, event) => {
+            event.stopPropagation();
+            const btn = event.currentTarget;
+            const variantId = document.getElementById(`variant-select-${groupId}`).value;
+            try {
+                components.showLoader();
+                await api.post('/cart/add', { medicine_id: variantId, qty: quantities[groupId] || 1 });
+                const old = btn.innerText; btn.innerText = "✓"; btn.style.background = "#10b981";
+                setTimeout(() => { btn.innerText = old; btn.style.background = ""; }, 1500);
+            } catch (err) { console.error(err); } finally { components.hideLoader(); }
+        };
+
+        window.changeVariant = (groupId, selectEl) => {
+            const selectedOpt = selectEl.options[selectEl.selectedIndex];
+            
+            // Update Price
+            document.getElementById(`price-${groupId}`).innerText = '₹' + parseFloat(selectedOpt.dataset.price).toFixed(0);
+            
+            // Update Stock
+            const stockEl = document.getElementById(`stock-${groupId}`);
+            if (stockEl) stockEl.innerText = selectedOpt.dataset.stock;
+            
+            // Update Select Styling
+            selectEl.className = `variant-select type-${selectedOpt.text}`;
+        };
+
+        window.toggleWishlist = async (id, event) => {
+            event.stopPropagation();
+            const btn = event.currentTarget;
+            try {
+                // Trigger pop animation immediately for feedback
+                btn.classList.add('pop');
+                setTimeout(() => btn.classList.remove('pop'), 400);
+
+                await api.post('/user/wishlist/toggle', { medicine_id: id });
+                btn.classList.toggle('active');
+                const icon = btn.querySelector('i');
+                if (btn.classList.contains('active')) {
+                    icon.setAttribute('fill', '#ef4444');
+                    icon.style.color = '#ef4444';
+                } else {
+                    icon.removeAttribute('fill');
+                    icon.style.color = '';
+                }
+            } catch (err) { console.error(err); }
+        };
+
+        function resetFilters() {
+            document.getElementById('medicine-search').value = '';
+            document.getElementById('f-cat').value = 'all';
+            document.getElementById('f-price').value = 5000;
+            document.getElementById('p-val').innerText = '₹5000';
+            document.getElementById('f-sort').value = 'default';
+            applyFilters();
+        }
+
+        init();
+    </script>
+</body>
+</html>

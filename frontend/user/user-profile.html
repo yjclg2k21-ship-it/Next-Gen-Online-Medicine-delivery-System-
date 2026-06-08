@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        body {
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .profile-header-card {
+            background: linear-gradient(135deg, rgba(0, 122, 255, 0.1), rgba(88, 86, 214, 0.1));
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            padding: 32px;
+            border-radius: var(--l-card-r);
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+        }
+
+        .avatar-squircle {
+            width: 100px;
+            height: 100px;
+            background: white;
+            border-radius: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: var(--primary);
+            font-weight: 800;
+            box-shadow: 0 10px 25px rgba(0,122,255,0.08);
+        }
+
+        .badge-verified {
+            background: rgba(52, 199, 89, 0.1);
+            color: var(--success);
+            padding: 6px 12px;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            width: fit-content;
+        }
+
+        .save-banner {
+            position: fixed;
+            bottom: 40px;
+            right: 40px;
+            background: var(--primary);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 100px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 12px 32px rgba(0, 122, 255, 0.3);
+            transform: translateY(150px);
+            transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 2000;
+            cursor: pointer;
+        }
+
+        .save-banner.show {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+
+        <main class="liquid-main">
+            <header style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1 class="vibrant-h1">My Profile</h1>
+                    <p style="color: #6e6e73; font-size: 1.2rem; font-weight: 500;">Manage your personal details and account settings.</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 16px; background: rgba(255,255,255,0.4); padding: 8px 16px; border-radius: 100px; border: 1px solid rgba(255,255,255,0.5);">
+                    <div class="avatar-mini" id="top-avatar-initials" style="width: 32px; height: 32px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.8rem;">JD</div>
+                    <span style="font-weight: 700; color: #1d1d1f;" id="top-display-name">John Doe</span>
+                </div>
+            </header>
+
+            <div class="liquid-tabs" style="align-self: flex-start; margin-bottom: 24px;">
+                <div class="tab-item active" onclick="switchTab('general', this)">General Settings</div>
+                <div class="tab-item" onclick="switchTab('overview', this)">Account Overview</div>
+                <div class="tab-item" onclick="switchTab('security', this)">Security Details</div>
+            </div>
+
+            <div id="tab-general" class="tab-content">
+                <div class="profile-header-card">
+                    <div class="avatar-squircle" id="profileInitials">JD</div>
+                    <div>
+                        <div class="badge-verified">VERIFIED ACCOUNT</div>
+                        <h2 style="font-size: 1.8rem; font-weight: 800; margin: 12px 0 4px 0; color: #1d1d1f;" id="display-name">John Doe</h2>
+                        <p style="color: #6e6e73; font-weight: 600;" id="display-email">user@medimitra.com</p>
+                    </div>
+                </div>
+
+                <form class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;" onsubmit="event.preventDefault();">
+                    <div class="input-card">
+                        <label class="field-label">Full Account Name</label>
+                        <input type="text" id="inputFirstName" class="field-input" value="John Doe" oninput="handleInput()">
+                    </div>
+                    <div class="input-card">
+                        <label class="field-label">Authenticated Email</label>
+                        <input type="email" id="inputEmail" class="field-input" value="user@medimitra.com" readonly style="opacity: 0.6; cursor: not-allowed;">
+                    </div>
+                    <div class="input-card">
+                        <label class="field-label">Contact Number</label>
+                        <input type="tel" id="inputPhone" class="field-input" value="+91 98765 43210" oninput="handleInput()">
+                    </div>
+                    <div class="input-card">
+                        <label class="field-label">Date of Birth</label>
+                        <input type="date" id="inputDob" class="field-input" oninput="handleInput()">
+                    </div>
+                    <div class="input-card">
+                        <label class="field-label">Gender Identity</label>
+                        <select id="inputGender" class="field-input" oninput="handleInput()" style="background: transparent; -webkit-appearance: none; appearance: none; cursor: pointer;">
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                            <option value="prefer_not_to_say">Prefer not to say</option>
+                        </select>
+                    </div>
+                    <div class="input-card">
+                        <label class="field-label">Blood Group</label>
+                        <select id="inputBloodGroup" class="field-input" oninput="handleInput()" style="background: transparent; -webkit-appearance: none; appearance: none; cursor: pointer;">
+                            <option value="">Select Blood Group</option>
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                        </select>
+                    </div>
+                    <div class="input-card">
+                        <label class="field-label">Emergency Contact</label>
+                        <input type="tel" id="inputEmergencyContact" class="field-input" placeholder="e.g. +91 99999 88888" oninput="handleInput()">
+                    </div>
+                    
+                    <div class="input-card">
+                        <label class="field-label">House/Flat No</label>
+                        <input type="text" id="inputHouseNo" class="field-input" placeholder="Flat 101" oninput="handleInput()">
+                    </div>
+                    <div class="input-card">
+                        <label class="field-label">Area / Locality</label>
+                        <input type="text" id="inputArea" class="field-input" placeholder="e.g. Mangalwar Peth, Deshpande Nagar" oninput="handleInput()">
+                    </div>
+                    <div class="input-card">
+                        <label class="field-label">City</label>
+                        <input type="text" id="inputCity" class="field-input" placeholder="Phaltan" oninput="handleInput()">
+                    </div>
+                    <div class="input-card">
+                        <label class="field-label">Pincode / Zone</label>
+                        <select id="inputPincode" class="field-input" style="padding: 12px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.1); background: white; width: 100%; font-family: inherit; font-size: 0.95rem; font-weight: 600;" onchange="handleInput()">
+                            <option value="415523">415523 - Central Phaltan Zone (City, Kolki, Market Yard)</option>
+                            <option value="415537">415537 - North / NE Zone (Kurvali Khurd side, Rural)</option>
+                            <option value="415528">415528 - East / SE Zone (Pimparad side, Agr. villages)</option>
+                            <option value="415521">415521 - West / NW Zone (Saswad side, Canal belt)</option>
+                            <option value="415509">415509 - Outer Rural / Satara-side Connection</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Map Pinning & Address Management Card -->
+                    <div class="input-card" style="grid-column: span 2; background: rgba(0, 122, 255, 0.06); border-color: rgba(0, 122, 255, 0.15); display: flex; justify-content: space-between; align-items: center; padding: 24px; margin-top: 8px;">
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <div style="width: 48px; height: 48px; background: rgba(0, 122, 255, 0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                                <i data-lucide="map-pin" style="width: 24px; height: 24px;"></i>
+                            </div>
+                            <div>
+                                <h4 style="margin: 0 0 4px 0; font-weight: 800; color: #1d1d1f; font-size: 1.05rem;">Home Address & Live Map</h4>
+                                <p style="margin: 0; color: #6e6e73; font-size: 0.85rem; font-weight: 500; line-height: 1.4;">Set your primary delivery addresses and pin your exact home location on the map.</p>
+                            </div>
+                        </div>
+                        <button type="button" class="pill-button" onclick="window.location.href='user-addresses.html'" style="display: flex; align-items: center; gap: 8px; font-weight: 700; white-space: nowrap; padding: 12px 20px;">
+                            <i data-lucide="map"></i> Pin Home on Map
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="tab-overview" class="tab-content" style="display: none;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                    <!-- LEFT COLUMN: Financials & Activity Stats -->
+                    <div style="display: grid; gap: 20px; align-content: start;">
+                        <div class="input-card" style="background: rgba(255, 255, 255, 0.4); display: flex; justify-content: space-between; align-items: center; padding: 24px;">
+                            <div>
+                                <label class="field-label">Wallet Balance</label>
+                                <div style="font-size: 2.2rem; font-weight: 800; color: #1d1d1f; margin-top: 4px;" id="stat-wallet">₹0.00</div>
+                            </div>
+                            <div style="width: 54px; height: 54px; background: rgba(52, 199, 89, 0.1); color: var(--success); border-radius: 16px; display: flex; align-items: center; justify-content: center;">
+                                <i data-lucide="wallet" style="width: 28px; height: 28px;"></i>
+                            </div>
+                        </div>
+
+                        <div class="input-card" style="background: rgba(255, 255, 255, 0.4); display: flex; justify-content: space-between; align-items: center; padding: 24px;">
+                            <div>
+                                <label class="field-label">Account Trust Rating</label>
+                                <div style="font-size: 2.2rem; font-weight: 800; color: var(--primary); margin-top: 4px;">4.9 ★</div>
+                            </div>
+                            <div style="width: 54px; height: 54px; background: rgba(0, 122, 255, 0.1); color: var(--primary); border-radius: 16px; display: flex; align-items: center; justify-content: center;">
+                                <i data-lucide="shield-check" style="width: 28px; height: 28px;"></i>
+                            </div>
+                        </div>
+
+                        <!-- Dynamic Stats Cards -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div class="input-card" style="background: rgba(255, 255, 255, 0.4); text-align: center; padding: 20px;">
+                                <div style="width: 42px; height: 42px; background: rgba(255, 149, 0, 0.1); color: #ff9500; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px auto;">
+                                    <i data-lucide="package" style="width: 20px; height: 20px;"></i>
+                                </div>
+                                <div style="font-size: 1.8rem; font-weight: 800; color: #1d1d1f;" id="stat-orders-count">0</div>
+                                <label class="field-label" style="margin-top: 4px; font-size: 0.7rem;">Total Dispatches</label>
+                            </div>
+                            <div class="input-card" style="background: rgba(255, 255, 255, 0.4); text-align: center; padding: 20px;">
+                                <div style="width: 42px; height: 42px; background: rgba(175, 82, 222, 0.1); color: #af52de; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px auto;">
+                                    <i data-lucide="file-text" style="width: 20px; height: 20px;"></i>
+                                </div>
+                                <div style="font-size: 1.8rem; font-weight: 800; color: #1d1d1f;" id="stat-prescriptions-count">0</div>
+                                <label class="field-label" style="margin-top: 4px; font-size: 0.7rem;">Prescription Files</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT COLUMN: Medical & Address Identity Cards -->
+                    <div style="display: grid; gap: 20px; align-content: start;">
+                        <!-- Premium Medical ID Card -->
+                        <div class="input-card" style="background: linear-gradient(135deg, rgba(255, 59, 48, 0.05), rgba(255, 149, 0, 0.05)); border-color: rgba(255, 59, 48, 0.15); padding: 24px; position: relative; overflow: hidden;">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
+                                <div style="width: 40px; height: 40px; background: rgba(255, 59, 48, 0.1); color: var(--danger); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                    <i data-lucide="heart-pulse" style="width: 20px; height: 20px;"></i>
+                                </div>
+                                <h3 style="margin: 0; font-weight: 800; color: #1d1d1f; font-size: 1.1rem; letter-spacing: -0.01em;">Emergency Medical ID</h3>
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                <div>
+                                    <label class="field-label" style="font-size: 0.65rem; color: #8e8e93;">Blood Type</label>
+                                    <span style="font-size: 1.15rem; font-weight: 800; color: #ff3b30;" id="overview-blood-group">Not Set</span>
+                                </div>
+                                <div>
+                                    <label class="field-label" style="font-size: 0.65rem; color: #8e8e93;">Gender ID</label>
+                                    <span style="font-size: 1.15rem; font-weight: 700; color: #1d1d1f;" id="overview-gender">Male</span>
+                                </div>
+                                <div style="grid-column: span 2;">
+                                    <label class="field-label" style="font-size: 0.65rem; color: #8e8e93;">Emergency Contact</label>
+                                    <span style="font-size: 1.15rem; font-weight: 700; color: #1d1d1f;" id="overview-emergency-contact">Not Set</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Active Primary Address Card -->
+                        <div class="input-card" style="background: rgba(255, 255, 255, 0.4); padding: 24px;">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                                <div style="width: 40px; height: 40px; background: rgba(0, 122, 255, 0.1); color: var(--primary); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                    <i data-lucide="map-pin" style="width: 20px; height: 20px;"></i>
+                                </div>
+                                <h3 style="margin: 0; font-weight: 800; color: #1d1d1f; font-size: 1.1rem;">Registered Home Address</h3>
+                            </div>
+                            <div>
+                                <label class="field-label" style="font-size: 0.65rem; color: #8e8e93;">Primary Location</label>
+                                <p style="font-size: 0.95rem; font-weight: 600; color: #1d1d1f; margin: 4px 0 0 0; line-height: 1.45;" id="overview-address-summary">No registered address details found. Set your address inside General Settings.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-security" class="tab-content" style="display: none;">
+                <div style="display: grid; gap: 24px;">
+                    <div class="input-card">
+                        <h3 class="vibrant-h2" style="font-size: 1.4rem; margin-bottom: 20px;">Change Password</h3>
+                        <div style="display: grid; gap: 16px;">
+                            <div>
+                                <label class="field-label">Current Password</label>
+                                <input type="password" id="oldPassword" class="field-input" style="border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 8px;">
+                            </div>
+                            <div>
+                                <label class="field-label">New Password</label>
+                                <input type="password" id="newPassword" class="field-input" style="border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 8px;">
+                            </div>
+                            <button onclick="updatePassword()" class="pill-button" style="width: fit-content; margin-top: 12px;">Update Password</button>
+                        </div>
+                    </div>
+
+                    <div class="input-card" style="border-color: rgba(255, 59, 48, 0.2); background: rgba(255, 59, 48, 0.05);">
+                        <h3 style="font-weight: 800; color: var(--danger); margin-bottom: 8px;">Delete or Deactivate Account</h3>
+                        <p style="color: #991b1b; font-size: 0.9rem; margin-bottom: 20px;">Deactivating or deleting your account will lock your wallet balance and order history.</p>
+                        <div style="display: flex; gap: 12px;">
+                            <button onclick="deactivateAccount()" class="pill-button btn-danger">Deactivate Account</button>
+                            <button onclick="deleteAccount()" class="pill-button btn-outline" style="color: var(--danger); border-color: var(--danger); background: transparent;">Delete Account</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="save-banner" class="save-banner" onclick="saveProfile()">
+        <i data-lucide="save"></i> Save Profile Changes
+    </div>
+
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script>
+        let homeAddressId = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = auth.getUser();
+            if (!user) {
+                window.location.href = '../auth/login.html';
+                return;
+            }
+            
+            initProfile();
+
+            // Load Sidebar
+            if (typeof components !== 'undefined' && components.liquidSidebar) {
+                document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('user');
+            }
+            
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        });
+
+        async function initProfile() {
+            try {
+                const res = await api.get('/user/profile');
+                const user = res.data.user;
+                
+                // Populate Data
+                document.getElementById('display-name').innerText = user.name;
+                document.getElementById('display-email').innerText = user.email;
+                document.getElementById('top-display-name').innerText = user.name;
+                document.getElementById('inputFirstName').value = user.name;
+                document.getElementById('inputEmail').value = user.email;
+                document.getElementById('inputPhone').value = user.phone || '';
+                
+                // Sync name with base user object in local/session storage
+                const storedUser = auth.getUser();
+                if (storedUser && user.name) {
+                    storedUser.name = user.name;
+                    auth.updateUser(storedUser);
+                }
+
+                // Update active top profile elements immediately
+                const topProfileContainer = document.querySelector('.user-user-profile');
+                if (topProfileContainer) {
+                    const initials = user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+                    const avatarDiv = topProfileContainer.querySelector('div');
+                    const nameDiv = topProfileContainer.querySelector('div:nth-child(2)');
+                    if (avatarDiv) avatarDiv.innerText = initials;
+                    if (nameDiv) nameDiv.innerText = user.name;
+                }
+
+                if (user.profile) {
+                    document.getElementById('inputDob').value = user.profile.dob || '';
+                    document.getElementById('inputGender').value = user.profile.gender || 'male';
+                    document.getElementById('inputBloodGroup').value = user.profile.blood_group || '';
+                    document.getElementById('inputEmergencyContact').value = user.profile.emergency_contact || '';
+                }
+
+                const initials = (user.name.charAt(0)).toUpperCase();
+                document.getElementById('profileInitials').innerText = initials;
+                document.getElementById('top-avatar-initials').innerText = initials;
+
+                // Load Stored Address Details
+                try {
+                    const addrRes = await api.get('/user/addresses');
+                    const addresses = addrRes.data.addresses || [];
+                    const homeAddr = addresses.find(a => a.label === 'Home') || addresses[0];
+                    if (homeAddr) {
+                        homeAddressId = homeAddr.id;
+                        document.getElementById('inputHouseNo').value = homeAddr.address_line1 || '';
+                        document.getElementById('inputArea').value = homeAddr.address_line2 || '';
+                        document.getElementById('inputCity').value = homeAddr.city || '';
+                        document.getElementById('inputPincode').value = homeAddr.pincode || '';
+                    }
+                } catch (addrErr) {
+                    console.warn("Failed to load address details:", addrErr);
+                }
+
+            } catch (err) {
+                console.error("Failed to fetch profile details:", err);
+            }
+        }
+
+        function switchTab(tabId, el) {
+            document.querySelectorAll('.tab-item').forEach(item => item.classList.remove('active'));
+            el.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
+            document.getElementById(`tab-${tabId}`).style.display = 'block';
+            if (tabId === 'overview') renderOverview();
+        }
+
+        async function renderOverview() {
+            // 1. Load Wallet Balance
+            try {
+                const walletRes = await api.get('/user/wallet');
+                document.getElementById('stat-wallet').innerText = `₹${parseFloat(walletRes.data.balance || 0).toFixed(2)}`;
+            } catch (err) { console.error("Wallet balance error:", err); }
+
+            // 2. Load Total Orders Count
+            try {
+                const ordersRes = await api.get('/orders');
+                const orders = ordersRes.data.orders || [];
+                document.getElementById('stat-orders-count').innerText = orders.length;
+            } catch (err) { console.error("Orders count error:", err); }
+
+            // 3. Load Total Prescriptions Count
+            try {
+                const rxRes = await api.get('/prescriptions');
+                const prescriptions = rxRes.data.prescriptions || [];
+                document.getElementById('stat-prescriptions-count').innerText = prescriptions.length;
+            } catch (err) { console.error("Prescriptions count error:", err); }
+
+            // 4. Set Medical ID details (from form fields)
+            const bloodGroup = document.getElementById('inputBloodGroup') ? document.getElementById('inputBloodGroup').value : '';
+            const gender = document.getElementById('inputGender') ? document.getElementById('inputGender').value : 'male';
+            const emergencyContact = document.getElementById('inputEmergencyContact') ? document.getElementById('inputEmergencyContact').value.trim() : '';
+
+            document.getElementById('overview-blood-group').innerText = bloodGroup ? bloodGroup.toUpperCase() : 'Not Set';
+            
+            // Format gender string nicely
+            let formattedGender = 'Prefer not to say';
+            if (gender === 'male') formattedGender = 'Male ♂';
+            else if (gender === 'female') formattedGender = 'Female ♀';
+            else if (gender === 'other') formattedGender = 'Other';
+            document.getElementById('overview-gender').innerText = formattedGender;
+
+            document.getElementById('overview-emergency-contact').innerText = emergencyContact || 'Not Set';
+
+            // 5. Load Registered Address Summary
+            const houseNo = document.getElementById('inputHouseNo').value.trim();
+            const area = document.getElementById('inputArea').value.trim();
+            const city = document.getElementById('inputCity').value.trim();
+            const pincode = document.getElementById('inputPincode').value.trim();
+
+            if (houseNo || area || city || pincode) {
+                const parts = [houseNo, area, city, pincode].filter(Boolean);
+                document.getElementById('overview-address-summary').innerText = parts.join(', ');
+            } else {
+                document.getElementById('overview-address-summary').innerText = 'No registered address details found. Set your address inside General Settings.';
+            }
+
+            lucide.createIcons();
+        }
+
+        function handleInput() {
+            document.getElementById('save-banner').classList.add('show');
+        }
+
+        async function saveProfile() {
+            const banner = document.getElementById('save-banner');
+            const originalHtml = banner.innerHTML;
+            banner.innerHTML = '<i data-lucide="loader-2" class="animate-spin"></i> Saving...';
+            lucide.createIcons();
+            
+            try {
+                const data = {
+                    name: document.getElementById('inputFirstName').value.trim(),
+                    phone: document.getElementById('inputPhone').value.trim(),
+                    dob: document.getElementById('inputDob').value,
+                    gender: document.getElementById('inputGender').value,
+                    blood_group: document.getElementById('inputBloodGroup').value,
+                    emergency_contact: document.getElementById('inputEmergencyContact').value.trim()
+                };
+
+                const res = await api.post('/user/profile/update', data);
+                if (res.success) {
+                    const user = auth.getUser();
+                    if (user) {
+                        user.name = data.name;
+                        auth.updateUser(user);
+                    }
+
+                    // Update active DOM elements on the page immediately
+                    document.getElementById('display-name').innerText = data.name;
+                    const initials = data.name.charAt(0).toUpperCase();
+                    document.getElementById('profileInitials').innerText = initials;
+                    document.getElementById('top-avatar-initials').innerText = initials;
+                    document.getElementById('top-display-name').innerText = data.name;
+
+                    const topProfileContainer = document.querySelector('.user-user-profile');
+                    if (topProfileContainer) {
+                        const avatarDiv = topProfileContainer.querySelector('div');
+                        const nameDiv = topProfileContainer.querySelector('div:nth-child(2)');
+                        if (avatarDiv) avatarDiv.innerText = initials;
+                        if (nameDiv) nameDiv.innerText = data.name;
+                    }
+
+                    // Save Stored Address Details
+                    const addrData = {
+                        address_line1: document.getElementById('inputHouseNo').value.trim(),
+                        address_line2: document.getElementById('inputArea').value.trim(),
+                        city: document.getElementById('inputCity').value.trim(),
+                        pincode: document.getElementById('inputPincode').value.trim()
+                    };
+
+                    if (homeAddressId) {
+                        await api.request('PUT', `/user/addresses/${homeAddressId}`, addrData);
+                    } else {
+                        // Create one if it does not exist
+                        const newAddrData = {
+                            label: 'Home',
+                            address_line1: addrData.address_line1,
+                            address_line2: addrData.address_line2,
+                            city: addrData.city,
+                            pincode: addrData.pincode,
+                            is_default: 1
+                        };
+                        const newAddrRes = await api.post('/user/addresses', newAddrData);
+                        if (newAddrRes.success) {
+                            homeAddressId = newAddrRes.data.id;
+                        }
+                    }
+                    
+                    banner.innerHTML = '<i data-lucide="check"></i> Profile Saved!';
+                    banner.style.background = '#22c55e';
+                    lucide.createIcons();
+                    
+                    setTimeout(() => {
+                        banner.classList.remove('show');
+                        setTimeout(() => {
+                            banner.innerHTML = originalHtml;
+                            banner.style.background = '';
+                            lucide.createIcons();
+                        }, 400);
+                    }, 2000);
+                }
+            } catch (err) { 
+                banner.innerHTML = originalHtml;
+                components.showError(err.message); 
+            }
+        }
+
+        async function updatePassword() {
+            const oldPass = document.getElementById('oldPassword').value;
+            const newPass = document.getElementById('newPassword').value;
+            
+            if (!oldPass || !newPass) return components.showError("All credential fields required.");
+
+            try {
+                const res = await api.post('/user/password', { old_password: oldPass, new_password: newPass });
+                components.showError("Password updated successfully.");
+                document.getElementById('oldPassword').value = '';
+                document.getElementById('newPassword').value = '';
+            } catch (err) { components.showError(err.message); }
+        }
+
+        async function deactivateAccount() {
+            const confirmed = await components.confirm('Deactivate Account', 'Are you sure you want to deactivate your account? You will be logged out.', 'Yes, Deactivate');
+            if (!confirmed) return;
+            try {
+                await api.post('/user/deactivate');
+                auth.logout();
+            } catch (err) { components.showError(err.message); }
+        }
+
+        async function deleteAccount() {
+            const pass = await components.prompt("Delete Account", "WARNING: This will permanently delete your account. Enter password to confirm:", "", "Delete Permanently");
+            if (!pass) return;
+            
+            try {
+                await api.request('DELETE', '/user/account', { password: pass });
+                components.showError("Account deleted successfully.");
+                auth.logout();
+            } catch (err) { components.showError(err.message); }
+        }
+    </script>
+</body>
+
+</html>

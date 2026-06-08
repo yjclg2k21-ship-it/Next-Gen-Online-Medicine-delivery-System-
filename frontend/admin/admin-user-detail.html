@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clinical Node Details | Admin | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <link rel="stylesheet" href="../assets/css/admin-dark.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .detail-glass { background: rgba(255, 255, 255, 0.4); border-radius: var(--l-card-r); padding: var(--l-card-p); border: 1px solid rgba(255, 255, 255, 0.5); margin-bottom: 24px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .stat-block { background: rgba(255,255,255,0.3); padding: 16px; border-radius: 16px; display: flex; align-items: center; gap: 16px; }
+        .stat-icon { width: 44px; height: 44px; border-radius: 12px; background: white; display: flex; justify-content: center; align-items: center; color: var(--primary); }
+    </style>
+</head>
+<body>
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        <main class="liquid-main" style="overflow-y:auto;">
+            <header style="margin-bottom: 24px;">
+                <button onclick="window.history.back()" style="background:none; border:none; color:#6e6e73; font-weight:700; display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:12px;">
+                    <i data-lucide="arrow-left" size="18"></i> Back to Nodes
+                </button>
+                <h1 class="vibrant-h1" id="page-title">Node Diagnostics</h1>
+                <p style="color: #6e6e73; font-size: 1.1rem; font-weight: 500;">Comprehensive analysis of user activity and authorization status.</p>
+            </header>
+
+            <div style="padding-bottom: 40px;">
+                <div class="detail-glass grid-2">
+                    <div style="display: flex; align-items: center; gap: 24px;">
+                        <div id="user-avatar" style="width: 80px; height: 80px; background: white; border-radius: 24px; display: flex; justify-content: center; align-items: center; font-size: 2rem; font-weight: 800; color: var(--primary); box-shadow: 0 10px 30px rgba(0,0,0,0.05);">U</div>
+                        <div>
+                            <h2 style="font-size: 1.8rem; font-weight: 800; color: #1d1d1f; margin-bottom: 4px;" id="u-name">Loading...</h2>
+                            <div style="color: #6e6e73; font-weight: 600; margin-bottom: 4px;" id="u-email">...</div>
+                            <div style="color: #6e6e73; font-weight: 600; margin-bottom: 4px; display:flex; align-items:center; gap:6px;" id="u-phone"><i data-lucide="phone" style="width:14px;height:14px;"></i> ...</div>
+                            <div style="display:flex; gap:8px; align-items:center; margin-top:8px;">
+                                <span id="u-role" style="padding: 6px 14px; border-radius: 100px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; background: rgba(0,122,255,0.1); color: var(--primary);">ROLE</span>
+                                <span id="u-joined" style="font-size:0.75rem; color:#8e8e93; font-weight:600;"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="stat-block">
+                            <div class="stat-icon"><i data-lucide="activity"></i></div>
+                            <div>
+                                <div style="font-weight: 800; font-size: 1.2rem;" id="u-status">Active</div>
+                                <div style="color: #6e6e73; font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">Connection</div>
+                            </div>
+                        </div>
+                        <div class="stat-block">
+                            <div class="stat-icon" style="color: #34c759;"><i data-lucide="shield-check"></i></div>
+                            <div>
+                                <div style="font-weight: 800; font-size: 1.2rem;" id="u-kyc">Verified</div>
+                                <div style="color: #6e6e73; font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">KYC Status</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-glass">
+                    <h3 style="font-weight: 800; margin-bottom: 16px; font-size: 1.3rem;">Wallet & Financial Integrity</h3>
+                    <div class="grid-2" style="gap: 16px;">
+                        <div style="background: white; border-radius: 12px; padding: 20px; border: 1px solid rgba(0,0,0,0.05);">
+                            <div style="color: #6e6e73; font-weight: 600; font-size: 0.9rem; margin-bottom: 8px;">Available Balance</div>
+                            <div style="font-size: 2rem; font-weight: 900; color: #1d1d1f;" id="u-wallet">₹0.00</div>
+                        </div>
+                        <div style="background: white; border-radius: 12px; padding: 20px; border: 1px solid rgba(0,0,0,0.05);">
+                            <div style="color: #6e6e73; font-weight: 600; font-size: 0.9rem; margin-bottom: 8px;">Total Orders</div>
+                            <div style="font-size: 2rem; font-weight: 900; color: #1d1d1f;" id="u-order-count">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="role-specific-details" style="display:none;">
+                    <div class="detail-glass">
+                        <h3 style="font-weight: 800; margin-bottom: 16px; font-size: 1.3rem;" id="role-title">Specialized Registry</h3>
+                        <div id="profile-grid" class="grid-2">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Addresses Section -->
+                <div class="detail-glass" id="addresses-section" style="display:none;">
+                    <h3 style="font-weight: 800; margin-bottom: 16px; font-size: 1.3rem;"><i data-lucide="map-pin" style="width:18px;height:18px;display:inline;vertical-align:middle;margin-right:8px;"></i>Saved Addresses</h3>
+                    <div id="addresses-list" style="display:grid; gap:12px;"></div>
+                </div>
+
+                <!-- Recent Orders Section -->
+                <div class="detail-glass" id="orders-section" style="display:none;">
+                    <h3 style="font-weight: 800; margin-bottom: 16px; font-size: 1.3rem;"><i data-lucide="shopping-bag" style="width:18px;height:18px;display:inline;vertical-align:middle;margin-right:8px;"></i>Recent Orders</h3>
+                    <div id="orders-list" style="display:grid; gap:10px;"></div>
+                </div>
+
+                <!-- Activity Log Section -->
+                <div class="detail-glass" id="activity-section" style="display:none;">
+                    <h3 style="font-weight: 800; margin-bottom: 16px; font-size: 1.3rem;"><i data-lucide="clock" style="width:18px;height:18px;display:inline;vertical-align:middle;margin-right:8px;"></i>Recent Activity</h3>
+                    <div id="activity-list" style="display:grid; gap:8px; max-height:300px; overflow-y:auto;"></div>
+                </div>
+
+                <button class="pill-button" style="background: rgba(255,59,48,0.1); color: var(--danger); border: 1px solid rgba(255,59,48,0.2); margin-top:24px;" id="action-btn">
+                     <i data-lucide="lock"></i> Suspend Network Access
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('admin');
+        lucide.createIcons();
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetId = urlParams.get('id');
+
+        async function init() {
+            if(!targetId) { window.location.href='admin-users.html'; return; }
+            try {
+                components.showLoader();
+                let userRes;
+                try {
+                    userRes = await api.get(`/admin/users/${targetId}`);
+                } catch(e) {
+                    console.error("Core User Fetch Failed:", e);
+                    throw new Error("Core user registry unreachable.");
+                }
+
+                const userObj = userRes.data.user;
+                const profileObj = userRes.data.profile;
+                const orders = userRes.data.orders || [];
+                const addresses = userRes.data.addresses || [];
+                const activity = userRes.data.activity || [];
+                
+                if(!userObj) throw new Error("Entity missing from node registry.");
+                
+                // Basic Info
+                document.getElementById('u-name').innerText = userObj.name;
+                document.getElementById('u-email').innerText = userObj.email;
+                document.getElementById('u-phone').innerHTML = '<i data-lucide="phone" style="width:14px;height:14px;"></i> ' + (userObj.phone || 'Not provided');
+                document.getElementById('user-avatar').innerText = userObj.name.charAt(0).toUpperCase();
+                
+                document.getElementById('u-role').innerText = userObj.role;
+                if(userObj.role === 'admin') document.getElementById('u-role').style.color = 'var(--danger)';
+
+                // Join date
+                if (userObj.created_at) {
+                    const joinDate = new Date(userObj.created_at);
+                    document.getElementById('u-joined').innerText = 'Joined ' + joinDate.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+                }
+
+                document.getElementById('u-status').innerText = (userObj.status == 1 || userObj.status === 'active') ? 'Operating' : 'Suspended';
+                document.getElementById('u-order-count').innerText = orders.length;
+                
+                // Profile section
+                if (profileObj) {
+                    const section = document.getElementById('role-specific-details');
+                    const title = document.getElementById('role-title');
+                    const grid = document.getElementById('profile-grid');
+                    section.style.display = 'block';
+                    
+                    if (userObj.role === 'vendor') {
+                        title.innerText = 'Pharmacy Registry';
+                        grid.innerHTML = `
+                            <div class="stat-block"><div><div style="color:#6e6e73; font-size:0.75rem; font-weight:700; text-transform:uppercase; margin-bottom:4px;">Pharmacy Name</div><div style="font-weight:800;">${profileObj.pharmacy_name || 'N/A'}</div></div></div>
+                            <div class="stat-block"><div><div style="color:#6e6e73; font-size:0.75rem; font-weight:700; text-transform:uppercase; margin-bottom:4px;">Drug License</div><div style="font-weight:800; color:var(--primary);">${profileObj.license_number || 'N/A'}</div></div></div>
+                            <div class="stat-block" style="grid-column:1/-1;"><div><div style="color:#6e6e73; font-size:0.75rem; font-weight:700; text-transform:uppercase; margin-bottom:4px;">Address</div><div style="font-weight:800;">${profileObj.address || 'N/A'}</div></div></div>
+                        `;
+                    } else if (userObj.role === 'delivery') {
+                        title.innerText = 'Fleet Registry';
+                        grid.innerHTML = `
+                            <div class="stat-block"><div><div style="color:#6e6e73; font-size:0.75rem; font-weight:700; text-transform:uppercase; margin-bottom:4px;">Vehicle</div><div style="font-weight:800;">${profileObj.vehicle_type ? profileObj.vehicle_type.toUpperCase() : 'N/A'} - ${profileObj.vehicle_number || 'N/A'}</div></div></div>
+                            <div class="stat-block"><div><div style="color:#6e6e73; font-size:0.75rem; font-weight:700; text-transform:uppercase; margin-bottom:4px;">License</div><div style="font-weight:800; color:var(--primary);">${profileObj.license_number || 'N/A'}</div></div></div>
+                            <div class="stat-block" style="grid-column:1/-1;"><div><div style="color:#6e6e73; font-size:0.75rem; font-weight:700; text-transform:uppercase; margin-bottom:4px;">Address</div><div style="font-weight:800;">${profileObj.current_address || 'N/A'}</div></div></div>
+                        `;
+                    }
+                }
+
+                // KYC Status
+                try {
+                    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+                    const kycResp = await fetch(api.BASE_URL + '/admin/kyc/user/' + targetId, { headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' } });
+                    if (kycResp.ok) {
+                        const kycData = await kycResp.json();
+                        const docs = (kycData.data && kycData.data.documents) || [];
+                        document.getElementById('u-kyc').innerText = docs.length > 0 ? 'Submitted (' + docs.length + ')' : 'Not Submitted';
+                    } else {
+                        document.getElementById('u-kyc').innerText = 'Unknown';
+                    }
+                } catch(e) { 
+                    document.getElementById('u-kyc').innerText = 'Unknown'; 
+                }
+
+                // Wallet
+                document.getElementById('u-wallet').innerText = '\u20b9' + (Number(userObj.wallet_balance) || 0).toFixed(2);
+
+                // Addresses
+                if (addresses.length > 0) {
+                    document.getElementById('addresses-section').style.display = 'block';
+                    document.getElementById('addresses-list').innerHTML = addresses.map(a => `
+                        <div style="background:white; padding:14px 18px; border-radius:12px; border:1px solid rgba(0,0,0,0.05); display:flex; justify-content:space-between; align-items:center;">
+                            <div>
+                                <div style="font-weight:700; font-size:0.85rem; margin-bottom:4px;">${a.label || 'Address'} ${a.is_default == 1 ? '<span style="background:rgba(52,199,89,0.1); color:#34c759; padding:2px 8px; border-radius:8px; font-size:0.65rem; font-weight:800;">DEFAULT</span>' : ''}</div>
+                                <div style="color:#6e6e73; font-size:0.8rem;">${a.address_line || ''}, ${a.city || ''} ${a.pincode || ''}</div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+
+                // Orders
+                if (orders.length > 0) {
+                    document.getElementById('orders-section').style.display = 'block';
+                    document.getElementById('orders-list').innerHTML = orders.map(o => {
+                        const statusColors = { delivered:'#34c759', cancelled:'#ff3b30', pending:'#ff9500', confirmed:'#007aff', processing:'#5856d6', dispatched:'#af52de' };
+                        const color = statusColors[o.status] || '#8e8e93';
+                        const date = new Date(o.created_at).toLocaleDateString('en-IN', { day:'numeric', month:'short' });
+                        return `
+                            <div style="background:white; padding:14px 18px; border-radius:12px; border:1px solid rgba(0,0,0,0.05); display:flex; justify-content:space-between; align-items:center;">
+                                <div>
+                                    <span style="font-weight:800; font-size:0.85rem;">Order #${o.id}</span>
+                                    <span style="color:#8e8e93; font-size:0.75rem; margin-left:8px;">${date}</span>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:12px;">
+                                    <span style="font-weight:800;">₹${Number(o.grand_total || 0).toFixed(0)}</span>
+                                    <span style="padding:4px 10px; border-radius:8px; font-size:0.7rem; font-weight:800; text-transform:uppercase; background:${color}15; color:${color};">${o.status}</span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+
+                // Activity Log
+                if (activity.length > 0) {
+                    document.getElementById('activity-section').style.display = 'block';
+                    document.getElementById('activity-list').innerHTML = activity.map(a => {
+                        const time = new Date(a.created_at).toLocaleString('en-IN', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+                        return `
+                            <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:rgba(0,0,0,0.02); border-radius:10px;">
+                                <div style="font-size:0.8rem; font-weight:600; color:#1d1d1f;">${a.action} <span style="color:#8e8e93;">${a.entity_type || ''} #${a.entity_id || ''}</span></div>
+                                <div style="font-size:0.72rem; color:#8e8e93; font-weight:600;">${time}</div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+
+                // Action button
+                const isActive = (userObj.status == 1 || userObj.status === 'active');
+                const btn = document.getElementById('action-btn');
+                btn.onclick = () => toggleStatus(isActive);
+                if(!isActive) {
+                    btn.style.background = 'rgba(52, 199, 89, 0.1)';
+                    btn.style.color = '#34c759';
+                    btn.innerHTML = '<i data-lucide="unlock"></i> Restore Authorization';
+                }
+
+            } catch(e) {
+                console.error("Diagnostic Pulse Failure:", e);
+                const errorMsg = e.message || 'Unknown error';
+                document.getElementById('u-name').innerText = 'Load Failed';
+                document.getElementById('u-email').innerText = errorMsg;
+                components.showError('Failed to load user details: ' + errorMsg);
+            } finally {
+                components.hideLoader();
+                lucide.createIcons();
+            }
+        }
+
+        async function toggleStatus(currentlyActive) {
+            const action = currentlyActive ? 'block' : 'unblock';
+            const confirmed = await components.confirm(
+                currentlyActive ? 'Block User' : 'Unblock User',
+                `Are you sure you want to ${action} this user?`,
+                currentlyActive ? 'Yes, Block' : 'Yes, Unblock'
+            );
+            if (!confirmed) return;
+            try {
+                components.showLoader();
+                await api.post(`/admin/users/${targetId}/${action}`);
+                window.location.reload();
+            } catch(e) { console.error(e); } finally { components.hideLoader(); }
+        }
+
+        init();
+    </script>
+</body>
+</html>

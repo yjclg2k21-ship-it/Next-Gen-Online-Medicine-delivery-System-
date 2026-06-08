@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sitemap | MediMitra</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/glass.css">
+    <style>
+        body { display: flex; min-height: 100vh; background: #f1f5f9; }
+        .main-content { flex: 1; margin-left: 260px; transition: margin 0.3s; display: flex; flex-direction: column; }
+        .content-area { padding: 2.5rem; flex: 1; }
+        @media (max-width: 992px) { .main-content { margin-left: 0; } }
+    </style>
+</head>
+<body>
+    <div id="loader" class="loader-overlay"><div class="loader-spinner"></div></div>
+    <div id="sidebar-root"></div>
+    <main class="main-content">
+        <div id="header-root"></div>
+        <div class="content-area animate-fade-in">
+            <h1 style="font-size: 2.25rem; font-weight: 800; margin-bottom: 0.5rem;">Sitemap</h1>
+            <p style="color: var(--grey); margin-bottom: 2rem;">This module is part of the new Vanilla architecture.</p>
+            
+            <div class="glass-card" style="padding: 4rem 2rem; border: 2px dashed var(--border); text-align: center;">
+                <div style="font-size: 4rem; margin-bottom: 1rem;">🚧</div>
+                <h3 style="font-size: 1.5rem; margin-bottom: 1rem;">UI Under Construction</h3>
+                <p style="color: var(--grey); margin-bottom: 2rem;">The specific layout and APIs for "Sitemap" are currently being mapped to the PHP backend.</p>
+                <div style="display: flex; gap: 1rem; justify-content: center;">
+                    <a href="javascript:history.back()" class="btn btn-outline">Go Back</a>
+                </div>
+            </div>
+        </div>
+        <div id="footer-root"></div>
+    </main>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/ui-loader.js"></script>
+</body>
+</html>

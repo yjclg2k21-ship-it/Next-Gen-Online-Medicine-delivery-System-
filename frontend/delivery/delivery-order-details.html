@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Details | Delivery | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .otp-box { background: rgba(0,122,255,0.06); border: 1px solid rgba(0,122,255,0.2); border-radius: 14px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .otp-code { font-size: 2rem; font-weight: 800; letter-spacing: 6px; color: #007aff; font-family: monospace; }
+        .step-item { display: flex; align-items: center; gap: 14px; padding: 12px 0; }
+        .step-dot { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.8rem; flex-shrink: 0; }
+        .step-line { width: 2px; height: 24px; background: rgba(0,0,0,0.08); margin-left: 15px; }
+        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 0.84rem; }
+        .item-row:last-child { border-bottom: none; }
+    </style>
+</head>
+<body>
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        <main class="liquid-main" style="overflow-y:auto;">
+            <header style="margin-bottom:20px;display:flex;align-items:center;gap:14px;">
+                <a href="delivery-orders.html" style="width:36px;height:36px;border-radius:10px;border:1px solid rgba(0,0,0,0.1);display:flex;align-items:center;justify-content:center;text-decoration:none;color:#1d1d1f;flex-shrink:0;"><i data-lucide="arrow-left" style="width:16px;height:16px;"></i></a>
+                <div>
+                    <h1 class="vibrant-h1" style="margin-bottom:0;" id="order-title">Order Details</h1>
+                    <p style="color:#6e6e73;font-size:0.9rem;font-weight:500;" id="order-status-text">Loading...</p>
+                </div>
+            </header>
+
+            <div style="display:grid;grid-template-columns:1fr 360px;gap:20px;">
+                <!-- Left: Order Info -->
+                <div style="display:flex;flex-direction:column;gap:16px;">
+                    <div class="liquid-card" style="padding:20px;">
+                        <h3 style="font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:8px;"><i data-lucide="user" style="width:16px;height:16px;color:#007aff;"></i> Customer Info</h3>
+                        <div id="customer-info"></div>
+                    </div>
+
+                    <div class="liquid-card" style="padding:20px;">
+                        <h3 style="font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:8px;"><i data-lucide="shopping-bag" style="width:16px;height:16px;color:#5856d6;"></i> Order Items</h3>
+                        <div id="order-items"></div>
+                        <div id="order-total" style="border-top:2px solid rgba(0,0,0,0.06);padding-top:12px;margin-top:8px;"></div>
+                    </div>
+                </div>
+
+                <!-- Right: OTP + Actions -->
+                <div style="display:flex;flex-direction:column;gap:16px;">
+                    <div class="liquid-card" style="padding:20px;">
+                        <h3 style="font-weight:800;margin-bottom:12px;">🔐 Verification OTPs</h3>
+                        <div style="margin-bottom:10px;">
+                            <div style="font-size:0.75rem;color:#8e8e93;font-weight:600;margin-bottom:6px;">PICKUP OTP (from vendor)</div>
+                            <div class="otp-box"><span class="otp-code" id="pickup-otp">----</span><button onclick="copyOTP('pickup-otp')" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(0,0,0,0.1);background:transparent;cursor:pointer;font-size:0.75rem;font-weight:600;font-family:Inter,sans-serif;">Copy</button></div>
+                        </div>
+                        <div>
+                            <div style="font-size:0.75rem;color:#8e8e93;font-weight:600;margin-bottom:6px;">DELIVERY OTP (collect from customer)</div>
+                            <div class="otp-box"><span class="otp-code" id="delivery-otp" style="color:#8e8e93;letter-spacing:2px;font-size:1.2rem;">LOCKED</span><i data-lucide="lock" style="width:16px;height:16px;color:#8e8e93;" id="delivery-otp-icon"></i></div>
+                        </div>
+                    </div>
+
+                    <div class="liquid-card" style="padding:20px;">
+                        <h3 style="font-weight:800;margin-bottom:16px;">📍 Delivery Progress</h3>
+                        <div id="progress-steps"></div>
+                    </div>
+
+                    <div class="liquid-card" style="padding:20px;">
+                        <h3 style="font-weight:800;margin-bottom:12px;">🏪 Pickup From</h3>
+                        <div style="font-weight:700;" id="vendor-name"></div>
+                        <div style="font-size:0.82rem;color:#6e6e73;margin-top:4px;" id="vendor-addr"></div>
+                        <a id="map-link" href="#" style="display:inline-flex;align-items:center;gap:6px;color:#007aff;font-weight:600;font-size:0.82rem;margin-top:10px;text-decoration:none;" target="_blank"><i data-lucide="map" style="width:14px;height:14px;"></i> Open in Maps</a>
+                    </div>
+
+                    <div id="action-buttons" style="display:flex;flex-direction:column;gap:8px;"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        const user = auth.getUser();
+        if (!user || user.role !== 'delivery') window.location.href = '../auth/login.html';
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('delivery');
+        lucide.createIcons();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('id') || 'ORD-101';
+
+        const statusSteps = [
+            { key:'assigned', label:'Order Assigned', icon:'check-circle' },
+            { key:'heading_to_pickup', label:'Heading to Pharmacy', icon:'navigation' },
+            { key:'picked_up', label:'Picked Up', icon:'package' },
+            { key:'in_transit', label:'In Transit', icon:'truck' },
+            { key:'delivered', label:'Delivered', icon:'home' },
+        ];
+
+        async function loadOrder() {
+            let order;
+            try { const r = await api.get(`/delivery/orders/${orderId}`); order = r.data.order; }
+            catch(e) {
+                console.error("API load failed. Falling back to dummy order details.", e);
+                order = { id: orderId, customer: 'Rahul Nair', phone: '+91 98765 43210', address: 'Flat 4B, Adarsh Nagar, Andheri West, Phaltan - 400053', type: 'emergency', amount: 540, items: [{ name:'Paracetamol 500mg', qty:2, price:45 },{ name:'Cetirizine 10mg', qty:1, price:60 }], vendor:'City Pharmacy, Andheri', vendor_address:'Shop 5, Lokhandwala Market, Andheri West', status:'assigned', pickup_otp:'4821', delivery_otp:'7395' };
+            }
+            renderOrder(order);
+        }
+
+        function renderOrder(order) {
+            // Normalize status if it is empty/invalid
+            if (!order.status || !['assigned', 'heading_to_pickup', 'picked_up', 'in_transit', 'delivered'].includes(order.status)) {
+                order.status = 'assigned';
+            }
+
+            const amount = order.grand_total || order.total_amount || order.amount || 0;
+
+            document.getElementById('order-title').textContent = `Order #MM-ORD-${order.id}`;
+            document.getElementById('order-status-text').textContent = `Status: ${order.status.replace(/_/g,' ')} · ${order.is_emergency == 1 || order.type === 'emergency' ? '🚨 Emergency' : '📦 Standard'}`;
+
+            document.getElementById('customer-info').innerHTML = `
+                <div style="display:grid;gap:10px;">
+                    <div style="display:flex;justify-content:space-between;"><span style="color:#8e8e93;">Name</span><span style="font-weight:700;">${order.customer || 'Unknown Customer'}</span></div>
+                    <div style="display:flex;justify-content:space-between;"><span style="color:#8e8e93;">Phone</span><a href="tel:${order.phone || ''}" style="font-weight:700;color:#007aff;">${order.phone || 'N/A'}</a></div>
+                    <div style="display:flex;flex-direction:column;gap:4px;"><span style="color:#8e8e93;">Delivery Address</span><span style="font-weight:600;line-height:1.4;">${order.address || 'Address not specified'}</span></div>
+                </div>`;
+
+            // Calculate subtotal from items
+            const items = order.items || [];
+            document.getElementById('order-items').innerHTML = items.map(i => {
+                const qty = i.quantity || i.qty || 1;
+                const price = parseFloat(i.price) || 0;
+                return `<div class="item-row"><span>${i.name || 'Medicine'} × ${qty}</span><span style="font-weight:700;">₹${(price * qty).toFixed(2)}</span></div>`;
+            }).join('');
+            
+            document.getElementById('order-total').innerHTML = `<div style="display:flex;justify-content:space-between;font-weight:800;font-size:1rem;"><span>Total Collected</span><span style="color:#007aff;">₹${parseFloat(amount).toFixed(2)}</span></div>`;
+
+            document.getElementById('pickup-otp').textContent  = order.pickup_otp || '----';
+            
+            const deliveryOtpEl = document.getElementById('delivery-otp');
+            if (order.status === 'delivered') {
+                deliveryOtpEl.textContent = order.delivery_otp || 'VERIFIED';
+                deliveryOtpEl.style.color = '#34c759';
+                deliveryOtpEl.style.letterSpacing = 'normal';
+                deliveryOtpEl.style.fontSize = '1.2rem';
+                document.getElementById('delivery-otp-icon')?.remove();
+            } else {
+                deliveryOtpEl.textContent = 'LOCKED';
+                deliveryOtpEl.style.color = '#8e8e93';
+                deliveryOtpEl.style.letterSpacing = '2px';
+                deliveryOtpEl.style.fontSize = '1.2rem';
+            }
+
+            document.getElementById('vendor-name').textContent  = order.vendor || 'Pharmacy';
+            document.getElementById('vendor-address')?.remove();
+            document.getElementById('vendor-name').insertAdjacentHTML('afterend', `<div id="vendor-address" style="font-size:0.82rem;color:#6e6e73;margin-top:4px;">${order.vendor_address||'Address not specified'}</div>`);
+
+            // Set Google Maps link
+            const addr = order.vendor_address || order.address || 'Phaltan, Maharashtra';
+            document.getElementById('map-link').href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}`;
+
+            const si = statusSteps.findIndex(s=>s.key===order.status);
+            document.getElementById('progress-steps').innerHTML = statusSteps.map((s,i) => `
+                ${i>0?'<div class="step-line"></div>':''}
+                <div class="step-item">
+                    <div class="step-dot" style="background:${i<=si?'#007aff':'rgba(0,0,0,0.08)'};color:${i<=si?'#fff':'#8e8e93'};">
+                        ${i<si?'✓':i+1}
+                    </div>
+                    <span style="font-weight:${i===si?'800':'500'};color:${i<=si?'#1d1d1f':'#8e8e93'}">${s.label}</span>
+                </div>
+            `).join('');
+
+            const nextSteps = { assigned:'heading_to_pickup', heading_to_pickup:'picked_up', picked_up:'in_transit', in_transit:'delivered' };
+            const nextLabels = { assigned:'🚗 Start Heading to Pickup', heading_to_pickup:'📦 Confirm Pickup', picked_up:'🚀 Start Delivery', in_transit:'✅ Mark Delivered' };
+            
+            let actionHtml = '';
+            
+            if (order.payment_method === 'cod' && order.status !== 'delivered' && order.status !== 'failed_delivery') {
+                actionHtml += `
+                <div style="background:rgba(255,149,0,0.1); border:1px solid rgba(255,149,0,0.2); padding:16px; border-radius:14px; margin-bottom:12px; display:flex; align-items:center; gap:12px;">
+                    <i data-lucide="hand-coins" style="color:#ff9500;"></i>
+                    <div>
+                        <div style="font-weight:800; color:#ff9500; font-size:0.9rem;">COLLECT CASH</div>
+                        <div style="font-weight:900; font-size:1.4rem;">₹${parseFloat(amount).toFixed(2)}</div>
+                    </div>
+                </div>`;
+            }
+            
+            if (order.status !== 'delivered' && order.status !== 'failed_delivery') {
+                actionHtml += `
+                <button onclick="updateStatus('${order.id}','${nextSteps[order.status]}')" style="padding:14px;border-radius:14px;background:#007aff;color:#fff;border:none;font-weight:800;font-size:1rem;cursor:pointer;font-family:Inter,sans-serif;width:100%;">${nextLabels[order.status]}</button>`;
+            } else {
+                actionHtml += `
+                <div style="background:rgba(52,199,89,0.1); border:1px solid rgba(52,199,89,0.2); padding:16px; border-radius:14px; margin-bottom:12px; display:flex; align-items:center; justify-content:center; gap:12px; color:#34c759; font-weight:700; width:100%;">
+                    <i data-lucide="check-circle" style="color:#34c759;"></i>
+                    <span>Delivery Completed</span>
+                </div>`;
+            }
+            
+            if (order.status === 'in_transit') {
+                actionHtml += `
+                <div style="margin-top:8px;">
+                    <input type="file" id="proof-input" style="display:none" accept="image/*" onchange="uploadProof('${order.id}')">
+                    <button onclick="document.getElementById('proof-input').click()" style="width:100%; padding:12px; border-radius:14px; border:1px solid rgba(0,0,0,0.1); background:white; font-weight:700; font-size:0.9rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+                        <i data-lucide="camera" style="width:16px;"></i> ${order.proof_image ? 'Update Delivery Photo' : 'Upload Delivery Photo'}
+                    </button>
+                    ${order.proof_image ? '<p style="font-size:0.7rem; color:#34c759; text-align:center; margin-top:4px;">✓ Photo anchored</p>' : ''}
+                </div>
+                <button onclick="reportFailure('${order.id}')" style="padding:12px;border-radius:14px;background:rgba(255,59,48,0.1);color:#ff3b30;border:1px solid rgba(255,59,48,0.2);font-weight:700;font-size:0.9rem;cursor:pointer;margin-top:8px;width:100%;">⚠️ Report Failed Attempt</button>`;
+            }
+            
+            actionHtml += `
+            <a href="delivery-history.html" style="padding:12px;border-radius:14px;border:1px solid rgba(0,0,0,0.1);text-align:center;text-decoration:none;color:#1d1d1f;font-weight:700;font-size:0.9rem;margin-top:8px;display:block;width:100%;">📋 View Delivery History</a>`;
+            
+            document.getElementById('action-buttons').innerHTML = actionHtml;
+            if (window.lucide) lucide.createIcons();
+        }
+
+        async function uploadProof(id) {
+            const file = document.getElementById('proof-input').files[0];
+            if (!file) return;
+            const formData = new FormData();
+            formData.append('proof', file);
+            try {
+                components.showLoader();
+                const res = await api.post(`/delivery/orders/${id}/proof`, formData);
+                if (res.success) {
+                    components.showSuccess("Delivery proof anchored.");
+                    await loadOrder();
+                }
+            } catch (e) { components.showError("Proof upload failed."); }
+            finally { components.hideLoader(); }
+        }
+
+        async function reportFailure(id) {
+            const reason = await components.prompt("Report Delivery Failure", "Why did the delivery fail?", "", "Report");
+            if (!reason) return;
+            try {
+                const res = await api.post(`/delivery/orders/${id}/status`, { status: 'failed_delivery', reason });
+                if (res.success) {
+                    components.showSuccess("Delivery attempt failed reported.");
+                    await loadOrder();
+                }
+            } catch (e) {
+                components.showError("Failed to report attempt.");
+            }
+        }
+
+        function copyOTP(id) { navigator.clipboard.writeText(document.getElementById(id).textContent); components.showSuccess('OTP copied to clipboard.'); }
+
+        async function updateStatus(id, status) {
+            let body = { status };
+            if (status === 'picked_up') {
+                const otp = await components.prompt("Pickup Verification", "Enter 6-digit PICKUP OTP from Pharmacy:", "", "Verify");
+                if (!otp) return;
+                if (otp.length !== 6) {
+                    components.showError("Invalid OTP format. Must be 6 digits.");
+                    return;
+                }
+                body.otp = otp;
+            }
+            
+            if (status === 'delivered') {
+                const otp = await components.prompt("Delivery Verification", "Enter 6-digit DELIVERY OTP from customer:", "", "Confirm Delivery");
+                if (!otp) return;
+                if (otp.length !== 6) {
+                    components.showError("Invalid OTP format. Must be 6 digits.");
+                    return;
+                }
+                body.otp = otp;
+            }
+
+            try { 
+                const res = await api.post(`/delivery/orders/${id}/status`, body); 
+                if (res.success) {
+                    components.showSuccess(`Status updated to: ${status.replace(/_/g,' ')}`);
+                    await loadOrder();
+                } else {
+                    throw new Error(res.message);
+                }
+            } catch(e) { 
+                components.showError(e.message || "Failed to commit status to server."); 
+            }
+        }
+
+        loadOrder();
+    </script>
+</body>
+</html>

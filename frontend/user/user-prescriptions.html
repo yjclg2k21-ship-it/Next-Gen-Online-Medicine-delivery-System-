@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prescriptions | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        
+        .upload-zone {
+            background: rgba(255, 255, 255, 0.4);
+            border: 2px dashed rgba(0, 122, 255, 0.3);
+            border-radius: var(--l-card-r);
+            padding: 24px 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            margin-bottom: 16px;
+        }
+        .upload-zone:hover { background: rgba(255, 255, 255, 0.6); border-color: var(--primary); transform: scale(1.02); }
+
+        .rx-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        .rx-card {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: var(--l-card-r);
+            padding: var(--l-card-p);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .rx-card:hover { transform: translateY(-5px); background: rgba(255, 255, 255, 0.6); }
+        
+        .rx-badge {
+            padding: 6px 12px;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+        }
+
+        /* Preview Modal */
+        .preview-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(15px);
+            z-index: 9999; display: none; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .preview-overlay.active { display: flex; opacity: 1; }
+        .preview-card {
+            background: white; border-radius: 32px; padding: 20px; max-width: 500px; width: 90%;
+            transform: translateY(20px); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .preview-overlay.active .preview-card { transform: translateY(0); }
+        .rx-preview-img { width: 100%; border-radius: 20px; border: 1px solid rgba(0,0,0,0.05); }
+
+    </style>
+</head>
+<body>
+    
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        
+        <main class="liquid-main">
+            <header style="margin-bottom: 16px;">
+                <h1 class="vibrant-h1">Prescriptions</h1>
+                <p style="color: #6e6e73; font-size: 1.2rem; font-weight: 500;">Verification for restricted medicine supply.</p>
+            </header>
+
+            <div class="upload-zone" onclick="window.location.href='user-prescription-flow.html'">
+                <i data-lucide="upload-cloud" size="48" style="color: var(--primary); margin-bottom: 20px;"></i>
+                <h3 class="vibrant-h2" style="margin-bottom: 8px;">Upload New RX</h3>
+                <p style="color: #6e6e73; font-weight: 500;">Drag and drop or click to select image/PDF files.</p>
+                <div style="margin-top: 24px; display: flex; justify-content: center;">
+                    <button class="pill-button" onclick="window.location.href='user-prescription-flow.html'">Access Document Picker</button>
+                </div>
+            </div>
+
+            <!-- Search, Filter & Sort Bar -->
+            <div style="display:flex; gap:12px; align-items:center; margin-bottom:20px; flex-wrap:wrap;">
+                <input type="text" id="rxSearchInput" placeholder="Search doctor name..." oninput="applyRxFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; min-width:200px; outline:none;">
+                <select id="rxFilterSelect" onchange="applyRxFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; font-weight:600;">
+                    <option value="all">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                </select>
+                <select id="rxSortSelect" onchange="applyRxFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; font-weight:600;">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                </select>
+            </div>
+
+
+            <div class="rx-grid">
+                <!-- Prescription 1 -->
+                <div class="rx-card">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+                        <div style="background: white; width: 48px; height: 48px; border-radius: var(--l-card-r); display: flex; align-items: center; justify-content: center;"><i data-lucide="file-text" style="color: var(--primary);"></i></div>
+                        <span class="rx-badge" style="background: rgba(52, 199, 89, 0.1); color: var(--success);">VERIFIED</span>
+                    </div>
+                    <div style="margin-bottom: 16px;">
+                        <h3 style="font-weight: 800; color: #1d1d1f; margin-bottom: 4px;">Dr. Sharma's Clinic</h3>
+                        <p style="font-size: 0.85rem; color: #6e6e73; font-weight: 600;">Uploaded: April 1, 2026 • Valid till: Oct 1, 2026</p>
+                    </div>
+                    <button class="pill-button" style="width: 100%; justify-content: center; background: rgba(0,0,0,0.05); color: black;">Inspect Document</button>
+                </div>
+
+                <!-- Prescription 2 -->
+                <div class="rx-card">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+                        <div style="background: white; width: 48px; height: 48px; border-radius: var(--l-card-r); display: flex; align-items: center; justify-content: center;"><i data-lucide="file-text" style="color: var(--danger);"></i></div>
+                        <span class="rx-badge" style="background: rgba(255, 59, 48, 0.1); color: var(--danger);">EXPIRED</span>
+                    </div>
+                    <div style="margin-bottom: 16px;">
+                        <h3 style="font-weight: 800; color: #1d1d1f; margin-bottom: 4px;">General Hospital #842</h3>
+                        <p style="font-size: 0.85rem; color: #6e6e73; font-weight: 600;">Uploaded: Dec 12, 2025 • Valid till: Mar 12, 2026</p>
+                    </div>
+                    <button class="pill-button" onclick="inspectRx('General Hospital #842')" style="width: 100%; justify-content: center; background: rgba(0,0,0,0.05); color: black;">Inspect Document</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Preview Modal -->
+    <div class="preview-overlay" id="previewOverlay" onclick="closePreview()">
+        <div class="preview-card" onclick="event.stopPropagation()">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0 10px;">
+                <h3 id="previewTitle" style="font-weight: 800;">Prescription Preview</h3>
+                <i data-lucide="x" onclick="closePreview()" style="cursor: pointer; color: #6e6e73;"></i>
+            </div>
+            <img src="https://images.unsplash.com/photo-1576091160550-217359f4ecf8?q=80&w=2070&auto=format&fit=crop" class="rx-preview-img" alt="Prescription">
+            <div style="margin-top: 24px; padding: 0 10px;">
+                <button class="pill-button" style="width: 100%; justify-content: center;" onclick="closePreview()">Done Reviewing</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Scripts -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        // Check Auth
+        const user = auth.getUser();
+        if (!user) { window.location.href = '../auth/login.html'; }
+
+        // Load Sidebar
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('user');
+        lucide.createIcons();
+
+        let allPrescriptions = [];
+
+        async function loadPrescriptions() {
+            try {
+                components.showLoader();
+                const res = await api.get('/prescriptions');
+                allPrescriptions = res.data.prescriptions || [];
+                applyRxFilters();
+            } catch (err) {
+                console.error(err);
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        function applyRxFilters() {
+            const search = (document.getElementById('rxSearchInput').value || '').toLowerCase();
+            const statusFilter = document.getElementById('rxFilterSelect').value;
+            const sort = document.getElementById('rxSortSelect').value;
+
+            let list = [...allPrescriptions];
+
+            if (search) {
+                list = list.filter(rx => (rx.doctor_name || '').toLowerCase().includes(search));
+            }
+            if (statusFilter !== 'all') {
+                list = list.filter(rx => rx.status === statusFilter);
+            }
+            if (sort === 'newest') list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            else if (sort === 'oldest') list.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+            renderPrescriptions(list);
+        }
+
+        function renderPrescriptions(list) {
+                const grid = document.querySelector('.rx-grid');
+                if (list.length === 0) {
+                    grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 60px; color: #6e6e73; font-weight:600;">No prescriptions found.</div>';
+                    return;
+                }
+
+                grid.innerHTML = list.map(rx => {
+                    const statusColor = rx.status === 'approved' ? 'var(--success)' : (rx.status === 'rejected' ? 'var(--danger)' : 'var(--warning)');
+                    const statusBg = rx.status === 'approved' ? 'rgba(52, 199, 89, 0.1)' : (rx.status === 'rejected' ? 'rgba(255, 59, 48, 0.1)' : 'rgba(255, 149, 0, 0.1)');
+                    const date = new Date(rx.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    
+                    // Expiry and reuse info
+                    const isExpired = rx.is_expired;
+                    const isReusable = rx.is_reusable;
+                    const expiryDate = rx.expiry_date ? new Date(rx.expiry_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : null;
+                    const timesUsed = rx.times_used || 0;
+                    const maxUses = rx.max_uses || 1;
+                    
+                    let expiryBadge = '';
+                    if (isExpired) {
+                        expiryBadge = '<span style="display:inline-block; margin-top:4px; font-size:0.75rem; font-weight:700; color:var(--danger); background:rgba(255,59,48,0.1); padding:2px 8px; border-radius:6px;">⚠ EXPIRED</span>';
+                    } else if (expiryDate) {
+                        expiryBadge = `<span style="display:inline-block; margin-top:4px; font-size:0.75rem; font-weight:600; color:#6e6e73;">Valid till: ${expiryDate}</span>`;
+                    }
+
+                    let reuseBadge = '';
+                    if (!isReusable) {
+                        reuseBadge = '<span style="display:inline-block; margin-top:4px; margin-left:8px; font-size:0.75rem; font-weight:700; color:var(--warning); background:rgba(255,149,0,0.1); padding:2px 8px; border-radius:6px;">FULLY USED</span>';
+                    } else if (maxUses > 1) {
+                        reuseBadge = `<span style="display:inline-block; margin-top:4px; margin-left:8px; font-size:0.75rem; font-weight:600; color:#6e6e73;">Uses: ${timesUsed}/${maxUses}</span>`;
+                    }
+
+                    // Linked medicines
+                    const linkedMeds = rx.linked_medicines || [];
+                    let medsHtml = '';
+                    if (linkedMeds.length > 0) {
+                        medsHtml = `<div style="margin-top:8px; display:flex; flex-wrap:wrap; gap:4px;">${linkedMeds.slice(0, 3).map(m => `<span style="font-size:0.7rem; background:rgba(0,122,255,0.08); color:var(--primary); padding:2px 6px; border-radius:4px; font-weight:600;">${m.resolved_name || m.medicine_name}</span>`).join('')}${linkedMeds.length > 3 ? `<span style="font-size:0.7rem; color:#6e6e73; font-weight:600;">+${linkedMeds.length - 3} more</span>` : ''}</div>`;
+                    }
+
+                    // Can add to cart button
+                    const canUse = rx.status === 'approved' && !isExpired && isReusable;
+
+                    return `
+                    <div class="rx-card">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+                            <div style="background: white; width: 48px; height: 48px; border-radius: var(--l-card-r); display: flex; align-items: center; justify-content: center;"><i data-lucide="file-text" style="color: ${isExpired ? 'var(--danger)' : 'var(--primary)'};"></i></div>
+                            <span class="rx-badge" style="background: ${statusBg}; color: ${statusColor}; text-transform: uppercase;">${rx.status}</span>
+                        </div>
+                        <div style="margin-bottom: 16px;">
+                            <h3 style="font-weight: 800; color: #1d1d1f; margin-bottom: 4px;">${rx.doctor_name || 'Medical Practitioner'}</h3>
+                            <p style="font-size: 0.85rem; color: #6e6e73; font-weight: 600;">Uploaded: ${date}</p>
+                            <div>${expiryBadge}${reuseBadge}</div>
+                            ${medsHtml}
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            <button class="pill-button" onclick="inspectRx('${rx.doctor_name}', ${rx.id})" style="flex:1; justify-content: center; background: rgba(0,0,0,0.05); color: black;">Inspect</button>
+                            ${canUse && linkedMeds.length > 0 ? `<button class="pill-button" onclick="addRxToCart(${rx.id})" style="flex:1; justify-content: center;">Add to Cart</button>` : ''}
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+                lucide.createIcons();
+        }
+
+        async function addRxToCart(prescriptionId) {
+            try {
+                components.showLoader();
+                const res = await api.post(`/prescriptions/${prescriptionId}/add-to-cart`);
+                if (res.success) {
+                    components.showSuccess(res.message || 'Medicines added to cart!');
+                    setTimeout(() => window.location.href = 'cart-page.html', 1200);
+                } else {
+                    components.showError(res.message || 'Failed to add medicines to cart.');
+                }
+            } catch (err) {
+                components.showError(err.message || 'Error adding to cart.');
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        function inspectRx(name, prescriptionId) {
+            document.getElementById('previewTitle').textContent = `Prescription: ${name}`;
+            const container = document.querySelector('.preview-card');
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            
+            // Remove old preview content and add loading state
+            let previewContent = container.querySelector('.rx-preview-content');
+            if (!previewContent) {
+                // Replace the static img with a dynamic container
+                const oldImg = container.querySelector('.rx-preview-img');
+                if (oldImg) {
+                    previewContent = document.createElement('div');
+                    previewContent.className = 'rx-preview-content';
+                    previewContent.style.cssText = 'width:100%; min-height:300px; border-radius:12px; overflow:hidden;';
+                    oldImg.parentNode.replaceChild(previewContent, oldImg);
+                }
+            }
+            if (previewContent) {
+                previewContent.innerHTML = '<p style="text-align:center; padding:40px; color:#6e6e73; font-weight:600;">Loading document...</p>';
+            }
+
+            document.getElementById('previewOverlay').classList.add('active');
+
+            fetch(`${api.BASE_URL}/prescriptions/${prescriptionId}/view`, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            })
+            .then(res => {
+                if (!res.ok) throw new Error('Not found');
+                const contentType = res.headers.get('content-type') || '';
+                return res.blob().then(blob => ({ blob, contentType }));
+            })
+            .then(({ blob, contentType }) => {
+                const url = URL.createObjectURL(blob);
+                if (previewContent) {
+                    if (contentType.includes('pdf')) {
+                        previewContent.innerHTML = `<iframe src="${url}" style="width:100%; height:400px; border:none; border-radius:8px;"></iframe>`;
+                    } else {
+                        previewContent.innerHTML = `<img src="${url}" style="width:100%; border-radius:8px; display:block;" alt="Prescription">`;
+                    }
+                }
+            })
+            .catch(() => {
+                if (previewContent) {
+                    previewContent.innerHTML = '<p style="text-align:center; padding:40px; color:var(--danger); font-weight:600;">Document not available for preview.</p>';
+                }
+            });
+        }
+
+        function closePreview() {
+            document.getElementById('previewOverlay').classList.remove('active');
+        }
+
+        loadPrescriptions();
+    </script>
+</body>
+</html>

@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Profile | MediMitra Delivery</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        
+        .profile-header-card {
+            background: linear-gradient(135deg, #064e3b, #065f46);
+            padding: 40px;
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            margin-bottom: 24px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .profile-header-card::after {
+            content: ''; position: absolute; top: -50%; right: -10%; width: 300px; height: 300px;
+            background: radial-gradient(circle, rgba(52, 211, 153, 0.2), transparent);
+            filter: blur(40px);
+        }
+
+        .avatar-squircle {
+            width: 120px; height: 120px; background: white; border-radius: 36px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 3rem; box-shadow: 0 12px 32px rgba(0,0,0,0.2);
+            position: relative; z-index: 2; color: #059669; font-weight: 800;
+        }
+
+        .form-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+        }
+
+        .input-card {
+            background: rgba(255,255,255,0.6); backdrop-filter: blur(20px);
+            padding: 20px; border-radius: 20px;
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: all 0.3s;
+        }
+        .input-card:focus-within {
+            background: white; border-color: #10b981; box-shadow: 0 8px 24px rgba(16, 185, 129, 0.1);
+        }
+
+        .field-label {
+            font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase;
+            letter-spacing: 0.05em; margin-bottom: 8px; display: block;
+        }
+
+        .field-input {
+            width: 100%; border: none; background: transparent; 
+            font-size: 1.1rem; font-weight: 700; color: #1e293b;
+            outline: none; padding: 0;
+        }
+
+        .badge-verified {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(255, 255, 255, 0.2); color: white;
+            padding: 6px 12px; border-radius: 100px; font-size: 0.75rem; font-weight: 800;
+            backdrop-filter: blur(10px);
+        }
+
+        .save-banner {
+            position: fixed; bottom: 40px; right: 40px; 
+            background: #10b981; color: white; padding: 16px 32px;
+            border-radius: 100px; font-weight: 700; display: flex; align-items: center; gap: 12px;
+            box-shadow: 0 12px 32px rgba(16, 185, 129, 0.3);
+            cursor: pointer; transform: translateY(100px); opacity: 0; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .save-banner.show { transform: translateY(0); opacity: 1; }
+    </style>
+</head>
+<body>
+    
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        
+        <main class="liquid-main">
+            <header style="margin-bottom: 24px;">
+                <h1 class="vibrant-h1">Delivery Profile</h1>
+                <p style="color: #6e6e73; font-size: 1.2rem; font-weight: 500;">Manage your delivery partner profile and vehicle settings.</p>
+            </header>
+
+            <div class="profile-header-card">
+                <div class="avatar-squircle" id="profileInitials">--</div>
+                <div>
+                    <div class="badge-verified"><i data-lucide="shield-check" size="14"></i> ACTIVE DELIVERY AGENT</div>
+                    <h2 style="font-size: 2rem; font-weight: 800; margin: 12px 0 4px 0;" id="display-name">Loading...</h2>
+                    <p style="color: #d1fae5; font-weight: 600; font-size: 1.1rem;" id="display-id">Agent ID: --</p>
+                </div>
+            </div>
+            
+            <form id="profile-form" class="form-grid">
+                <div class="input-card">
+                    <label class="field-label">Full Legal Name</label>
+                    <input type="text" id="inputFullName" class="field-input" value="" oninput="handleInput()">
+                </div>
+                <div class="input-card">
+                    <label class="field-label">Vehicle Registration</label>
+                    <input type="text" id="inputVehicle" class="field-input" value="" oninput="handleInput()">
+                </div>
+                <div class="input-card">
+                    <label class="field-label">Primary Zone</label>
+                    <input type="text" id="inputZone" class="field-input" value="" oninput="handleInput()">
+                </div>
+                <div class="input-card">
+                    <label class="field-label">Vehicle Type</label>
+                    <input type="text" id="inputProtocol" class="field-input" value="" readonly style="opacity: 0.6;">
+                </div>
+                <div class="input-card" style="grid-column: span 2;">
+                    <label class="field-label">Driving License</label>
+                    <input type="text" id="inputLicense" class="field-input" value="" oninput="handleInput()">
+                </div>
+                
+                <div class="input-card">
+                    <label class="field-label">Aadhaar Number</label>
+                    <input type="text" id="inputAadhaar" class="field-input" value="" oninput="handleInput()">
+                </div>
+                <div class="input-card">
+                    <label class="field-label">PAN Number</label>
+                    <input type="text" id="inputPan" class="field-input" value="" oninput="handleInput()">
+                </div>
+                <div class="input-card">
+                    <label class="field-label">Current Address</label>
+                    <input type="text" id="inputCurrentAddress" class="field-input" value="" oninput="handleInput()">
+                </div>
+                <div class="input-card">
+                    <label class="field-label">Permanent Address</label>
+                    <input type="text" id="inputPermanentAddress" class="field-input" value="" oninput="handleInput()">
+                </div>
+                <div class="input-card">
+                    <label class="field-label">Bank Name</label>
+                    <input type="text" id="inputBankName" class="field-input" value="" oninput="handleInput()">
+                </div>
+                <div class="input-card">
+                    <label class="field-label">IFSC Code</label>
+                    <input type="text" id="inputIfscCode" class="field-input" value="" oninput="handleInput()">
+                </div>
+                <div class="input-card" style="grid-column: span 2;">
+                    <label class="field-label">Account Number</label>
+                    <input type="text" id="inputAccountNumber" class="field-input" value="" oninput="handleInput()">
+                </div>
+            </form>
+
+            <div style="margin-top: 32px; display: grid; gap: 24px;">
+                <div class="input-card" style="background: rgba(255,255,255,0.8);">
+                    <h3 style="font-weight: 800; margin-bottom: 20px; color: #0f172a;">Change Password</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                        <div>
+                            <label class="field-label">Current Password</label>
+                            <input type="password" id="oldPassword" class="field-input" style="border-bottom: 1px solid #ddd; padding-bottom: 8px;">
+                        </div>
+                        <div>
+                            <label class="field-label">New Password</label>
+                            <input type="password" id="newPassword" class="field-input" style="border-bottom: 1px solid #ddd; padding-bottom: 8px;">
+                        </div>
+                    </div>
+                    <button type="button" onclick="updatePassword()" style="background: #0f172a; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer;">Update Password</button>
+                </div>
+
+                <div class="input-card" style="border-color: #fee2e2; background: #fff5f5;">
+                    <h3 style="font-weight: 800; color: #dc2626; margin-bottom: 8px;">Delete or Deactivate Account</h3>
+                    <p style="color: #991b1b; font-size: 0.9rem; margin-bottom: 20px;">Deactivating or deleting your account will suspend your delivery agent operations and remove you from the platform.</p>
+                    <div style="display: flex; gap: 12px;">
+                        <button type="button" onclick="deactivateAccount()" style="background: #ef4444; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer;">Deactivate Account</button>
+                        <button type="button" onclick="deleteAccount()" style="background: white; color: #ef4444; border: 1px solid #ef4444; padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer;">Delete Account</button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding-bottom: 100px;">
+                <div class="liquid-card" style="text-align: center; padding: 20px;">
+                    <div style="font-size: 1.5rem; margin-bottom: 8px;">🚴</div>
+                    <div style="font-weight: 800;" id="stat-rating">5.0 / 5.0</div>
+                    <div style="font-size: 0.7rem; color: #6e6e73; font-weight: 700;">DELIVERY RATING</div>
+                </div>
+                <div style="background: #10b98110; border: 1px solid #10b98130; border-radius: 20px; text-align: center; padding: 20px;">
+                    <div style="font-size: 1.5rem; margin-bottom: 8px;">💰</div>
+                    <div style="font-weight: 800; color: #059669;" id="stat-earnings">₹0.00</div>
+                    <div style="font-size: 0.7rem; color: #6e6e73; font-weight: 700;">TOTAL EARNINGS</div>
+                </div>
+                <div class="liquid-card" style="text-align: center; padding: 20px;">
+                    <div style="font-size: 1.5rem; margin-bottom: 8px;">📦</div>
+                    <div style="font-weight: 800;" id="stat-deliveries">0 Deliveries</div>
+                    <div style="font-size: 0.7rem; color: #6e6e73; font-weight: 700;">COMPLETED DELIVERIES</div>
+                </div>
+            </div>
+
+            <div id="save-banner" class="save-banner" onclick="saveProfile()">
+                <i data-lucide="save"></i> Save Profile Changes
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = auth.getUser();
+            if (!user || user.role !== 'delivery') {
+                window.location.href = '../auth/login.html';
+                return;
+            }
+
+            // Load Sidebar
+            document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('delivery');
+            lucide.createIcons();
+
+            await loadProfile();
+        });
+        async function loadProfile() {
+            try {
+                const res = await api.get('/delivery/partner/settings');
+                const r = res.data || res;
+                
+                 document.getElementById('display-name').innerText = r.name;
+                 document.getElementById('display-id').innerText = `Agent ID: ${r.agent_id}`;
+                 
+                 // Sync name with base user object in local/session storage
+                 const storedUser = auth.getUser();
+                 if (storedUser && r.name) {
+                     storedUser.name = r.name;
+                     auth.updateUser(storedUser);
+                 }
+
+                 document.getElementById('inputFullName').value = r.name;
+                 document.getElementById('inputVehicle').value = r.vehicle_number;
+                 document.getElementById('inputZone').value = r.zone || '';
+                document.getElementById('inputProtocol').value = r.vehicle_type;
+                document.getElementById('inputLicense').value = r.license_number;
+
+                document.getElementById('inputAadhaar').value = r.aadhaar_number || '';
+                document.getElementById('inputPan').value = r.pan_number || '';
+                document.getElementById('inputCurrentAddress').value = r.current_address || '';
+                document.getElementById('inputPermanentAddress').value = r.permanent_address || '';
+                document.getElementById('inputBankName').value = r.bank_name || '';
+                document.getElementById('inputIfscCode').value = r.ifsc_code || '';
+                document.getElementById('inputAccountNumber').value = r.account_number || '';
+
+                document.getElementById('stat-rating').innerText = `${r.rating || '5.0'} / 5.0`;
+                document.getElementById('stat-earnings').innerText = `₹${(r.total_earnings || 0).toLocaleString()}`;
+                document.getElementById('stat-deliveries').innerText = `${r.total_deliveries || 0} Dispatches`;
+
+                const parts = r.name.split(' ');
+                document.getElementById('profileInitials').innerText = (parts[0].charAt(0) + (parts[1] ? parts[1].charAt(0) : '')).toUpperCase();
+                
+            } catch(e) {
+                console.error(e);
+                if(typeof components !== "undefined") components.showError("Failed to load delivery profile.");
+            }
+        }
+
+        function handleInput() {
+            const banner = document.getElementById('save-banner');
+            banner.classList.add('show');
+            
+            const name = document.getElementById('inputFullName').value;
+            document.getElementById('display-name').innerText = name;
+            const parts = name.split(' ');
+            if(parts.length >= 2) {
+                document.getElementById('profileInitials').innerText = (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+            }
+        }
+
+        async function saveProfile() {
+            const banner = document.getElementById('save-banner');
+            const originalHtml = banner.innerHTML;
+            banner.innerHTML = '<i data-lucide="loader-2" class="animate-spin"></i> Saving...';
+            lucide.createIcons();
+
+            const data = {
+                name: document.getElementById('inputFullName').value,
+                vehicle_number: document.getElementById('inputVehicle').value,
+                zone: document.getElementById('inputZone').value,
+                license_number: document.getElementById('inputLicense').value,
+                aadhaar_number: document.getElementById('inputAadhaar').value,
+                pan_number: document.getElementById('inputPan').value,
+                current_address: document.getElementById('inputCurrentAddress').value,
+                permanent_address: document.getElementById('inputPermanentAddress').value,
+                bank_name: document.getElementById('inputBankName').value,
+                ifsc_code: document.getElementById('inputIfscCode').value,
+                account_number: document.getElementById('inputAccountNumber').value
+            };
+
+            try {
+                await api.post('/user/profile/update', data);
+                
+                banner.innerHTML = '<i data-lucide="check"></i> Profile Saved!';
+                banner.style.background = '#059669';
+                lucide.createIcons();
+                
+                // Update local storage if name changed
+                const user = auth.getUser();
+                if (user && user.name !== data.name) {
+                    user.name = data.name;
+                    auth.updateUser(user);
+                }
+
+                // Update active DOM elements on the page immediately
+                document.getElementById('display-name').innerText = data.name;
+                const initials = data.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+                document.getElementById('profileInitials').innerText = initials;
+
+                const topProfileContainer = document.querySelector('.delivery-user-profile');
+                if (topProfileContainer) {
+                    const avatarDiv = topProfileContainer.querySelector('div');
+                    const nameDiv = topProfileContainer.querySelector('div:nth-child(2)');
+                    if (avatarDiv) avatarDiv.innerText = initials;
+                    if (nameDiv) nameDiv.innerText = data.name;
+                }
+
+                setTimeout(() => {
+                    banner.classList.remove('show');
+                    setTimeout(() => {
+                        banner.innerHTML = originalHtml;
+                        banner.style.background = '';
+                        lucide.createIcons();
+                    }, 400);
+                }, 2000);
+            } catch (err) {
+                console.error(err);
+                if (typeof components !== "undefined") components.showError("Failed to save delivery profile changes.");
+                banner.innerHTML = originalHtml;
+                lucide.createIcons();
+            }
+        }
+
+        async function updatePassword() {
+            const oldPass = document.getElementById('oldPassword').value;
+            const newPass = document.getElementById('newPassword').value;
+            if (!oldPass || !newPass) return components.showError("All credential fields required.");
+            try {
+                await api.post('/user/password', { old_password: oldPass, new_password: newPass });
+                components.showError("Password updated successfully.");
+                document.getElementById('oldPassword').value = '';
+                document.getElementById('newPassword').value = '';
+            } catch (err) { components.showError(err.message); }
+        }
+
+        async function deactivateAccount() {
+            const confirmed = await components.confirm('Deactivate Account', 'Are you sure you want to deactivate your delivery account? Delivery dispatches will be suspended.', 'Yes, Deactivate');
+            if (!confirmed) return;
+            try {
+                await api.post('/user/deactivate');
+                auth.logout();
+            } catch (err) { components.showError(err.message); }
+        }
+
+        async function deleteAccount() {
+            const pass = await components.prompt("Delete Account", "WARNING: This will permanently delete your delivery account. Enter password to confirm:", "", "Delete Permanently");
+            if (!pass) return;
+            try {
+                await api.request('DELETE', '/user/account', { password: pass });
+                components.showError("Delivery account deleted successfully.");
+                auth.logout();
+            } catch (err) { components.showError(err.message); }
+        }
+    </script>
+</body>
+</html>

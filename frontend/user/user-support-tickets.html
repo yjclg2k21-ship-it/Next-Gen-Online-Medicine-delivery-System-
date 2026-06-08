@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support Desk | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+</head>
+
+<body>
+
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+
+        <main class="liquid-main">
+            <header class="vibrant-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <h1 class="vibrant-h1">Help & Support</h1>
+                    <p class="vibrant-p">Raise medicinal inquiries or account-related support tickets.</p>
+                </div>
+                <button class="pill-button" onclick="openNewTicketModal()">
+                    <i data-lucide="plus-circle"></i> New Inquiry
+                </button>
+            </header>
+
+            <section class="liquid-card">
+                <h2 class="vibrant-h2">Your Active Tickets</h2>
+                <div style="display:flex; gap:12px; align-items:center; margin-bottom:20px; flex-wrap:wrap;">
+                    <input type="text" id="userTicketSearchInput" placeholder="Search subject..." oninput="applyUserTicketFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; min-width:200px; outline:none;">
+                    <select id="userTicketFilterSelect" onchange="applyUserTicketFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; font-weight:600;">
+                        <option value="all">All Status</option>
+                        <option value="open">Open</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="closed">Closed</option>
+                    </select>
+                    <select id="userTicketSortSelect" onchange="applyUserTicketFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; font-weight:600;">
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                    </select>
+                </div>
+                <div id="ticket-list" class="log-grid">
+                    <p class="muted-text">Loading your support tickets...</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        // Check Auth
+        if (!auth.getUser()) window.location.href = '../auth/login.html';
+
+        // Load Sidebar
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('user');
+        lucide.createIcons();
+
+        let allUserTickets = [];
+
+        async function loadTickets() {
+            try {
+                components.showLoader();
+                const res = await api.get('/admin/tickets'); // Controller handles user filtering automatically
+                
+                if (res.success && res.data.tickets.length > 0) {
+                    allUserTickets = res.data.tickets;
+                } else {
+                    allUserTickets = [];
+                }
+                applyUserTicketFilters();
+            } catch (err) {
+                console.error(err);
+                components.showError('Failed to load support tickets.');
+                allUserTickets = [];
+                applyUserTicketFilters();
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        function applyUserTicketFilters() {
+            const q = document.getElementById('userTicketSearchInput').value.toLowerCase();
+            const status = document.getElementById('userTicketFilterSelect').value;
+            const sort = document.getElementById('userTicketSortSelect').value;
+
+            let filtered = allUserTickets.filter(t => {
+                const matchSearch = t.subject.toLowerCase().includes(q);
+                const matchStatus = status === 'all' || t.status === status;
+                return matchSearch && matchStatus;
+            });
+
+            if (sort === 'newest') filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            else if (sort === 'oldest') filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+            renderUserTickets(filtered);
+        }
+
+        function renderUserTickets(tickets) {
+            const list = document.getElementById('ticket-list');
+            if (tickets.length > 0) {
+                list.innerHTML = tickets.map(t => `
+                    <div class="log-item" onclick="viewTicket(${t.id})" style="cursor: pointer;">
+                        <div class="log-info">
+                            <span class="log-title">${t.subject}</span>
+                            <span class="log-meta">Opened on ${new Date(t.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <span class="badge ${getStatusClass(t.status)}">${t.status.toUpperCase()}</span>
+                    </div>
+                `).join('');
+            } else {
+                list.innerHTML = '<div style="text-align: center; padding: 40px; color: #8e8e93;">No support history found. Need help with a prescription or order?</div>';
+            }
+        }
+
+        function openNewTicketModal() {
+            components.showModal('Raise Support Inquiry', `
+                <form id="modal-ticket-form" class="liquid-form">
+                    <div class="input-group">
+                        <label>Issue Subject</label>
+                        <input type="text" id="m-subject" placeholder="e.g. Delayed Delivery - #ORD-123" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Urgency Level</label>
+                        <select id="m-priority" class="liquid-select">
+                            <option value="low">Low (General Inquiry)</option>
+                            <option value="medium" selected>Medium (Action Needed)</option>
+                            <option value="high">High (Urgent)</option>
+                        </select>
+                    </div>
+                    <p style="font-size: 0.8rem; color: #6e6e73; margin-top: 12px;">Your ticket will be sent to our support team.</p>
+                </form>
+            `, [
+                { label: 'Cancel', type: 'outline', onClick: () => {} },
+                { label: 'Submit Ticket', type: 'primary', onClick: submitTicket }
+            ]);
+        }
+
+        async function submitTicket() {
+            const subject = document.getElementById('m-subject').value;
+            const priority = document.getElementById('m-priority').value;
+
+            if (!subject) return;
+
+            try {
+                components.showLoader();
+                const res = await api.post('/admin/tickets', { subject, priority });
+                if (res.success) {
+                    components.showSuccess('Support ticket opened successfully.');
+                    loadTickets();
+                } else {
+                    components.showError(res.message);
+                }
+            } catch (err) {
+                components.showError('Failed to submit ticket. Please try again.');
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        function viewTicket(id) {
+            // In a full implementation, this would open the chat thread.
+            // For MVP completion, we show the ticket status details.
+            components.showModal(`Ticket #${id}`, `
+                <p class="muted-text">Loading messages...</p>
+                <div id="m-chat-history"></div>
+            `, []);
+        }
+
+        function getStatusClass(status) {
+            switch(status) {
+                case 'resolved': return 'success';
+                case 'in_progress': return 'warning';
+                default: return 'secondary';
+            }
+        }
+
+        loadTickets();
+    </script>
+</body>
+
+</html>

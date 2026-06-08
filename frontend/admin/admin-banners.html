@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banner Control | Admin | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <link rel="stylesheet" href="../assets/css/admin-dark.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        
+        .banner-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 24px;
+            overflow-y: auto;
+            max-height: calc(100vh - 250px);
+            padding-right: 12px;
+        }
+
+        .banner-card {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: var(--l-card-r);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .banner-card:hover { transform: translateY(-5px); background: rgba(255, 255, 255, 0.6); }
+
+        .banner-img {
+            height: 160px;
+            background: #eee;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .banner-info { padding: var(--l-card-p); }
+        
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+        .status-active { background: rgba(52, 199, 89, 0.1); color: var(--success); }
+        .status-inactive { background: rgba(255, 59, 48, 0.1); color: var(--danger); }
+    </style>
+</head>
+<body>
+    
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        
+        <main class="liquid-main">
+            <header style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end;">
+                <div>
+                    <h1 class="vibrant-h1">Banner Control</h1>
+                    <p style="color: #6e6e73; font-size: 1.2rem; font-weight: 500;">Manage home-page pharmaceutical showcase banners.</p>
+                </div>
+                <button class="pill-button" onclick="showAddModal()">
+                    <i data-lucide="plus"></i> Add Banner
+                </button>
+            </header>
+
+            <div class="banner-grid" id="banner-container">
+                <!-- Dynamic Banners -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Banner Modal -->
+    <div id="banner-modal" class="modal-overlay" style="display: none;">
+        <div class="liquid-card animate-scale-in" style="width: 450px; padding: 32px;">
+            <h2 style="font-weight: 800; color: #1d1d1f; margin-bottom: 8px;">Inject Banner Node</h2>
+            <p style="color: #6e6e73; margin-bottom: 24px; font-size: 0.95rem;">Configure a new showcase artifact for the public node.</p>
+            
+            <form id="banner-form">
+                <div class="input-group">
+                    <label>Internal Title</label>
+                    <input type="text" name="title" placeholder="e.g. Summer Health Sale" required>
+                </div>
+                <div class="input-group">
+                    <label>Image URL</label>
+                    <input type="url" name="image_url" placeholder="https://cloud.medimitra.com/banners/..." required>
+                </div>
+                <div class="input-group">
+                    <label>Target Link</label>
+                    <input type="text" name="link" placeholder="medicines-page.html?cat=wellness">
+                </div>
+                <div style="display: flex; gap: 12px; margin-top: 32px;">
+                    <button type="button" class="pill-button" style="background: white; color: #1d1d1f; border: 1px solid rgba(0,0,0,0.1); flex: 1;" onclick="hideAddModal()">Cancel</button>
+                    <button type="submit" class="pill-button" style="flex: 2; justify-content: center;">Deploy Node</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        const user = auth.getUser();
+        if (!user || user.role !== 'admin') { window.location.href = '../auth/login.html'; }
+
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('admin');
+        lucide.createIcons();
+
+        async function loadBanners() {
+            try {
+                components.showLoader();
+                const res = await api.get('/banners');
+                const banners = res.data.banners || [];
+                
+                const container = document.getElementById('banner-container');
+                
+                if (banners.length === 0) {
+                    container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 60px; color: #8e8e93;">No banner artifacts found.</div>';
+                } else {
+                    container.innerHTML = banners.map(b => `
+                        <div class="banner-card animate-scale-in">
+                            <div class="banner-img" style="background-image: url('${b.image_url}')"></div>
+                            <div class="banner-info">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                                    <h3 style="font-weight: 800; font-size: 1.1rem; color: #1d1d1f;">${b.title}</h3>
+                                    <span class="status-badge status-${b.status}">${b.status}</span>
+                                </div>
+                                <p style="color: #6e6e73; font-size: 0.85rem; margin-bottom: 20px;">Target: ${b.link || 'Internal Route'}</p>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="pill-button" style="padding: 8px 16px; font-size: 0.8rem; background: ${b.status === 'active' ? 'var(--danger)' : 'var(--primary)'}" onclick="toggleBanner(${b.id})">
+                                        ${b.status === 'active' ? 'Deactivate' : 'Activate'}
+                                    </button>
+                                    <button class="pill-button" style="padding: 8px 16px; font-size: 0.8rem; background: white; color: #1d1d1f; border: 1px solid rgba(0,0,0,0.1);" onclick="deleteBanner(${b.id})">
+                                        <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                lucide.createIcons();
+            } catch (err) {
+                console.error(err);
+                components.showError("Failed to synchronize banner showcase nodes.");
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        function showAddModal() { document.getElementById('banner-modal').style.display = 'flex'; }
+        function hideAddModal() { document.getElementById('banner-modal').style.display = 'none'; }
+
+        document.getElementById('banner-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                await api.post('/banners', data);
+                hideAddModal();
+                loadBanners();
+                components.showSuccess("Banner artifact injected successfully.");
+            } catch (err) {
+                components.showError("Failed to inject banner artifact.");
+            }
+        };
+
+        window.toggleBanner = async (id) => {
+            try {
+                await api.post(`/banners/${id}/toggle`);
+                loadBanners();
+                components.showSuccess("Banner adjacency node transitioned.");
+            } catch (err) { console.error(err); }
+        };
+
+        window.deleteBanner = async (id) => {
+            const confirmed = await components.confirm('Delete Banner', 'Are you sure you want to remove this banner?', 'Yes, Delete');
+            if (!confirmed) return;
+            try {
+                await api.post(`/banners/${id}/delete`);
+                loadBanners();
+                components.showSuccess("Banner node decoupled.");
+            } catch (err) { console.error(err); }
+        };
+
+        loadBanners();
+    </script>
+</body>
+</html>

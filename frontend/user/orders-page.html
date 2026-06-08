@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <link rel="stylesheet" href="../assets/css/emergency-alerts.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        
+        .filters-pill-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .filter-pill {
+            padding: 10px 24px;
+            background: rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 100px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #6e6e73;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .filter-pill.active { background: white; color: var(--primary); border-color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+
+        .order-glass-card {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: var(--l-card-r);
+            padding: var(--l-card-p);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            margin-bottom: 16px;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .order-glass-card:hover { transform: translateY(-5px); background: rgba(255, 255, 255, 0.6); }
+        
+        .order-id-tag { font-family: monospace; font-size: 0.8rem; letter-spacing: 0.05em; font-weight: 800; color: #6e6e73; }
+        
+        .status-chip {
+            padding: 6px 16px;
+            border-radius: 100px;
+            font-size: 0.8rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+        }
+
+        /* Emergency Tracking Styles */
+        #emergency-tracking-section { margin-bottom: 20px; }
+
+        .emergency-tracking-card {
+            background: rgba(255, 255, 255, 0.6);
+            border: 2px solid #ff3b30;
+            border-radius: 14px;
+            padding: 16px 20px;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+        .emergency-tracking-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #ff3b30, #ff6b5e, #ff3b30);
+        }
+
+        .emergency-tracking-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .emergency-tracking-header h3 {
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: #1d1d1f;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .emergency-eta-display {
+            text-align: right;
+        }
+        .emergency-eta-display .eta-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #6e6e73;
+            text-transform: uppercase;
+        }
+        .emergency-eta-display .eta-value {
+            font-family: "SF Mono", "Fira Code", monospace;
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #1d1d1f;
+        }
+
+        /* Compact Stage Stepper */
+        .emergency-stepper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 12px 0;
+            position: relative;
+        }
+        .emergency-stepper::before {
+            content: '';
+            position: absolute;
+            top: 12px;
+            left: 20px;
+            right: 20px;
+            height: 2px;
+            background: rgba(0, 0, 0, 0.06);
+            z-index: 0;
+        }
+        .stepper-progress-line {
+            position: absolute;
+            top: 12px;
+            left: 20px;
+            height: 2px;
+            background: #34c759;
+            z-index: 1;
+            transition: width 0.5s ease;
+        }
+        .stepper-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 2;
+            flex: 1;
+        }
+        .stepper-dot {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.6rem;
+            font-weight: 800;
+            color: #6e6e73;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        .stepper-step.completed .stepper-dot {
+            background: #34c759;
+            color: white;
+            border-color: #34c759;
+        }
+        .stepper-step.active .stepper-dot {
+            background: white;
+            color: #ff3b30;
+            border-color: #ff3b30;
+            box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.15);
+        }
+        .stepper-label {
+            margin-top: 4px;
+            font-size: 0.55rem;
+            font-weight: 700;
+            color: #6e6e73;
+            text-align: center;
+            max-width: 60px;
+        }
+        .stepper-step.active .stepper-label { color: #ff3b30; }
+        .stepper-step.completed .stepper-label { color: #34c759; }
+        .stepper-timestamp {
+            font-size: 0.5rem;
+            color: #aeaeb2;
+            margin-top: 1px;
+        }
+
+        /* Compact SLA Progress Bar */
+        .sla-progress-container {
+            margin: 10px 0 6px;
+        }
+        .sla-progress-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        .sla-progress-label span {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #6e6e73;
+        }
+
+        /* Delay Warning */
+        .emergency-delay-warning {
+            background: rgba(255, 59, 48, 0.08);
+            border: 1px solid rgba(255, 59, 48, 0.2);
+            border-radius: 10px;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .emergency-delay-warning i { color: #ff3b30; }
+        .emergency-delay-warning span {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #ff3b30;
+        }
+
+        /* Stale GPS Indicator */
+        .gps-stale-indicator {
+            background: rgba(255, 149, 0, 0.08);
+            border: 1px solid rgba(255, 149, 0, 0.2);
+            border-radius: 10px;
+            padding: 6px 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .gps-stale-indicator i { color: #ff9500; }
+        .gps-stale-indicator span {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #ff9500;
+        }
+
+        /* Stage transition notification toast */
+        .stage-transition-toast {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            background: white;
+            border-radius: 16px;
+            padding: 16px 24px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            border-left: 4px solid #34c759;
+            z-index: 9999;
+            transform: translateX(120%);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            max-width: 320px;
+        }
+        .stage-transition-toast.show { transform: translateX(0); }
+        .stage-transition-toast .toast-title {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: #1d1d1f;
+            margin-bottom: 4px;
+        }
+        .stage-transition-toast .toast-body {
+            font-size: 0.8rem;
+            color: #6e6e73;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        
+        <main class="liquid-main">
+            <header style="margin-bottom: 16px;">
+                <h1 class="vibrant-h1">Dispatches</h1>
+                <p style="color: #6e6e73; font-size: 1.2rem; font-weight: 500;">Track and manage your pharmaceutical deliveries.</p>
+            </header>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <div class="filters-pill-group" style="margin-bottom: 0;">
+                    <div class="filter-pill active" onclick="filterOrders('all', this)">All Orders</div>
+                    <div class="filter-pill" onclick="filterOrders('transit', this)">In Transit</div>
+                    <div class="filter-pill" onclick="filterOrders('completed', this)">Completed</div>
+                </div>
+                <button class="pill-button" onclick="resetAppData()" style="background: rgba(255, 59, 48, 0.1); color: #ff3b30; border: 1px solid rgba(255, 59, 48, 0.2);">
+                    <i data-lucide="refresh-ccw" size="18"></i> Reset All Data
+                </button>
+            </div>
+
+            <!-- Search & Sort Bar -->
+            <div style="display:flex; gap:12px; align-items:center; margin-bottom:20px; flex-wrap:wrap;">
+                <input type="text" id="orderSearchInput" placeholder="Search order ID or medicine..." oninput="applyOrderFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; min-width:200px; outline:none;">
+                <select id="orderSortSelect" onchange="applyOrderFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; font-weight:600;">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="amount_high">Amount: High → Low</option>
+                    <option value="amount_low">Amount: Low → High</option>
+                </select>
+            </div>
+
+
+
+            <!-- Emergency Tracking Section (shown for active emergency orders) -->
+            <div id="emergency-tracking-section" style="display: none;"></div>
+
+            <div id="orders-container" style="display: grid; gap: 24px;">
+                <!-- Dynamic Orders -->
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script src="../assets/js/emergency-alerts.js"></script>
+    <script>
+        // Check Auth
+        const user = auth.getUser();
+        if (!user) { window.location.href = '../auth/login.html'; }
+
+        // Load Sidebar
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('user');
+        lucide.createIcons();
+
+        window.viewOrderDetails = (id) => {
+            window.location.href = `order-details.html?id=${id}`;
+        };
+
+        window.initiateReturn = async (orderId) => {
+            var reason = await components.prompt('Return Order', 'Enter reason for return:', 'Package Damaged', 'Submit Return');
+            if (reason === null) return;
+            try {
+                components.showLoader();
+                var res = await api.post('/orders/' + orderId + '/return', { reason: reason });
+                if (res.success) {
+                    components.showSuccess('Pharmaceutical reversal protocol initiated.');
+                    setTimeout(function() { window.location.reload(); }, 2000);
+                } else {
+                    components.showError(res.message);
+                }
+            } catch (err) {
+                components.showError('Failed to submit return request. Please try again.');
+            } finally {
+                components.hideLoader();
+            }
+        };
+
+        let allOrdersData = [];
+        let currentOrderFilter = 'all';
+
+        async function loadOrders(filter = 'all') {
+            try {
+                components.showLoader();
+                currentOrderFilter = filter;
+                const res = await api.get('/orders');
+                allOrdersData = res.data.orders || [];
+                applyOrderFilters();
+            } catch (err) {
+                console.error(err);
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        function applyOrderFilters() {
+            const search = (document.getElementById('orderSearchInput').value || '').toLowerCase();
+            const sort = document.getElementById('orderSortSelect').value;
+            const filter = currentOrderFilter;
+            const container = document.getElementById('orders-container');
+
+            let history = allOrdersData.filter(order => {
+                if (filter === 'transit') return ['placed', 'processing', 'shipped', 'pending', 'confirmed', 'dispatched'].includes(order.status);
+                if (filter === 'completed') return ['delivered', 'returned', 'return_requested', 'cancelled'].includes(order.status);
+                return true;
+            });
+
+            if (search) {
+                history = history.filter(order => {
+                    return String(order.id).toLowerCase().includes(search) ||
+                           (order.items_summary || '').toLowerCase().includes(search);
+                });
+            }
+
+            if (sort === 'newest') history.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            else if (sort === 'oldest') history.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+            else if (sort === 'amount_high') history.sort((a, b) => parseFloat(b.grand_total) - parseFloat(a.grand_total));
+            else if (sort === 'amount_low') history.sort((a, b) => parseFloat(a.grand_total) - parseFloat(b.grand_total));
+
+            renderOrders(history);
+            // Initialize emergency tracking for active emergency orders
+            EmergencyTracking.init(allOrdersData);
+        }
+
+        function renderOrders(history) {
+            const container = document.getElementById('orders-container');
+
+                if (history.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 60px; background: rgba(255,255,255,0.3); border-radius: 24px; border: 2px dashed rgba(0,0,0,0.05);">
+                            <i data-lucide="package" size="48" style="color: #6e6e73; margin-bottom: 16px; opacity: 0.5;"></i>
+                            <h3 style="color: #6e6e73; font-weight: 800;">No medical dispatches found.</h3>
+                            <p style="color: #6e6e73; font-size: 0.9rem;">Start scanning your prescriptions to see order history.</p>
+                        </div>`;
+                    lucide.createIcons();
+                    return;
+                }
+
+                container.innerHTML = history.map(order => {
+                        const status = order.status;
+                        const date = new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                        
+                        return `
+                        <div class="order-glass-card">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; padding-bottom: 24px; border-bottom: 1px solid rgba(0,0,0,0.05);">
+                                <div>
+                                    <span class="order-id-tag">ORDER #${order.id}</span>
+                                    <div style="font-size: 0.9rem; color: #6e6e73; margin-top: 4px;">Created: ${date}</div>
+                                </div>
+                                <span class="status-chip" style="background: ${
+                                    ['placed', 'processing', 'shipped', 'pending', 'confirmed', 'dispatched'].includes(status) ? 'rgba(0, 122, 255, 0.1)' : 
+                                    (status === 'delivered' || status === 'returned' ? 'rgba(52, 199, 89, 0.1)' : 
+                                    (status === 'return_requested' ? 'rgba(255, 149, 0, 0.1)' : 'rgba(255, 59, 48, 0.1)'))
+                                }; color: ${
+                                    ['placed', 'processing', 'shipped', 'pending', 'confirmed', 'dispatched'].includes(status) ? 'var(--primary)' : 
+                                    (status === 'delivered' || status === 'returned' ? 'var(--success)' : 
+                                    (status === 'return_requested' ? '#ff9500' : 'var(--danger)'))
+                                }; text-transform: uppercase;">
+                                    ${status.replace('_', ' ')}
+                                </span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="font-size: 1.25rem; font-weight: 800; color: #1d1d1f;">
+                                        Pharmaceutical Batch #${order.id}
+                                    </div>
+                                    <div style="margin-top: 8px; font-weight: 600; color: #6e6e73;">
+                                        Total: <span style="color: #1d1d1f;">₹${parseFloat(order.grand_total).toFixed(2)}</span> • Mode: ${order.payment_method.toUpperCase()}
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 12px; align-items: center;">
+                                    <button class="pill-button" onclick="viewOrderDetails('${order.id}')" style="background: white; color: black;"><i data-lucide="file-text"></i> Invoice</button>
+                                    ${['placed', 'processing', 'shipped', 'pending', 'confirmed', 'dispatched'].includes(status) ? `
+                                        <button class="pill-button" onclick="window.location.href='order-tracking-map.html?id=${order.id}'"><i data-lucide="map-pin"></i> Live Track</button>
+                                    ` : ''}
+                                    ${status === 'delivered' ? `
+                                        <button class="pill-button" onclick="initiateReturn('${order.id}')" style="background: rgba(255,149,0,0.1); color: #ff9500; border: 1px solid rgba(255,149,0,0.2);">Return Request</button>
+                                    ` : ''}
+                                    ${status === 'return_requested' ? `
+                                        <button class="pill-button" onclick="window.location.href='user-returns.html'" style="background: rgba(255,149,0,0.1); color: #ff9500; border: 1px solid rgba(255,149,0,0.2); cursor: pointer;"><i data-lucide="refresh-ccw"></i> Return Requested</button>
+                                    ` : ''}
+                                    ${status === 'returned' ? `
+                                        <button class="pill-button" onclick="window.location.href='user-returns.html'" style="background: rgba(52,199,89,0.1); color: var(--success); border: 1px solid rgba(52,199,89,0.2); cursor: pointer;"><i data-lucide="check-circle"></i> Returned</button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>`;
+                    }).join('');
+                
+                lucide.createIcons();
+        }
+
+        loadOrders();
+
+        function filterOrders(filter, element) {
+            document.querySelectorAll('.filter-pill').forEach(pill => pill.classList.remove('active'));
+            element.classList.add('active');
+            currentOrderFilter = filter;
+            // Hide emergency tracking section on non-"all" tabs
+            const emergencySection = document.getElementById('emergency-tracking-section');
+            if (emergencySection) {
+                emergencySection.style.display = filter === 'all' ? '' : 'none';
+            }
+            applyOrderFilters();
+        }
+
+        // =====================================================================
+        // EMERGENCY DELIVERY TRACKING
+        // =====================================================================
+
+        const EmergencyTracking = {
+            _pollIds: {},
+            _previousStages: {},
+            _countdownInterval: null,
+            _activeEmergencyOrders: [],
+
+            STAGES: ['Confirmed', 'Preparing', 'Ready', 'En Route', 'Delivered'],
+            STAGE_LABELS: {
+                'confirmed': 'Confirmed',
+                'preparing': 'Preparing',
+                'ready_for_pickup': 'Ready',
+                'rider_en_route_to_vendor': 'En Route',
+                'picked_up': 'En Route',
+                'rider_en_route': 'En Route',
+                'in_transit': 'En Route',
+                'delivered': 'Delivered'
+            },
+
+            /**
+             * Initialize emergency tracking for active emergency orders.
+             */
+            init(orders) {
+                const emergencyOrders = orders.filter(o =>
+                    o.is_emergency == 1 &&
+                    !['delivered', 'cancelled', 'returned'].includes(o.status)
+                );
+
+                this._activeEmergencyOrders = emergencyOrders;
+
+                if (emergencyOrders.length === 0) {
+                    document.getElementById('emergency-tracking-section').style.display = 'none';
+                    this.stopAllPolling();
+                    return;
+                }
+
+                document.getElementById('emergency-tracking-section').style.display = 'block';
+                this.renderTrackingCards(emergencyOrders);
+                this.startPollingAll(emergencyOrders);
+                this.startCountdownTimer();
+            },
+
+            /**
+             * Render tracking cards for all active emergency orders.
+             */
+            renderTrackingCards(orders) {
+                const section = document.getElementById('emergency-tracking-section');
+                section.innerHTML = orders.map(order => this.buildTrackingCardHTML(order)).join('');
+                lucide.createIcons();
+            },
+
+            /**
+             * Build HTML for a single emergency tracking card.
+             */
+            buildTrackingCardHTML(order) {
+                const orderId = order.id;
+                return `
+                <div class="emergency-tracking-card emergency-pulse" id="emergency-track-${orderId}" data-order-id="${orderId}" data-created-at="${order.created_at}">
+                    <div class="emergency-tracking-header">
+                        <h3>
+                            <span class="emergency-badge">🚨 EMERGENCY DELIVERY</span>
+                            <span class="order-id-tag">ORDER #${orderId}</span>
+                        </h3>
+                        <div class="emergency-eta-display">
+                            <div class="eta-label">Estimated Arrival</div>
+                            <div class="eta-value" id="eta-value-${orderId}">--:--</div>
+                        </div>
+                    </div>
+
+                    <!-- Stage Stepper -->
+                    <div class="emergency-stepper" id="stepper-${orderId}">
+                        <div class="stepper-progress-line" id="stepper-line-${orderId}" style="width: 0%;"></div>
+                        ${this.STAGES.map((stage, i) => `
+                            <div class="stepper-step" id="step-${orderId}-${i}">
+                                <div class="stepper-dot">${i + 1}</div>
+                                <div class="stepper-label">${stage}</div>
+                                <div class="stepper-timestamp" id="step-time-${orderId}-${i}"></div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <!-- SLA Progress Bar -->
+                    <div class="sla-progress-container">
+                        <div class="sla-progress-label">
+                            <span>SLA Progress (40 min)</span>
+                            <span id="sla-percent-${orderId}">0%</span>
+                        </div>
+                        <div class="emergency-sla-bar">
+                            <div class="emergency-sla-bar-fill" id="sla-bar-${orderId}" style="width: 0%;" data-progress="safe"></div>
+                        </div>
+                    </div>
+
+                    <!-- SLA Countdown (shown when no rider location) -->
+                    <div id="sla-countdown-${orderId}" style="text-align: center; margin-top: 12px; display: none;">
+                        <span class="emergency-countdown" id="sla-countdown-value-${orderId}">00:40:00</span>
+                        <div style="font-size: 0.75rem; color: #6e6e73; margin-top: 4px; font-weight: 600;">SLA Countdown</div>
+                    </div>
+
+                    <!-- Delay Warning (hidden by default) -->
+                    <div class="emergency-delay-warning" id="delay-warning-${orderId}" style="display: none;">
+                        <i data-lucide="alert-triangle" size="18"></i>
+                        <span id="delay-warning-text-${orderId}">Delivery may be delayed. Revised ETA exceeds SLA deadline.</span>
+                    </div>
+
+                    <!-- Stale GPS Indicator (hidden by default) -->
+                    <div class="gps-stale-indicator" id="gps-stale-${orderId}" style="display: none;">
+                        <i data-lucide="wifi-off" size="16"></i>
+                        <span>GPS data stale — last update over 60s ago</span>
+                    </div>
+                </div>
+                `;
+            },
+
+            /**
+             * Start 30-second polling for each emergency order.
+             */
+            startPollingAll(orders) {
+                this.stopAllPolling();
+                orders.forEach(order => {
+                    const pollId = EmergencyAlerts.startPolling(
+                        `/orders/${order.id}/emergency-tracking`,
+                        30000,
+                        (data, error) => this.handleTrackingUpdate(order.id, data, error)
+                    );
+                    this._pollIds[order.id] = pollId;
+                });
+            },
+
+            /**
+             * Stop all active polling intervals.
+             */
+            stopAllPolling() {
+                Object.keys(this._pollIds).forEach(orderId => {
+                    EmergencyAlerts.stopPolling(this._pollIds[orderId]);
+                });
+                this._pollIds = {};
+                if (this._countdownInterval) {
+                    clearInterval(this._countdownInterval);
+                    this._countdownInterval = null;
+                }
+            },
+
+            /**
+             * Handle tracking data update from polling.
+             */
+            handleTrackingUpdate(orderId, data, error) {
+                if (error || !data || !data.success) return;
+
+                const tracking = data.data || data;
+                this.updateStepper(orderId, tracking);
+                this.updateETA(orderId, tracking);
+                this.updateSLAProgress(orderId, tracking);
+                this.updateDelayWarning(orderId, tracking);
+                this.updateGPSStale(orderId, tracking);
+                this.updateSLACountdown(orderId, tracking);
+                this.checkStageTransition(orderId, tracking);
+
+                // If delivered, remove tracking card
+                if (tracking.current_stage === 'delivered') {
+                    this.removeTrackingCard(orderId);
+                }
+            },
+
+            /**
+             * Update the visual stepper based on current stage.
+             */
+            updateStepper(orderId, tracking) {
+                const currentStage = tracking.current_stage || '';
+                const stageMap = {
+                    'confirmed': 0,
+                    'preparing': 1,
+                    'ready_for_pickup': 2,
+                    'rider_en_route_to_vendor': 3,
+                    'picked_up': 3,
+                    'rider_en_route': 3,
+                    'in_transit': 3,
+                    'delivered': 4
+                };
+
+                const activeIndex = stageMap[currentStage] !== undefined ? stageMap[currentStage] : 0;
+                const totalSteps = this.STAGES.length;
+
+                // Update progress line width
+                const lineEl = document.getElementById(`stepper-line-${orderId}`);
+                if (lineEl) {
+                    const progressPercent = activeIndex > 0 ? ((activeIndex) / (totalSteps - 1)) * 100 : 0;
+                    lineEl.style.width = progressPercent + '%';
+                }
+
+                // Update step states
+                for (let i = 0; i < totalSteps; i++) {
+                    const stepEl = document.getElementById(`step-${orderId}-${i}`);
+                    if (!stepEl) continue;
+                    stepEl.classList.remove('completed', 'active');
+                    if (i < activeIndex) {
+                        stepEl.classList.add('completed');
+                    } else if (i === activeIndex) {
+                        stepEl.classList.add('active');
+                    }
+                }
+
+                // Update timestamps
+                const timestamps = tracking.stage_timestamps || {};
+                const stageKeys = ['confirmed', 'preparing', 'ready_for_pickup', 'rider_en_route', 'delivered'];
+                stageKeys.forEach((key, i) => {
+                    const timeEl = document.getElementById(`step-time-${orderId}-${i}`);
+                    if (timeEl && timestamps[key]) {
+                        const t = new Date(timestamps[key]);
+                        timeEl.textContent = t.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                    }
+                });
+            },
+
+            /**
+             * Update ETA display.
+             */
+            updateETA(orderId, tracking) {
+                const etaEl = document.getElementById(`eta-value-${orderId}`);
+                if (!etaEl) return;
+
+                if (tracking.eta_minutes !== null && tracking.eta_minutes !== undefined) {
+                    const mins = Math.ceil(tracking.eta_minutes);
+                    if (mins <= 0) {
+                        etaEl.textContent = 'Arriving';
+                    } else {
+                        etaEl.textContent = mins + ' min';
+                    }
+                    etaEl.style.color = tracking.delay_flag ? '#ff3b30' : '#1d1d1f';
+                } else {
+                    etaEl.textContent = '--:--';
+                }
+            },
+
+            /**
+             * Update SLA progress bar.
+             */
+            updateSLAProgress(orderId, tracking) {
+                const card = document.getElementById(`emergency-track-${orderId}`);
+                if (!card) return;
+
+                const createdAt = card.getAttribute('data-created-at');
+                let progress = tracking.sla_progress !== undefined
+                    ? tracking.sla_progress
+                    : EmergencyAlerts.calculateSLAProgress(createdAt, 40);
+
+                const barEl = document.getElementById(`sla-bar-${orderId}`);
+                const percentEl = document.getElementById(`sla-percent-${orderId}`);
+
+                if (barEl) {
+                    barEl.style.width = Math.min(progress, 100) + '%';
+                    if (progress >= 100) {
+                        barEl.setAttribute('data-progress', 'breached');
+                    } else if (progress >= 85) {
+                        barEl.setAttribute('data-progress', 'critical');
+                    } else if (progress >= 60) {
+                        barEl.setAttribute('data-progress', 'warning');
+                    } else {
+                        barEl.setAttribute('data-progress', 'safe');
+                    }
+                }
+                if (percentEl) {
+                    percentEl.textContent = Math.round(progress) + '%';
+                }
+            },
+
+            /**
+             * Show/hide delay warning.
+             */
+            updateDelayWarning(orderId, tracking) {
+                const warningEl = document.getElementById(`delay-warning-${orderId}`);
+                if (!warningEl) return;
+
+                if (tracking.delay_flag) {
+                    warningEl.style.display = 'flex';
+                    const textEl = document.getElementById(`delay-warning-text-${orderId}`);
+                    if (textEl && tracking.eta_minutes) {
+                        textEl.textContent = `Delivery may be delayed. Revised ETA: ${Math.ceil(tracking.eta_minutes)} min (exceeds SLA deadline).`;
+                    }
+                } else {
+                    warningEl.style.display = 'none';
+                }
+            },
+
+            /**
+             * Show/hide stale GPS indicator.
+             */
+            updateGPSStale(orderId, tracking) {
+                const staleEl = document.getElementById(`gps-stale-${orderId}`);
+                if (!staleEl) return;
+                staleEl.style.display = tracking.gps_stale ? 'flex' : 'none';
+            },
+
+            /**
+             * Show/hide SLA countdown when no rider location available.
+             */
+            updateSLACountdown(orderId, tracking) {
+                const countdownContainer = document.getElementById(`sla-countdown-${orderId}`);
+                if (!countdownContainer) return;
+
+                const noRiderLocation = tracking.no_rider_location || (!tracking.eta_minutes && !tracking.rider_location);
+                const isEarlyStage = ['confirmed', 'preparing'].includes(tracking.current_stage);
+
+                if (noRiderLocation || isEarlyStage) {
+                    countdownContainer.style.display = 'block';
+                } else {
+                    countdownContainer.style.display = 'none';
+                }
+            },
+
+            /**
+             * Start a 1-second interval to update SLA countdowns.
+             */
+            startCountdownTimer() {
+                if (this._countdownInterval) clearInterval(this._countdownInterval);
+                this._countdownInterval = setInterval(() => {
+                    this._activeEmergencyOrders.forEach(order => {
+                        const card = document.getElementById(`emergency-track-${order.id}`);
+                        if (!card) return;
+                        const createdAt = card.getAttribute('data-created-at');
+                        const createdTime = new Date(createdAt).getTime();
+                        const slaDeadline = createdTime + (40 * 60 * 1000);
+                        const remaining = Math.max(0, Math.floor((slaDeadline - Date.now()) / 1000));
+
+                        const countdownEl = document.getElementById(`sla-countdown-value-${order.id}`);
+                        if (countdownEl) {
+                            countdownEl.textContent = EmergencyAlerts.formatCountdown(remaining);
+                            if (remaining <= 0) {
+                                countdownEl.classList.add('breached');
+                            } else if (remaining <= 600) {
+                                countdownEl.classList.add('warning');
+                                countdownEl.classList.remove('breached');
+                            } else {
+                                countdownEl.classList.remove('warning', 'breached');
+                            }
+                        }
+                    });
+                }, 1000);
+            },
+
+            /**
+             * Check for stage transitions and show notification.
+             */
+            checkStageTransition(orderId, tracking) {
+                const currentStage = tracking.current_stage;
+                const previousStage = this._previousStages[orderId];
+
+                if (previousStage && previousStage !== currentStage) {
+                    const stageName = this.STAGE_LABELS[currentStage] || currentStage;
+                    const etaText = tracking.eta_minutes
+                        ? `ETA: ${Math.ceil(tracking.eta_minutes)} min`
+                        : '';
+                    this.showStageTransitionNotification(orderId, stageName, etaText);
+                }
+
+                this._previousStages[orderId] = currentStage;
+            },
+
+            /**
+             * Show a toast notification for stage transitions.
+             */
+            showStageTransitionNotification(orderId, stageName, etaText) {
+                // Remove existing toast
+                const existing = document.getElementById('stage-toast');
+                if (existing) existing.remove();
+
+                const toast = document.createElement('div');
+                toast.className = 'stage-transition-toast';
+                toast.id = 'stage-toast';
+                toast.innerHTML = `
+                    <div class="toast-title">🚨 Order #${orderId} — ${stageName}</div>
+                    <div class="toast-body">${etaText || 'Your emergency delivery is progressing.'}</div>
+                `;
+                document.body.appendChild(toast);
+
+                // Animate in
+                requestAnimationFrame(() => toast.classList.add('show'));
+
+                // Auto-dismiss after 5 seconds
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 400);
+                }, 5000);
+            },
+
+            /**
+             * Remove a tracking card when order is delivered.
+             */
+            removeTrackingCard(orderId) {
+                const card = document.getElementById(`emergency-track-${orderId}`);
+                if (card) {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(-20px)';
+                    setTimeout(() => card.remove(), 400);
+                }
+                EmergencyAlerts.stopPolling(this._pollIds[orderId]);
+                delete this._pollIds[orderId];
+                this._activeEmergencyOrders = this._activeEmergencyOrders.filter(o => o.id != orderId);
+
+                if (this._activeEmergencyOrders.length === 0) {
+                    document.getElementById('emergency-tracking-section').style.display = 'none';
+                    if (this._countdownInterval) {
+                        clearInterval(this._countdownInterval);
+                        this._countdownInterval = null;
+                    }
+                }
+            }
+        };
+    </script>
+</body>
+</html>

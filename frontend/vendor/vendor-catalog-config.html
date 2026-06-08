@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catalog Config | Vendor | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .cat-row { display: grid; grid-template-columns: 56px 1fr 100px 100px 100px 100px; gap: 12px; align-items: center; padding: 13px 18px; border-radius: 12px; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 0.84rem; }
+        .cat-row:hover { background: rgba(0,0,0,0.02); }
+        .cat-header { display: grid; grid-template-columns: 56px 1fr 100px 100px 100px 100px; gap: 12px; padding: 8px 18px; font-size: 0.72rem; font-weight: 700; color: #8e8e93; text-transform: uppercase; }
+        .toggle-wrap { display:flex;align-items:center;justify-content:center; }
+        .toggle-switch { position:relative;width:40px;height:22px; }
+        .toggle-switch input { display:none; }
+        .toggle-slider { position:absolute;inset:0;background:rgba(0,0,0,0.12);border-radius:22px;cursor:pointer;transition:background 0.2s; }
+        .toggle-slider::after { content:'';position:absolute;width:16px;height:16px;top:3px;left:3px;background:#fff;border-radius:50%;transition:transform 0.2s;box-shadow:0 2px 4px rgba(0,0,0,0.2); }
+        input:checked + .toggle-slider { background:#34c759; }
+        input:checked + .toggle-slider::after { transform:translateX(18px); }
+        .med-badge { padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;background:rgba(0,122,255,0.08);color:#007aff; }
+        .badge-approved { background:rgba(52,199,89,0.1);color:#34c759; }
+        .badge-pending  { background:rgba(255,149,0,0.1);color:#ff9500; }
+        .badge-rejected { background:rgba(255,59,48,0.1);color:#ff3b30; }
+        .filter-bar { display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center; }
+        .filter-chip { padding:5px 14px;border-radius:20px;border:1px solid rgba(0,0,0,0.1);font-size:0.78rem;font-weight:600;cursor:pointer;background:transparent;font-family:Inter,sans-serif;transition:all 0.2s; }
+        .filter-chip.active,.filter-chip:hover { background:#1d1d1f;color:#fff;border-color:#1d1d1f; }
+    </style>
+</head>
+<body>
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        <main class="liquid-main">
+            <header style="margin-bottom:20px;display:flex;justify-content:space-between;align-items:flex-start;">
+                <div>
+                    <h1 class="vibrant-h1">Catalog Config</h1>
+                    <p style="color:#6e6e73;font-size:1rem;font-weight:500;">Toggle medicine visibility on the platform storefront.</p>
+                </div>
+                <button onclick="saveAll()" style="padding:10px 24px;border-radius:12px;background:#007aff;color:#fff;border:none;font-weight:700;font-size:0.9rem;cursor:pointer;font-family:Inter,sans-serif;">Save Changes</button>
+            </header>
+
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;">
+                <div class="liquid-card" style="padding:14px;text-align:center;"><div style="font-size:1.6rem;font-weight:800;color:#34c759" id="cnt-visible">—</div><div style="font-size:0.72rem;color:#8e8e93;font-weight:600;margin-top:3px;">Visible</div></div>
+                <div class="liquid-card" style="padding:14px;text-align:center;"><div style="font-size:1.6rem;font-weight:800;color:#8e8e93" id="cnt-hidden">—</div><div style="font-size:0.72rem;color:#8e8e93;font-weight:600;margin-top:3px;">Hidden</div></div>
+                <div class="liquid-card" style="padding:14px;text-align:center;"><div style="font-size:1.6rem;font-weight:800;color:#ff9500" id="cnt-pending">—</div><div style="font-size:0.72rem;color:#8e8e93;font-weight:600;margin-top:3px;">Pending Approval</div></div>
+            </div>
+
+            <div class="liquid-card" style="padding:20px;">
+                <div class="filter-bar">
+                    <button class="filter-chip active" onclick="filterCat('all',this)">All</button>
+                    <button class="filter-chip" onclick="filterCat('visible',this)">Visible</button>
+                    <button class="filter-chip" onclick="filterCat('hidden',this)">Hidden</button>
+                    <button class="filter-chip" onclick="filterCat('approved',this)">Approved</button>
+                    <button class="filter-chip" onclick="filterCat('pending',this)">Pending</button>
+                    <input type="search" id="cat-search" placeholder="Search medicines..." oninput="searchCat(this.value)" style="margin-left:auto;padding:6px 14px;border-radius:20px;border:1px solid rgba(0,0,0,0.1);font-family:Inter,sans-serif;font-size:0.8rem;outline:none;">
+                </div>
+                <div class="cat-header"><span>#</span><span>Medicine</span><span>Category</span><span>Price</span><span>Approval</span><span>Visible</span></div>
+                <div id="cat-list"></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        const user = auth.getUser();
+        if (!user || user.role !== 'vendor') window.location.href = '../auth/login.html';
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('vendor');
+        lucide.createIcons();
+
+        let allItems = [], changedIds = new Set();
+
+        async function loadCatalog() {
+            try { 
+                const r = await api.get('/vendor/catalog'); 
+                allItems = (r.data && r.data.catalog) ? r.data.catalog : [];
+            }
+            catch(e) { 
+                components.showError('Failed to load catalog from server.');
+                allItems = [];
+            }
+            updateStats(); renderCat(allItems);
+        }
+
+        function updateStats() {
+            document.getElementById('cnt-visible').textContent = allItems.filter(i=>i.visible).length;
+            document.getElementById('cnt-hidden').textContent  = allItems.filter(i=>!i.visible).length;
+            document.getElementById('cnt-pending').textContent = allItems.filter(i=>i.approval_status==='pending').length;
+        }
+
+        function renderCat(list) {
+            const el = document.getElementById('cat-list');
+            const sc = { approved:'badge-approved', pending:'badge-pending', rejected:'badge-rejected' };
+            if (!list.length) { el.innerHTML = '<p style="text-align:center;padding:40px;color:#8e8e93;">No medicines found.</p>'; return; }
+            el.innerHTML = list.map(m => `
+                <div class="cat-row">
+                    <span style="font-weight:700;color:#007aff">#${m.id}</span>
+                    <div><div style="font-weight:600;">${m.name}</div></div>
+                    <span class="med-badge">${m.category}</span>
+                    <span style="font-weight:700;">₹${m.price}</span>
+                    <span><span class="med-badge ${sc[m.approval_status]}">${m.approval_status}</span></span>
+                    <div class="toggle-wrap">
+                        ${m.approval_status==='approved' ? `
+                        <label class="toggle-switch">
+                            <input type="checkbox" ${m.visible?'checked':''} onchange="toggleVisibility(${m.id},this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>` : '<span style="font-size:0.72rem;color:#8e8e93;">Awaiting</span>'}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleVisibility(id, visible) {
+            const item = allItems.find(i=>i.id===id);
+            if (item) { item.visible = visible; changedIds.add(id); updateStats(); }
+        }
+
+        function filterCat(f, btn) {
+            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            let filtered = allItems;
+            if (f==='visible') filtered = allItems.filter(i=>i.visible);
+            else if (f==='hidden') filtered = allItems.filter(i=>!i.visible);
+            else if (f==='approved') filtered = allItems.filter(i=>i.approval_status==='approved');
+            else if (f==='pending') filtered = allItems.filter(i=>i.approval_status==='pending');
+            renderCat(filtered);
+        }
+
+        function searchCat(q) {
+            renderCat(allItems.filter(i=>i.name.toLowerCase().includes(q.toLowerCase())||i.category.toLowerCase().includes(q.toLowerCase())));
+        }
+
+        async function saveAll() {
+            const updated = [...changedIds].map(id => { const item=allItems.find(i=>i.id===id); return { id, visible:item.visible }; });
+            for (const u of updated) {
+                try { await api.post(`/vendor/catalog/toggle/${u.id}`, { visible: u.visible }); } catch(e) { console.error(e); if(typeof components !== "undefined") components.showError("Network exception or protocol verification failed."); }
+            }
+            changedIds.clear();
+            components.showSuccess(`Catalog updated — ${updated.length} changes saved.`);
+        }
+
+        loadCatalog();
+    </script>
+</body>
+</html>

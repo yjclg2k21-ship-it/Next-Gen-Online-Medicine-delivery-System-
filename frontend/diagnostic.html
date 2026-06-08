@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+    <meta charset="UTF-8">
+    <title>MediMitra API Diagnostic</title>
+    <style>
+        body { font-family: monospace; background: #0d1117; color: #c9d1d9; padding: 20px; }
+        h1 { color: #58a6ff; }
+        .step { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin: 12px 0; }
+        .step h3 { margin: 0 0 8px 0; color: #e3b341; }
+        .ok { color: #3fb950; }
+        .fail { color: #f85149; }
+        .warn { color: #d29922; }
+        pre { background: #0d1117; padding: 10px; border-radius: 4px; overflow-x: auto; word-wrap: break-word; white-space: pre-wrap; }
+        button { background: #238636; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+        button:hover { background: #2ea043; }
+    </style>
+</head>
+<body>
+    <h1>🔬 MediMitra API Diagnostic Tool</h1>
+    <p>हे page browser मधून API calls करून problem शोधेल.</p>
+    <button onclick="runDiagnostic()">▶ Run Full Diagnostic</button>
+    <button onclick="fixAndLogin()" style="background:#cf222e; margin-left:12px;">🔧 Fix: Clear Cache & Auto-Login as Patient John</button>
+    <div id="results"></div>
+
+<script>
+const BASE = window.location.origin;
+const log = (title, content, status) => {
+    const color = status === 'ok' ? '#3fb950' : status === 'fail' ? '#f85149' : '#d29922';
+    document.getElementById('results').innerHTML += `
+        <div class="step">
+            <h3>${title} <span style="color:${color}">${status === 'ok' ? '✓ OK' : status === 'fail' ? '✗ FAIL' : '⚠ WARN'}</span></h3>
+            <pre>${typeof content === 'object' ? JSON.stringify(content, null, 2) : content}</pre>
+        </div>
+    `;
+};
+
+async function runDiagnostic() {
+    document.getElementById('results').innerHTML = '';
+    
+    // STEP 1: Check what API URL is being used
+    const apiUrl = `${BASE}/api`;
+    log('STEP 1: API Base URL', `Browser Origin: ${BASE}\nAPI URL: ${apiUrl}`, 'ok');
+
+    // STEP 2: Try a simple GET to the API root
+    try {
+        const r = await fetch(`${apiUrl}/medicines?limit=1`, { headers: {'Accept':'application/json'} });
+        const ct = r.headers.get('content-type');
+        if (ct && ct.includes('json')) {
+            const d = await r.json();
+            log('STEP 2: GET /medicines (No auth needed)', `Status: ${r.status}\nContent-Type: ${ct}\nResponse: ${JSON.stringify(d).substring(0,200)}`, r.ok ? 'ok' : 'fail');
+        } else {
+            const text = await r.text();
+            log('STEP 2: GET /medicines - NON-JSON RESPONSE', `Status: ${r.status}\nContent-Type: ${ct}\nBody (first 500 chars):\n${text.substring(0,500)}`, 'fail');
+        }
+    } catch(e) {
+        log('STEP 2: GET /medicines - NETWORK ERROR', `Error: ${e.message}\n\nThis means the server is NOT reachable from the browser!`, 'fail');
+    }
+
+    // STEP 3: Try POST login
+    try {
+        const r = await fetch(`${apiUrl}/auth/login`, {
+            method: 'POST',
+            headers: {'Accept':'application/json','Content-Type':'application/json'},
+            body: JSON.stringify({email:'user@medimitra.com', password:'password123'})
+        });
+        const ct = r.headers.get('content-type');
+        if (ct && ct.includes('json')) {
+            const d = await r.json();
+            if (d.success && d.token) {
+                log('STEP 3: POST /auth/login', `Status: ${r.status}\nLogin SUCCESSFUL!\nToken: ${d.token.substring(0,60)}...\nUser: ${JSON.stringify(d.user)}`, 'ok');
+                
+                // STEP 4: Test /user/dashboard with token
+                try {
+                    const r2 = await fetch(`${apiUrl}/user/dashboard`, {
+                        headers: {
+                            'Accept':'application/json',
+                            'Authorization': `Bearer ${d.token}`
+                        }
+                    });
+                    const ct2 = r2.headers.get('content-type');
+                    if (ct2 && ct2.includes('json')) {
+                        const d2 = await r2.json();
+                        log('STEP 4: GET /user/dashboard', `Status: ${r2.status}\nResponse: ${JSON.stringify(d2).substring(0,500)}`, r2.ok ? 'ok' : 'fail');
+                    } else {
+                        const t2 = await r2.text();
+                        log('STEP 4: GET /user/dashboard - NON-JSON', `Status: ${r2.status}\nBody: ${t2.substring(0,500)}`, 'fail');
+                    }
+                } catch(e) {
+                    log('STEP 4: GET /user/dashboard - ERROR', e.message, 'fail');
+                }
+
+                // STEP 5: Test /user/wallet with token
+                try {
+                    const r3 = await fetch(`${apiUrl}/user/wallet`, {
+                        headers: {
+                            'Accept':'application/json',
+                            'Authorization': `Bearer ${d.token}`
+                        }
+                    });
+                    const d3 = await r3.json();
+                    log('STEP 5: GET /user/wallet', `Status: ${r3.status}\nBalance: ₹${d3.data?.balance ?? 'N/A'}`, r3.ok ? 'ok' : 'warn');
+                } catch(e) {
+                    log('STEP 5: GET /user/wallet - ERROR', e.message, 'fail');
+                }
+
+            } else {
+                log('STEP 3: POST /auth/login - FAILED', `Status: ${r.status}\nResponse: ${JSON.stringify(d)}`, 'fail');
+            }
+        } else {
+            const text = await r.text();
+            log('STEP 3: POST /auth/login - NON-JSON RESPONSE', `Status: ${r.status}\nContent-Type: ${ct}\nBody:\n${text.substring(0,1000)}`, 'fail');
+        }
+    } catch(e) {
+        log('STEP 3: POST /auth/login - NETWORK ERROR', `Error: ${e.message}\n\nServer not reachable!`, 'fail');
+    }
+
+    log('DONE', 'Diagnostic complete. Screenshot करा आणि share करा!', 'ok');
+};
+
+async function fixAndLogin() {
+    document.getElementById('results').innerHTML = '';
+    log('🔧 STEP 1: Clearing stale session data', 'localStorage.clear() + sessionStorage.clear()', 'ok');
+    localStorage.clear();
+    sessionStorage.clear();
+
+    log('🔧 STEP 2: Logging in as Patient John...', 'Calling POST /api/auth/login', 'ok');
+    try {
+        const r = await fetch(`${BASE}/api/auth/login`, {
+            method: 'POST',
+            headers: {'Accept':'application/json','Content-Type':'application/json'},
+            body: JSON.stringify({email:'user@medimitra.com', password:'password123'})
+        });
+        const d = await r.json();
+        if (d.success && d.token) {
+            localStorage.setItem('token', d.token);
+            localStorage.setItem('user', JSON.stringify(d.user));
+            log('🔧 STEP 3: Token saved to localStorage ✓', `User: ${JSON.stringify(d.user)}\nToken: ${d.token.substring(0,60)}...`, 'ok');
+            log('🔧 STEP 4: Redirecting to Dashboard...', 'जात आहे... /user/user-dashboard.html', 'ok');
+            setTimeout(() => { window.location.href = `${BASE}/user/user-dashboard.html`; }, 1500);
+        } else {
+            log('🔧 Login FAILED', JSON.stringify(d), 'fail');
+        }
+    } catch(e) {
+        log('🔧 Network Error', e.message, 'fail');
+    }
+}
+</script>
+</body>
+</html>

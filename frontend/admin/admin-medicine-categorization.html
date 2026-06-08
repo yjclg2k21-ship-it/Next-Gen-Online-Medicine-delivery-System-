@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medicine Categorization | Admin | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <link rel="stylesheet" href="../assets/css/admin-dark.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .cat-item { display: flex; align-items: center; gap: 14px; padding: 16px; border-bottom: 1px solid rgba(0,0,0,0.05); transition: background 0.2s; cursor: pointer; }
+        .cat-item:hover { background: rgba(0,0,0,0.02); }
+        .cat-item:last-child { border-bottom: none; }
+        .cat-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; background: #f1f5f9; color: #1d1d1f; }
+        .cat-item.active { background: rgba(0,122,255,0.05); border-left: 4px solid #007aff; }
+        .sub-cat-pill { padding: 6px 14px; border-radius: 20px; border: 1px solid rgba(0,0,0,0.1); font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+        .sub-cat-pill:hover { background: rgba(0,0,0,0.04); }
+        .add-pill { border: 1px dashed #007aff; color: #007aff; cursor: pointer; }
+        #cat-scroll { max-height: 520px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        <main class="liquid-main">
+            <header style="margin-bottom:20px;display:flex;justify-content:space-between;align-items:flex-start;">
+                <div>
+                    <h1 class="vibrant-h1">Medicine Categorization</h1>
+                    <p style="color:#6e6e73;font-size:1rem;font-weight:500;">Organize therapeutic classes and sub-categories.</p>
+                </div>
+                <button onclick="addMainCat()" style="padding:10px 24px;border-radius:12px;background:#1d1d1f;color:#fff;border:none;font-weight:700;font-size:0.9rem;cursor:pointer;font-family:Inter,sans-serif;">Add Root Category</button>
+            </header>
+
+            <div style="display:grid;grid-template-columns: 320px 1fr; gap: 24px;">
+                <div class="liquid-card" style="padding:0; overflow:hidden;">
+                    <div style="padding:16px; border-bottom:1px solid rgba(0,0,0,0.06); font-weight:800; font-size:0.8rem; color:#8e8e93; text-transform:uppercase; letter-spacing:0.04em;">Root Categories</div>
+                    <div id="cat-scroll">
+                        <div id="main-cat-list"></div>
+                    </div>
+                </div>
+
+                <div class="liquid-card" style="padding:24px;">
+                    <div id="detail-header" style="margin-bottom:24px;">
+                        <h2 id="selected-cat-name" style="font-weight:800; font-size:1.5rem; margin-bottom:4px;">Select a Category</h2>
+                        <p id="selected-cat-desc" style="color:#8e8e93; font-size:0.9rem;">Click a category on the left to manage its sub-categories.</p>
+                    </div>
+
+                    <div id="sub-cat-section" style="display:none;">
+                        <h3 style="font-weight:800; font-size:0.8rem; color:#8e8e93; text-transform:uppercase; margin-bottom:16px;">Sub-Categories / Molecule Types</h3>
+                        <div id="sub-cat-grid" style="display:flex; flex-wrap:wrap; gap:10px;"></div>
+                        
+                        <div id="medicines-section" style="margin-top: 32px;">
+                            <h3 style="font-weight:800; font-size:0.8rem; color:#8e8e93; text-transform:uppercase; margin-bottom:16px;">Associated Medicines</h3>
+                            <div id="medicines-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:12px; max-height: 250px; overflow-y: auto; padding-right: 8px;"></div>
+                        </div>
+
+                        <div style="margin-top:40px; padding:20px; background:rgba(0,122,255,0.03); border-radius:16px; border:1px solid rgba(0,122,255,0.08);">
+                            <h4 style="font-weight:700; margin-bottom:6px; display:flex; align-items:center; gap:8px;"><i data-lucide="info" style="width:16px;height:16px;"></i> Category Impact</h4>
+                            <p style="font-size:0.85rem; color:#6e6e73;">Changing root categories will affect how medicines are grouped in the store and inventory reports. Existing items mapped to deleted sub-categories will be moved to 'Uncategorized'.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    <!-- Add Category Modal -->
+    <div id="add-modal" onclick="if(event.target===this)closeModal()" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index:100; align-items:center; justify-content:center;">
+        <div class="modal-box animate-scale-in" style="background:#fff; border-radius:24px; padding:32px; width:440px; box-shadow:0 32px 80px rgba(0,0,0,0.2);">
+            <h2 id="modal-title" style="font-weight:800;margin-bottom:6px;">Add New Category</h2>
+            <p id="modal-subtitle" style="color:#8e8e93;font-size:0.85rem;margin-bottom:24px;">Enter the details for the new classification.</p>
+            
+            <div style="display:grid;gap:16px;">
+                <div>
+                    <label style="display:block;font-size:0.78rem;font-weight:700;color:#6e6e73;margin-bottom:2px;">Category Name</label>
+                    <input type="text" id="cat-name-input" placeholder="e.g. Antibiotics, Vitamins" style="width:100%; padding:12px 16px; border-radius:12px; border:1px solid rgba(0,0,0,0.1); background:rgba(0,0,0,0.02); font-family:Inter,sans-serif; font-size:0.95rem; margin-top:4px; box-sizing:border-box;">
+                </div>
+                <div id="desc-field">
+                    <label style="display:block;font-size:0.78rem;font-weight:700;color:#6e6e73;margin-bottom:2px;">Description</label>
+                    <textarea id="cat-desc-input" placeholder="What kind of medicines go here?" style="width:100%; height:80px; padding:12px 16px; border-radius:12px; border:1px solid rgba(0,0,0,0.1); background:rgba(0,0,0,0.02); font-family:Inter,sans-serif; font-size:0.95rem; margin-top:4px; box-sizing:border-box; resize:none;"></textarea>
+                </div>
+                <button id="modal-submit-btn" style="margin-top:10px;width:100%;padding:14px;border-radius:14px;background:#007aff;color:#fff;border:none;font-weight:800;cursor:pointer;font-family:Inter,sans-serif;font-size:1rem;transition: opacity 0.2s;" onmouseover="this.style.opacity=0.9" onmouseout="this.style.opacity=1">Save Category</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        const user = auth.getUser();
+        if (!user || user.role !== 'admin') window.location.href = '../auth/login.html';
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('admin');
+        lucide.createIcons();
+
+        let categories = [];
+        let allMedicines = [];
+        let activeId = null;
+
+        async function loadCategories() {
+            try {
+                components.showLoader();
+                const [catRes, medRes] = await Promise.all([
+                    api.get('/admin/categories'),
+                    api.get('/admin/medicines')
+                ]);
+                
+                const all = catRes.data.categories || [];
+                allMedicines = medRes.data.medicines || [];
+                
+                // Group by parent_id
+                const roots = all.filter(c => !c.parent_id);
+                categories = roots.map(r => ({
+                    ...r,
+                    medicine_count: r.medicine_count,
+                    sub: all.filter(c => c.parent_id == r.id).map(s => s.name)
+                }));
+                renderMainCats();
+            } catch (err) {
+                console.error(err);
+                components.showError("Failed to fetch categorization data.");
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        function renderMainCats() {
+            document.getElementById('main-cat-list').innerHTML = categories.map(c => `
+                <div class="cat-item ${activeId===c.id?'active':''}" onclick="selectCat(${c.id})">
+                    <div class="cat-icon">${c.icon || '📦'}</div>
+                    <div style="flex:1;">
+                        <div style="font-weight:700; font-size:0.95rem;">${c.name}</div>
+                        <div style="font-size:0.75rem; color:#8e8e93; display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+                            <span>${c.sub.length} sub-cats</span>
+                            <span style="color:#007aff;">•</span>
+                            <span>${c.medicine_count || 0} items</span>
+                        </div>
+                    </div>
+                    <i data-lucide="chevron-right" style="width:16px;height:16px;color:#8e8e93;"></i>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function selectCat(id) {
+            activeId = id;
+            const cat = categories.find(c => c.id === id);
+            if (!cat) return;
+            document.getElementById('selected-cat-name').textContent = (cat.icon || '📦') + ' ' + cat.name;
+            document.getElementById('selected-cat-desc').textContent = cat.description || cat.desc || '';
+            document.getElementById('sub-cat-section').style.display = 'block';
+            
+            document.getElementById('sub-cat-grid').innerHTML = cat.sub.map(s => `
+                <div class="sub-cat-pill">
+                    ${s}
+                    <i data-lucide="x" style="width:12px;height:12px;color:#ff3b30;cursor:pointer;" onclick="removeSub(${id}, '${s}')"></i>
+                </div>
+            `).join('') + '<div class="sub-cat-pill add-pill" onclick="addSub('+id+')"><i data-lucide="plus" style="width:12px;height:12px;"></i> Add New</div>';
+            
+            // Render associated medicines
+            const catMeds = allMedicines.filter(m => m.category_id == id);
+            const medGrid = document.getElementById('medicines-grid');
+            if (catMeds.length === 0) {
+                medGrid.innerHTML = '<div style="color:#8e8e93; font-size:0.85rem; padding:10px 0;">No items in this category yet.</div>';
+            } else {
+                medGrid.innerHTML = catMeds.map(m => `
+                    <div style="border:1px solid rgba(0,0,0,0.06); padding:10px 12px; border-radius:10px; background:#fff; display:flex; justify-content:space-between; align-items:center;">
+                        <div style="font-weight:600; font-size:0.85rem; color:#1d1d1f; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${m.name}</div>
+                        <div style="font-size:0.75rem; font-weight:800; color:#007aff;">₹${m.price}</div>
+                    </div>
+                `).join('');
+            }
+
+            renderMainCats();
+        }
+
+        function addSub(id) {
+            const modal = document.getElementById('add-modal');
+            const title = document.getElementById('modal-title');
+            const subtitle = document.getElementById('modal-subtitle');
+            const descField = document.getElementById('desc-field');
+            const input = document.getElementById('cat-name-input');
+            const submitBtn = document.getElementById('modal-submit-btn');
+
+            title.textContent = "Add Sub-Category";
+            subtitle.textContent = "Adding a new molecule type or classification.";
+            descField.style.display = "none";
+            input.value = "";
+            modal.style.display = "flex";
+
+            submitBtn.onclick = async () => {
+                const name = input.value.trim();
+                if (name) {
+                    try {
+                        components.showLoader();
+                        await api.post(`/admin/categories/${id}/sub`, { name });
+                        components.showSuccess(`Added "${name}" successfully.`);
+                        closeModal();
+                        await loadCategories();
+                        selectCat(id);
+                    } catch (e) {
+                        components.showError("Failed to add sub-category.");
+                    } finally {
+                        components.hideLoader();
+                    }
+                }
+            };
+        }
+
+        function removeSub(id, name) {
+            // UI only for now
+            const cat = categories.find(c => c.id === id);
+            cat.sub = cat.sub.filter(s => s !== name);
+            selectCat(id);
+        }
+
+        function addMainCat() {
+            const modal = document.getElementById('add-modal');
+            const title = document.getElementById('modal-title');
+            const subtitle = document.getElementById('modal-subtitle');
+            const descField = document.getElementById('desc-field');
+            const input = document.getElementById('cat-name-input');
+            const descInput = document.getElementById('cat-desc-input');
+            const submitBtn = document.getElementById('modal-submit-btn');
+
+            title.textContent = "Add Root Category";
+            subtitle.textContent = "Create a new top-level classification.";
+            descField.style.display = "block";
+            input.value = "";
+            descInput.value = "";
+            modal.style.display = "flex";
+
+            submitBtn.onclick = async () => {
+                const name = input.value.trim();
+                const desc = descInput.value.trim();
+                if (name) {
+                    try {
+                        components.showLoader();
+                        await api.post('/admin/categories', { name, description: desc });
+                        components.showSuccess(`Root category "${name}" created.`);
+                        closeModal();
+                        loadCategories();
+                    } catch (e) {
+                        components.showError("Failed to create root category.");
+                    } finally {
+                        components.hideLoader();
+                    }
+                }
+            };
+        }
+
+        function closeModal() {
+            document.getElementById('add-modal').style.display = "none";
+        }
+
+        loadCategories();
+    </script>
+</body>
+</html>

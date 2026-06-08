@@ -1,0 +1,6 @@
+/* 
+  MEDIMITRA GLOBAL STYLES (Fallback/Legacy mappings)
+  Main styles are inside main.css and glass.css
+*/
+@import url('main.css');
+@import url('glass.css');

@@ -1,0 +1,4 @@
+name,salt,price,mrp,stock,expiry_date,description,requires_prescription
+Paracip 500mg,Paracetamol,15.50,18.00,100,2026-12-31,"Standard analgesics for clinical use.",0
+Amix-CV 625,Amoxicillin,145.00,165.00,50,2025-08-15,"Broad spectrum antibiotic node.",1
+Vicks Action 500,Caffeine + Paracetamol,45.00,50.00,200,2027-01-01,"Relief from cold and flu.",0

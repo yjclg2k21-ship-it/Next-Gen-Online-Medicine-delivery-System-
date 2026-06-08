@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Vendor | Admin | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <link rel="stylesheet" href="../assets/css/admin-dark.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .form-section { margin-bottom: 32px; }
+        .form-section-title { font-size: 0.72rem; font-weight: 800; color: #8e8e93; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .form-label { display: block; font-size: 0.8rem; font-weight: 600; color: #6e6e73; margin-bottom: 6px; }
+        .form-input { width: 100%; padding: 12px 16px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.1); font-family: Inter,sans-serif; font-size: 0.9rem; outline: none; box-sizing: border-box; transition: border-color 0.2s; }
+        .form-input:focus { border-color: #007aff; }
+        .form-input.input-error { border-color: #ff3b30; background: rgba(255,59,48,0.03); }
+        .field-error { display: none; font-size: 0.72rem; color: #ff3b30; font-weight: 600; margin-top: 4px; }
+        .field-error.visible { display: block; }
+        .upload-card { border: 2px dashed rgba(0,0,0,0.1); border-radius: 16px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s; }
+        .upload-card:hover { border-color: #007aff; background: rgba(0,122,255,0.02); }
+        .vendor-hero { display: flex; align-items: center; gap: 20px; padding: 24px; background: #fbfbfd; border-radius: 20px; margin-bottom: 24px; border: 1px solid rgba(0,0,0,0.03); }
+        .vendor-avatar { width: 80px; height: 80px; border-radius: 20px; background: linear-gradient(135deg, #007aff, #5856d6); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 800; }
+        .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+        .badge-active { background: rgba(52,199,89,0.1); color: #34c759; }
+        .badge-danger { background: rgba(255,59,48,0.1); color: #ff3b30; }
+    </style>
+</head>
+<body>
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        <main class="liquid-main" style="overflow-y:auto;">
+            <header style="margin-bottom:20px;display:flex;align-items:center;gap:14px;">
+                <a href="admin-vendors.html" style="width:40px;height:40px;border-radius:12px;border:1px solid rgba(0,0,0,0.1);display:flex;align-items:center;justify-content:center;text-decoration:none;color:#1d1d1f;"><i data-lucide="arrow-left" style="width:18px;height:18px;"></i></a>
+                <div>
+                    <h1 class="vibrant-h1" style="margin-bottom:0;">View Pharmacy Partner</h1>
+                    <p style="color:#6e6e73;font-size:1rem;font-weight:500;">Vendor profile details (read-only). Vendors manage their own profiles.</p>
+                </div>
+                <div style="margin-left:auto; display:flex; gap:12px;">
+                    <button class="pill-button btn-outline" onclick="history.back()">Back</button>
+                </div>
+            </header>
+
+            <div class="vendor-hero">
+                <div class="vendor-avatar" id="v-initials">PH</div>
+                <div style="flex:1;">
+                    <h2 style="font-weight:800; font-size:1.5rem; margin-bottom:4px;" id="v-name">Loading...</h2>
+                    <div style="display:flex; gap:12px; align-items:center;">
+                        <span class="status-badge" id="v-status">Status</span>
+                        <span style="font-size:0.85rem; color:#8e8e93; display:flex; align-items:center; gap:4px;"><i data-lucide="calendar" style="width:14px;height:14px;"></i> Active Node</span>
+                    </div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:0.75rem; color:#8e8e93; font-weight:700; text-transform:uppercase;">Platform Rating</div>
+                    <div style="font-size:1.8rem; font-weight:800; color:#ff9500;" id="v-rating">N/A <span style="font-size:0.9rem; font-weight:500; color:#8e8e93;">/ 5.0</span></div>
+                </div>
+            </div>
+
+            <div class="liquid-card" style="padding:32px;">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+                    <div>
+                        <div class="form-section">
+                            <div class="form-section-title"><i data-lucide="info" style="width:14px;height:14px;"></i> Basic Information</div>
+                            <div style="display:grid; gap:16px;">
+                                <div>
+                                    <label class="form-label" for="v-name-input">Pharmacy Legal Name</label>
+                                    <input type="text" class="form-input" id="v-name-input" readonly disabled>
+                                </div>
+                                <div>
+                                    <label class="form-label" for="v-email-input">Contact Email</label>
+                                    <input type="email" class="form-input" id="v-email-input" readonly disabled>
+                                </div>
+                                <div>
+                                    <label class="form-label" for="v-phone-input">Phone Number</label>
+                                    <input type="tel" class="form-input" id="v-phone-input" readonly disabled>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <div class="form-section-title"><i data-lucide="map" style="width:14px;height:14px;"></i> Location & Logistics</div>
+                            <div style="display:grid; gap:16px;">
+                                <div>
+                                    <label class="form-label" for="v-address-input">Full Address</label>
+                                    <textarea class="form-input" id="v-address-input" style="min-height:80px; resize:none;" readonly disabled></textarea>
+                                </div>
+                                <div>
+                                    <label class="form-label" for="v-zone-input">Operating Zone</label>
+                                    <select class="form-input" id="v-zone-input" disabled>
+                                        <option value="Phaltan City">Phaltan City</option>
+                                        <option value="Phaltan Rural">Phaltan Rural</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="form-section">
+                            <div class="form-section-title"><i data-lucide="shield-check" style="width:14px;height:14px;"></i> Compliance & Credentials</div>
+                            <div style="display:grid; gap:16px;">
+                                <div>
+                                    <label class="form-label" for="v-license-input">Drug License Number</label>
+                                    <input type="text" class="form-input" id="v-license-input" readonly disabled>
+                                </div>
+                                
+                                <div style="margin-top:24px;">
+                                    <div class="form-section-title"><i data-lucide="file-check" style="width:14px;height:14px;"></i> Verified Documentation</div>
+                                    <div id="v-kyc-docs" style="display:grid; gap:10px;" role="list" aria-label="KYC Documents">
+                                        <p style="font-size:0.8rem; color:#8e8e93; font-weight:500;">Retrieving artifacts...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetId = urlParams.get('id');
+
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('admin');
+        lucide.createIcons();
+
+        async function init() {
+            if(!targetId) { window.location.href = 'admin-vendors.html'; return; }
+            
+            try {
+                components.showLoader();
+                const res = await api.get('/admin/vendors');
+                const vendor = res.data.vendors.find(v => v.id == targetId);
+                
+                if(!vendor) {
+                    components.showError('Vendor not found.');
+                    return;
+                }
+
+                // Populate UI
+                document.getElementById('v-name').innerText = vendor.name || '';
+                const initials = (vendor.name || 'PH').charAt(0).toUpperCase() + ((vendor.name || '').split(' ')[1] ? vendor.name.split(' ')[1].charAt(0).toUpperCase() : '');
+                document.getElementById('v-initials').innerText = initials;
+                document.getElementById('v-status').innerText = vendor.status === 'active' ? 'Active Partner' : 'Suspended';
+                document.getElementById('v-status').className = 'status-badge ' + (vendor.status === 'active' ? 'badge-active' : 'badge-danger');
+                
+                // Populate Inputs (read-only)
+                document.getElementById('v-name-input').value = vendor.name || '';
+                document.getElementById('v-email-input').value = vendor.email || '';
+                document.getElementById('v-phone-input').value = vendor.phone || '';
+                document.getElementById('v-address-input').value = vendor.address || '';
+                document.getElementById('v-license-input').value = vendor.license || '';
+                
+                document.getElementById('v-rating').innerHTML = 'N/A <span style="font-size:0.9rem; font-weight:500; color:#8e8e93;">/ 5.0</span>';
+
+                // Load KYC Documents
+                loadKYCDocs();
+
+            } catch(e) {
+                console.error(e);
+                components.showError('Failed to load vendor details.');
+            } finally {
+                components.hideLoader();
+                lucide.createIcons();
+            }
+        }
+
+        async function loadKYCDocs() {
+            try {
+                const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+                const headers = { 'Accept': 'application/json' };
+                if (token) headers['Authorization'] = `Bearer ${token}`;
+                
+                const response = await fetch(`${api.BASE_URL}/admin/kyc/user/${targetId}`, { headers });
+                if (!response.ok) throw new Error('KYC fetch failed');
+                
+                const kycRes = await response.json();
+                const docs = (kycRes.data && kycRes.data.documents) || [];
+                const container = document.getElementById('v-kyc-docs');
+                
+                if (docs.length === 0) {
+                    container.innerHTML = '<p style="font-size:0.8rem; color:#8e8e93; font-weight:500;">No documents found.</p>';
+                    return;
+                }
+
+                container.innerHTML = '';
+                docs.forEach(d => {
+                    const row = document.createElement('div');
+                    row.setAttribute('role', 'listitem');
+                    row.style.cssText = 'background:rgba(0,122,255,0.05); padding:12px 16px; border-radius:12px; display:flex; justify-content:space-between; align-items:center; border:1px solid rgba(0,122,255,0.1);';
+                    
+                    const label = document.createElement('span');
+                    label.style.cssText = 'font-size:0.85rem; font-weight:700; color:#007aff; text-transform:uppercase;';
+                    label.textContent = d.document_type || 'Unknown';
+                    
+                    const btn = document.createElement('button');
+                    btn.style.cssText = 'background:#007aff; color:white; border:none; padding:6px 12px; border-radius:8px; font-size:0.75rem; font-weight:700; cursor:pointer;';
+                    btn.textContent = 'View Artifact';
+                    btn.setAttribute('aria-label', 'View ' + (d.document_type || 'document'));
+                    btn.addEventListener('click', async () => {
+                        // Serve KYC files through secure API endpoint with auth token
+                        let imagePath = d.document_image || '';
+                        if (imagePath.includes('/')) {
+                            imagePath = imagePath.split('/').pop();
+                        }
+                        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+                        try {
+                            const response = await fetch(api.BASE_URL + '/kyc/file/' + encodeURIComponent(imagePath), {
+                                headers: { 'Authorization': 'Bearer ' + token }
+                            });
+                            if (!response.ok) throw new Error('Failed to load file');
+                            const blob = await response.blob();
+                            const url = URL.createObjectURL(blob);
+                            window.open(url, '_blank');
+                        } catch(err) {
+                            components.showError('Failed to open document.');
+                        }
+                    });
+                    
+                    row.appendChild(label);
+                    row.appendChild(btn);
+                    container.appendChild(row);
+                });
+            } catch(e) {
+                console.error("KYC load failed:", e);
+                document.getElementById('v-kyc-docs').innerHTML = '<p style="font-size:0.8rem; color:#8e8e93; font-weight:500;">No documents available.</p>';
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

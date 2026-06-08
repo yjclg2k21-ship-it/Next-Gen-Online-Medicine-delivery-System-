@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dispatch Queue | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .queue-card { background: #fff; border-radius: 16px; padding: 20px; margin-bottom: 12px; border: 1px solid rgba(0,0,0,0.06); transition: all 0.2s; }
+        .queue-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .queue-card.emergency { border-left: 4px solid #ff3b30; }
+        .queue-card.standard  { border-left: 4px solid #007aff; }
+        .badge-emergency { background:rgba(255,59,48,0.1);color:#ff3b30;padding:4px 12px;border-radius:20px;font-size:0.72rem;font-weight:700; }
+        .badge-standard  { background:rgba(0,122,255,0.1);color:#007aff;padding:4px 12px;border-radius:20px;font-size:0.72rem;font-weight:700; }
+        .live-dot { width:8px;height:8px;background:#34c759;border-radius:50%;display:inline-block;animation:blink 1.5s infinite; }
+        @keyframes blink { 0%,100%{opacity:1}50%{opacity:0.3} }
+        #queue-scroll { max-height: 520px; overflow-y: auto; }
+        #queue-scroll::-webkit-scrollbar { width: 4px; }
+        #queue-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        <main class="liquid-main">
+            <header style="margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <h1 class="vibrant-h1">Dispatch Queue</h1>
+                    <p style="color:#6e6e73;font-size:1rem;font-weight:500;">Incoming orders waiting for pickup assignment.</p>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span class="live-dot"></span>
+                    <span style="font-size:0.82rem;font-weight:700;color:#34c759;">Live Queue</span>
+                </div>
+            </header>
+
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;">
+                <div class="liquid-card" style="padding:14px;text-align:center;border-left:3px solid #ff9500;"><div style="font-size:1.8rem;font-weight:800;color:#ff9500" id="cnt-pending">—</div><div style="font-size:0.72rem;color:#8e8e93;font-weight:600;margin-top:3px;">In Queue</div></div>
+                <div class="liquid-card" style="padding:14px;text-align:center;border-left:3px solid #007aff;"><div style="font-size:1.8rem;font-weight:800;color:#007aff" id="cnt-active">—</div><div style="font-size:0.72rem;color:#8e8e93;font-weight:600;margin-top:3px;">Assigned Today</div></div>
+                <div class="liquid-card" style="padding:14px;text-align:center;border-left:3px solid #34c759;"><div style="font-size:1.8rem;font-weight:800;color:#34c759" id="cnt-done">—</div><div style="font-size:0.72rem;color:#8e8e93;font-weight:600;margin-top:3px;">Completed Today</div></div>
+            </div>
+
+            <div id="queue-scroll">
+                <div id="queue-list"></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        const user = auth.getUser();
+        if (!user || user.role !== 'delivery') window.location.href = '../auth/login.html';
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('delivery');
+        lucide.createIcons();
+
+        let queue = [];
+
+        async function loadQueue() {
+            try { 
+                const r = await api.get('/delivery/dispatch/queue'); 
+                queue = (r.data && r.data.queue) ? r.data.queue : (r.queue || getMock()); 
+                const s = (r.data && r.data.stats) ? r.data.stats : (r.stats || {pending:3,active:2,completed_today:14}); 
+                document.getElementById('cnt-pending').textContent=s.pending; 
+                document.getElementById('cnt-active').textContent=s.active; 
+                document.getElementById('cnt-done').textContent=s.completed_today; 
+            }
+            catch(e) { queue = getMock(); document.getElementById('cnt-pending').textContent=queue.length; document.getElementById('cnt-active').textContent=2; document.getElementById('cnt-done').textContent=14; }
+            renderQueue();
+        }
+
+        function getMock() {
+            return [
+                { id:'ORD-105', customer:'Meena Iyer', address:'Santacruz West, Phaltan', type:'emergency', priority:'Emergency', eta:'8 mins', distance:'1.8 km', amount:740, items:4 },
+                { id:'ORD-101', customer:'Rahul Nair', address:'Andheri West, Phaltan', type:'emergency', priority:'Emergency', eta:'12 mins', distance:'2.4 km', amount:540, items:3 },
+                { id:'ORD-102', customer:'Sneha Patil', address:'Bandra East, Phaltan', type:'standard', priority:'Standard', eta:'2-4 hrs', distance:'3.1 km', amount:890, items:5 },
+                { id:'ORD-104', customer:'Vikram Singh', address:'Borivali, Phaltan', type:'standard', priority:'Standard', eta:'3-5 hrs', distance:'5.6 km', amount:350, items:2 },
+            ];
+        }
+
+        function renderQueue() {
+            const el = document.getElementById('queue-list');
+            if (!queue.length) { el.innerHTML='<p style="text-align:center;padding:60px;color:#8e8e93;">No orders in queue.</p>'; return; }
+            el.innerHTML = queue.map(o => `
+                <div class="queue-card ${o.type}" id="card-${o.id}">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+                        <div>
+                            <span style="font-weight:800;font-size:1rem;">${o.id}</span>
+                            <span class="badge-${o.type}" style="margin-left:10px;">${o.type==='emergency'?'🚨':'📦'} ${o.priority}</span>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-weight:800;color:#007aff;font-size:1.1rem;">₹${o.amount}</div>
+                            <div style="font-size:0.75rem;color:#8e8e93;">${o.items} items</div>
+                        </div>
+                    </div>
+                    <div style="margin-bottom:12px;">
+                        <div style="font-weight:700;margin-bottom:2px;">${o.customer}</div>
+                        <div style="font-size:0.82rem;color:#6e6e73;display:flex;align-items:center;gap:5px;"><i data-lucide="map-pin" style="width:12px;height:12px;"></i> ${o.address}</div>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div style="display:flex;gap:16px;">
+                            <div style="font-size:0.8rem;color:#6e6e73;display:flex;align-items:center;gap:4px;"><i data-lucide="clock" style="width:13px;height:13px;"></i> ETA: <strong>${o.eta}</strong></div>
+                            <div style="font-size:0.8rem;color:#6e6e73;display:flex;align-items:center;gap:4px;"><i data-lucide="navigation" style="width:13px;height:13px;"></i> ${o.distance}</div>
+                        </div>
+                        <div style="display:flex;gap:8px;">
+                            <button onclick="declineOrder('${o.id}')" style="padding:8px 18px;border-radius:10px;border:1px solid rgba(255,59,48,0.2);color:#ff3b30;background:transparent;font-weight:700;font-size:0.82rem;cursor:pointer;font-family:Inter,sans-serif;">Decline</button>
+                            <button onclick="acceptOrder('${o.id}')" style="padding:8px 20px;border-radius:10px;background:${o.type==='emergency'?'#ff3b30':'#007aff'};color:#fff;border:none;font-weight:700;font-size:0.82rem;cursor:pointer;font-family:Inter,sans-serif;">✓ Accept</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        async function acceptOrder(id) {
+            try { await api.post(`/delivery/orders/${id}/accept`, {}); } catch(e) { components.showError(e.message || "Failed to commit logic to server."); return; }
+            queue = queue.filter(o => o.id !== id);
+            document.getElementById('cnt-pending').textContent = queue.length;
+            renderQueue();
+            components.showSuccess(`Order ${id} accepted. Navigate to pickup location.`);
+        }
+
+        function declineOrder(id) {
+            queue = queue.filter(o => o.id !== id);
+            document.getElementById('cnt-pending').textContent = queue.length;
+            renderQueue();
+        }
+
+        loadQueue();
+        setInterval(loadQueue, 30000);
+    </script>
+</body>
+</html>

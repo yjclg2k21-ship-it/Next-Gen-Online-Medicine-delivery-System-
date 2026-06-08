@@ -1,0 +1,335 @@
+/*
+  MEDIMITRA EMERGENCY ALERTS
+  Visual styles for emergency order priority system.
+  Consistent with the Liquid iOS Design System v2.
+*/
+
+/* ============================================================
+   EMERGENCY CARD STYLES
+   ============================================================ */
+
+.emergency-card {
+    border: 3px solid #ff3b30 !important;
+    position: relative;
+    background: rgba(255, 59, 48, 0.03);
+}
+
+.emergency-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #ff3b30, #ff6b5e, #ff3b30);
+    border-radius: 16px 16px 0 0;
+}
+
+/* ============================================================
+   EMERGENCY BADGE
+   ============================================================ */
+
+.emergency-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #ff3b30;
+    color: #ffffff;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 4px 10px;
+    border-radius: 100px;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.emergency-badge i {
+    font-size: 0.75rem;
+}
+
+/* ============================================================
+   EMERGENCY HIGHLIGHT (Delivery Panel Entries)
+   ============================================================ */
+
+.emergency-highlight {
+    background: rgba(255, 59, 48, 0.08) !important;
+    border-left: 4px solid #ff3b30 !important;
+}
+
+.emergency-highlight:hover {
+    background: rgba(255, 59, 48, 0.12) !important;
+}
+
+/* ============================================================
+   PULSE ANIMATIONS
+   ============================================================ */
+
+/* Standard pulse: 1 pulse per second (default) */
+@keyframes emergency-pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.4);
+        border-color: #ff3b30;
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(255, 59, 48, 0);
+        border-color: #ff6b5e;
+    }
+}
+
+/* Critical pulse: 3 pulses per second (for <2min deadline) */
+@keyframes emergency-pulse-critical {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.6);
+        border-color: #ff3b30;
+        background-color: rgba(255, 59, 48, 0.05);
+    }
+    50% {
+        box-shadow: 0 0 0 12px rgba(255, 59, 48, 0);
+        border-color: #cc0000;
+        background-color: rgba(255, 59, 48, 0.12);
+    }
+}
+
+.emergency-pulse {
+    animation: emergency-pulse 1s ease-in-out infinite;
+}
+
+.emergency-pulse-critical {
+    animation: emergency-pulse-critical 0.333s ease-in-out infinite;
+}
+
+/* ============================================================
+   FULL-SCREEN OVERLAY
+   ============================================================ */
+
+.emergency-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 99999;
+    background: linear-gradient(135deg, rgba(180, 0, 0, 0.95), rgba(255, 59, 48, 0.95));
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.emergency-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.emergency-overlay-content {
+    text-align: center;
+    color: #ffffff;
+    max-width: 480px;
+    padding: 48px 32px;
+    animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.emergency-overlay-icon {
+    font-size: 4rem;
+    margin-bottom: 16px;
+    animation: emergency-pulse-icon 1s ease-in-out infinite;
+}
+
+@keyframes emergency-pulse-icon {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.15); opacity: 0.8; }
+}
+
+.emergency-overlay-title {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif;
+    font-size: 2.2rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    margin-bottom: 24px;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.emergency-overlay-details {
+    font-size: 1.1rem;
+    font-weight: 500;
+    line-height: 1.8;
+    margin-bottom: 32px;
+    opacity: 0.95;
+}
+
+.emergency-overlay-details p {
+    margin-bottom: 8px;
+}
+
+.emergency-overlay-details strong {
+    font-weight: 700;
+}
+
+.emergency-overlay-btn {
+    background: #ffffff;
+    color: #ff3b30;
+    border: none;
+    padding: 14px 40px;
+    border-radius: 100px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.emergency-overlay-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+}
+
+.emergency-overlay-btn:active {
+    transform: scale(0.95);
+}
+
+/* ============================================================
+   COUNTDOWN TIMER DISPLAY
+   ============================================================ */
+
+.emergency-countdown {
+    font-family: "SF Mono", "Fira Code", "Courier New", monospace;
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: #ff3b30;
+    padding: 8px 16px;
+    background: rgba(255, 59, 48, 0.08);
+    border-radius: 12px;
+    display: inline-block;
+}
+
+.emergency-countdown.warning {
+    color: #ff9500;
+    background: rgba(255, 149, 0, 0.08);
+}
+
+.emergency-countdown.breached {
+    color: #ffffff;
+    background: #ff3b30;
+    animation: emergency-pulse-critical 0.333s ease-in-out infinite;
+}
+
+/* ============================================================
+   SLA PROGRESS BAR
+   ============================================================ */
+
+.emergency-sla-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(0, 0, 0, 0.06);
+    border-radius: 100px;
+    overflow: hidden;
+    position: relative;
+}
+
+.emergency-sla-bar-fill {
+    height: 100%;
+    border-radius: 100px;
+    transition: width 1s linear, background 0.5s ease;
+    background: var(--success);
+}
+
+/* Green (0-60%) */
+.emergency-sla-bar-fill[data-progress="safe"] {
+    background: #34c759;
+}
+
+/* Yellow (60-85%) */
+.emergency-sla-bar-fill[data-progress="warning"] {
+    background: linear-gradient(90deg, #ff9500, #ffcc00);
+}
+
+/* Red (85-100%) */
+.emergency-sla-bar-fill[data-progress="critical"] {
+    background: linear-gradient(90deg, #ff6b5e, #ff3b30);
+}
+
+/* Breached (100%) */
+.emergency-sla-bar-fill[data-progress="breached"] {
+    background: #ff3b30;
+    animation: sla-bar-pulse 0.5s ease-in-out infinite;
+}
+
+@keyframes sla-bar-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* ============================================================
+   UTILITY CLASSES
+   ============================================================ */
+
+.emergency-text-danger {
+    color: #ff3b30 !important;
+    font-weight: 700;
+}
+
+.emergency-text-warning {
+    color: #ff9500 !important;
+    font-weight: 700;
+}
+
+.emergency-status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+    background: #ff3b30;
+    animation: emergency-pulse-dot 1s ease-in-out infinite;
+}
+
+@keyframes emergency-pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+/* ============================================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================================ */
+
+@media (max-width: 768px) {
+    .emergency-overlay-title {
+        font-size: 1.6rem;
+    }
+
+    .emergency-overlay-content {
+        padding: 32px 20px;
+    }
+
+    .emergency-countdown {
+        font-size: 1.3rem;
+    }
+
+    .emergency-overlay-icon {
+        font-size: 3rem;
+    }
+}
+
+/* ============================================================
+   PRINT: HIDE EMERGENCY ANIMATIONS
+   ============================================================ */
+
+@media print {
+    .emergency-overlay {
+        display: none !important;
+    }
+
+    .emergency-pulse,
+    .emergency-pulse-critical {
+        animation: none !important;
+    }
+
+    .emergency-card {
+        border: 2px solid #ff3b30 !important;
+    }
+}

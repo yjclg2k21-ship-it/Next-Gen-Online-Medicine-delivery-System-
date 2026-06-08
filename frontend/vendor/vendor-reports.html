@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Reports | Vendor | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .report-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-top: 24px; }
+        .chart-card { background: #fff; border-radius: 24px; padding: 24px; border: 1px solid rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body>
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        <main class="liquid-main" style="overflow-y:auto;">
+            <header style="margin-bottom:24px;">
+                <h1 class="vibrant-h1">Sales Reports</h1>
+                <p style="color:#6e6e73; font-size:1rem; font-weight:500;">Revenue trends and category performance from real order data.</p>
+            </header>
+
+            <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
+                <div class="liquid-card" style="padding:20px;">
+                    <div style="font-size:0.75rem; font-weight:800; color:#8e8e93; text-transform:uppercase;">Total Revenue</div>
+                    <div style="font-size:1.5rem; font-weight:800; margin-top:4px;" id="kpi-revenue">—</div>
+                </div>
+                <div class="liquid-card" style="padding:20px;">
+                    <div style="font-size:0.75rem; font-weight:800; color:#8e8e93; text-transform:uppercase;">Total Orders</div>
+                    <div style="font-size:1.5rem; font-weight:800; margin-top:4px;" id="kpi-orders">—</div>
+                </div>
+                <div class="liquid-card" style="padding:20px;">
+                    <div style="font-size:0.75rem; font-weight:800; color:#8e8e93; text-transform:uppercase;">Avg Order Value</div>
+                    <div style="font-size:1.5rem; font-weight:800; margin-top:4px;" id="kpi-aov">—</div>
+                </div>
+                <div class="liquid-card" style="padding:20px;">
+                    <div style="font-size:0.75rem; font-weight:800; color:#8e8e93; text-transform:uppercase;">Products Sold</div>
+                    <div style="font-size:1.5rem; font-weight:800; margin-top:4px;" id="kpi-products">—</div>
+                </div>
+            </div>
+
+            <div class="report-grid">
+                <div class="chart-card">
+                    <h3 style="font-weight:800; margin-bottom:24px; display:flex; align-items:center; gap:8px;"><i data-lucide="line-chart" style="color:#007aff;"></i> Monthly Revenue</h3>
+                    <div style="height:280px;"><canvas id="revenueChart"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <h3 style="font-weight:800; margin-bottom:24px; display:flex; align-items:center; gap:8px;"><i data-lucide="pie-chart" style="color:#af52de;"></i> Revenue by Category</h3>
+                    <div style="height:280px; display:flex; align-items:center; justify-content:center;"><canvas id="categoryChart"></canvas></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        const user = auth.getUser();
+        if (!user || user.role !== 'vendor') window.location.href = '../auth/login.html';
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('vendor');
+        lucide.createIcons();
+
+        async function loadReports() {
+            try {
+                components.showLoader();
+                const res = await api.get('/vendor/insights/summary');
+                const data = res.data;
+
+                // KPIs
+                document.getElementById('kpi-revenue').textContent = data.kpi.revenue || '₹0';
+                document.getElementById('kpi-orders').textContent = data.kpi.orders || 0;
+                document.getElementById('kpi-aov').textContent = data.kpi.aov || '₹0';
+                document.getElementById('kpi-products').textContent = data.kpi.customers || data.kpi.orders || 0;
+
+                // Revenue Chart (monthly)
+                const revSeries = data.revenue_series || [];
+                const labels = revSeries.map(r => r.month);
+                const values = revSeries.map(r => parseFloat(r.revenue));
+
+                new Chart(document.getElementById('revenueChart').getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: labels.length ? labels : ['No Data'],
+                        datasets: [{
+                            label: 'Revenue (₹)',
+                            data: values.length ? values : [0],
+                            borderColor: '#007aff',
+                            backgroundColor: 'rgba(0,122,255,0.08)',
+                            fill: true, tension: 0.4, borderWidth: 3
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+                });
+
+                // Category Chart
+                const catData = data.revenue_by_category || [];
+                const catLabels = catData.map(c => c.cat || 'Other');
+                const catValues = catData.map(c => parseFloat(c.rev));
+                const catColors = ['#007aff', '#af52de', '#ff9500', '#ff3b30', '#34c759', '#5856d6'];
+
+                new Chart(document.getElementById('categoryChart').getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: catLabels.length ? catLabels : ['No Data'],
+                        datasets: [{
+                            data: catValues.length ? catValues : [1],
+                            backgroundColor: catColors.slice(0, catLabels.length || 1),
+                            borderWidth: 0
+                        }]
+                    },
+                    options: { cutout: '65%', plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 16 } } } }
+                });
+
+            } catch (err) {
+                console.error(err);
+                components.showError('Failed to load reports.');
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        loadReports();
+    </script>
+</body>
+</html>

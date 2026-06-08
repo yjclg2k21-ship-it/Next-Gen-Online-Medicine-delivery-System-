@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support Tickets | Admin | MediMitra</title>
+    <meta name="description" content="Manage customer and vendor support tickets on MediMitra.">
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <link rel="stylesheet" href="../assets/css/admin-dark.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .ticket-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; }
+        .badge-open    { background: rgba(255,59,48,0.12); color: #ff3b30; }
+        .badge-progress{ background: rgba(255,149,0,0.12); color: #ff9500; }
+        .badge-resolved{ background: rgba(52,199,89,0.12); color: #34c759; }
+        .badge-low     { background: rgba(52,199,89,0.12); color: #34c759; }
+        .badge-medium  { background: rgba(255,149,0,0.12); color: #ff9500; }
+        .badge-high    { background: rgba(255,59,48,0.12); color: #ff3b30; }
+        .badge-urgent  { background: rgba(255,59,48,0.18); color: #ff453a; }
+        .ticket-row { display: grid; grid-template-columns: 80px 1fr 100px 90px 90px 100px 120px; gap: 12px; align-items: center; padding: 14px 18px; border-radius: 12px; border-bottom: 1px solid rgba(0,0,0,0.06); font-size: 0.85rem; transition: background 0.15s; cursor: pointer; }
+        .ticket-row:hover { background: rgba(0,122,255,0.04); }
+        .ticket-header { display: grid; grid-template-columns: 80px 1fr 100px 90px 90px 100px 120px; gap: 12px; padding: 8px 18px; font-size: 0.72rem; font-weight: 700; color: #8e8e93; text-transform: uppercase; letter-spacing: 0.5px; }
+        .reply-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .reply-modal.show { display: flex; }
+        .reply-box { background: #fff; border-radius: 20px; padding: 28px; width: 560px; max-width: 95vw; box-shadow: 0 24px 64px rgba(0,0,0,0.18); }
+        .reply-box textarea { width: 100%; border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px; font-family: Inter, sans-serif; font-size: 0.9rem; resize: vertical; min-height: 100px; outline: none; box-sizing: border-box; }
+        .reply-box textarea:focus { border-color: #007aff; }
+        .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+        .filter-chip { padding: 6px 16px; border-radius: 20px; border: 1px solid rgba(0,0,0,0.1); font-size: 0.78rem; font-weight: 600; cursor: pointer; background: transparent; transition: all 0.2s; }
+        .filter-chip.active, .filter-chip:hover { background: #007aff; color: #fff; border-color: #007aff; }
+    </style>
+</head>
+<body>
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        <main class="liquid-main">
+            <header style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <h1 class="vibrant-h1">Support Tickets</h1>
+                    <p style="color: #6e6e73; font-size: 1rem; font-weight: 500;">Manage customer & vendor help requests.</p>
+                </div>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <div id="stat-open" class="liquid-card" style="padding: 12px 20px; text-align: center; min-width: 90px;">
+                        <div style="font-size: 1.6rem; font-weight: 800; color: #ff3b30;" id="cnt-open">—</div>
+                        <div style="font-size: 0.72rem; color: #8e8e93; font-weight: 600;">Open</div>
+                    </div>
+                    <div class="liquid-card" style="padding: 12px 20px; text-align: center; min-width: 90px;">
+                        <div style="font-size: 1.6rem; font-weight: 800; color: #ff9500;" id="cnt-prog">—</div>
+                        <div style="font-size: 0.72rem; color: #8e8e93; font-weight: 600;">In Progress</div>
+                    </div>
+                    <div class="liquid-card" style="padding: 12px 20px; text-align: center; min-width: 90px;">
+                        <div style="font-size: 1.6rem; font-weight: 800; color: #34c759;" id="cnt-res">—</div>
+                        <div style="font-size: 0.72rem; color: #8e8e93; font-weight: 600;">Resolved</div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="liquid-card" style="padding: 20px;">
+                <div style="display:flex; gap:12px; align-items:center; margin-bottom:20px; flex-wrap:wrap;">
+                    <input type="text" id="adminTicketSearchInput" placeholder="Search subject, user..." oninput="applyTicketFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; min-width:200px; outline:none;">
+                    <select id="adminTicketFilterSelect" onchange="applyTicketFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; font-weight:600;">
+                        <option value="all">All Status</option>
+                        <option value="open">Open</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="closed">Closed</option>
+                    </select>
+                    <select id="adminTicketSortSelect" onchange="applyTicketFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; font-weight:600;">
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                    </select>
+                </div>
+
+                <div class="ticket-header">
+                    <span>ID</span><span>Subject</span><span>Category</span><span>Priority</span><span>Status</span><span>User</span><span>Actions</span>
+                </div>
+                <div id="ticket-list"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Reply Modal -->
+    <div class="reply-modal" id="replyModal">
+        <div class="reply-box">
+            <h3 style="margin: 0 0 6px; font-weight: 800;">Reply to Ticket <span id="modal-ticket-id"></span></h3>
+            <p style="color: #6e6e73; font-size: 0.85rem; margin-bottom: 16px;" id="modal-ticket-subject"></p>
+            <textarea id="reply-text" placeholder="Type your response here..."></textarea>
+            <div style="display: flex; gap: 10px; margin-top: 14px; justify-content: flex-end;">
+                <button onclick="closeReply()" style="padding: 10px 20px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.1); background: transparent; cursor: pointer; font-weight: 600; font-family: Inter,sans-serif;">Cancel</button>
+                <button onclick="sendReply()" style="padding: 10px 24px; border-radius: 12px; background: #007aff; color: #fff; border: none; cursor: pointer; font-weight: 700; font-family: Inter,sans-serif;">Send Reply</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        const user = auth.getUser();
+        if (!user || user.role !== 'admin') window.location.href = '../auth/login.html';
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('admin');
+        lucide.createIcons();
+
+        let allTickets = [], currentFilter = 'all', selectedTicketId = null;
+
+        const statusMap  = { open: 'badge-open', in_progress: 'badge-progress', resolved: 'badge-resolved', closed: 'badge-resolved' };
+        const priorityMap = { low: 'badge-low', medium: 'badge-medium', high: 'badge-high', urgent: 'badge-urgent' };
+
+        async function loadTickets() {
+            try {
+                const res = await api.get('/admin/tickets');
+                allTickets = (res.data && res.data.tickets) ? res.data.tickets : [];
+            } catch(e) { allTickets = []; }
+            updateStats();
+            renderTickets(allTickets);
+        }
+
+
+        function updateStats() {
+            document.getElementById('cnt-open').textContent = allTickets.filter(t => t.status === 'open').length;
+            document.getElementById('cnt-prog').textContent = allTickets.filter(t => t.status === 'in_progress').length;
+            document.getElementById('cnt-res').textContent  = allTickets.filter(t => t.status === 'resolved').length;
+        }
+
+        function renderTickets(tickets) {
+            const list = document.getElementById('ticket-list');
+            if (!tickets.length) { list.innerHTML = '<p style="text-align:center;padding:40px;color:#8e8e93;">No tickets found.</p>'; return; }
+            list.innerHTML = tickets.map(t => `
+                <div class="ticket-row">
+                    <span style="font-weight:700;color:#007aff">${t.id}</span>
+                    <span style="font-weight:600">${t.subject}</span>
+                    <span style="text-transform:capitalize;">${t.category}</span>
+                    <span><span class="ticket-badge ${priorityMap[t.priority]||'badge-medium'}">${t.priority}</span></span>
+                    <span><span class="ticket-badge ${statusMap[t.status]||'badge-open'}">${t.status.replace('_',' ')}</span></span>
+                    <span style="color:#6e6e73">${t.user_name}</span>
+                    <div style="display:flex;gap:6px;">
+                        <button onclick="openReply('${t.id}','${t.subject.replace(/'/g,"\\'")}',event)" style="padding:5px 12px;border-radius:8px;border:none;background:#007aff;color:#fff;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;">Reply</button>
+                        <button onclick="markResolved('${t.id}',event)" style="padding:5px 12px;border-radius:8px;border:1px solid rgba(0,0,0,0.1);background:transparent;font-size:0.75rem;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;">Resolve</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterTickets(filter, btn) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            applyTicketFilters();
+        }
+
+        function searchTickets(q) {
+            applyTicketFilters();
+        }
+
+        function applyTicketFilters() {
+            const q = document.getElementById('adminTicketSearchInput').value.toLowerCase();
+            const status = document.getElementById('adminTicketFilterSelect').value;
+            const sort = document.getElementById('adminTicketSortSelect').value;
+
+            let filtered = allTickets.filter(t => {
+                const matchSearch = t.subject.toLowerCase().includes(q) || (t.user_name || '').toLowerCase().includes(q) || String(t.id).toLowerCase().includes(q);
+                const matchStatus = status === 'all' || t.status === status;
+                return matchSearch && matchStatus;
+            });
+
+            if (sort === 'newest') filtered.sort((a, b) => new Date(b.created_at || b.id) - new Date(a.created_at || a.id));
+            else if (sort === 'oldest') filtered.sort((a, b) => new Date(a.created_at || a.id) - new Date(b.created_at || b.id));
+
+            renderTickets(filtered);
+        }
+
+        function openReply(id, subject, e) {
+            e.stopPropagation();
+            selectedTicketId = id;
+            document.getElementById('modal-ticket-id').textContent = id;
+            document.getElementById('modal-ticket-subject').textContent = subject;
+            document.getElementById('reply-text').value = '';
+            document.getElementById('replyModal').classList.add('show');
+        }
+
+        function closeReply() { document.getElementById('replyModal').classList.remove('show'); }
+
+        async function sendReply() {
+            const msg = document.getElementById('reply-text').value.trim();
+            if (!msg) return components.showError('Please write a reply.');
+            try {
+                await api.post(`/admin/tickets/${selectedTicketId}/reply`, { message: msg });
+            } catch(e) { console.error(e); if(typeof components !== "undefined") components.showError("Network exception or protocol verification failed."); }
+            components.showSuccess('Reply sent successfully.');
+            closeReply();
+        }
+
+        async function markResolved(id, e) {
+            e.stopPropagation();
+            const t = allTickets.find(t => t.id === id);
+            if (t) { t.status = 'resolved'; updateStats(); renderTickets(allTickets); }
+            components.showSuccess(`Ticket ${id} marked as resolved.`);
+        }
+
+        loadTickets();
+    </script>
+</body>
+</html>

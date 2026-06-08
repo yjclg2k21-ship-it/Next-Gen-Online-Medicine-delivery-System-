@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Orders | Vendor | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <link rel="stylesheet" href="../assets/css/emergency-alerts.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        
+        .order-tabs-pill {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            background: rgba(255, 255, 255, 0.3);
+            padding: 8px;
+            border-radius: var(--l-card-r);
+            width: fit-content;
+        }
+        
+        .order-pill {
+            padding: 10px 24px;
+            border-radius: 18px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #6e6e73;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .order-pill.active { background: white; color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+
+        .order-strip-card {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: var(--l-card-r);
+            padding: 24px 32px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .order-strip-card:hover { transform: scale(1.01); background: rgba(255, 255, 255, 0.6); }
+
+        .customer-v-pill { display: flex; align-items: center; gap: 24px; }
+        .customer-v-pill .v-avatar {
+            width: 48px; height: 48px; border-radius: var(--l-card-r); background: white;
+            display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; color: var(--primary);
+        }
+
+        .status-badge-v {
+            padding: 6px 14px;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+        }
+
+        /* Emergency Orders Section */
+        .emergency-orders-section {
+            margin-bottom: 24px;
+        }
+
+        .emergency-section-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .emergency-section-header h2 {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #ff3b30;
+            margin: 0;
+        }
+
+        .emergency-section-count {
+            background: #ff3b30;
+            color: #fff;
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 3px 8px;
+            border-radius: 100px;
+        }
+
+        .emergency-order-card {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: var(--l-card-r);
+            padding: 20px 28px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .emergency-order-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .emergency-order-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex: 1;
+        }
+
+        .emergency-order-info .v-avatar {
+            width: 44px; height: 44px; border-radius: var(--l-card-r); background: white;
+            display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.95rem; color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .emergency-order-details h4 {
+            margin: 0 0 4px 0;
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: #1d1d1f;
+        }
+
+        .emergency-order-details p {
+            margin: 0;
+            font-size: 0.8rem;
+            color: #6e6e73;
+            font-weight: 500;
+        }
+
+        .emergency-order-timers {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .emergency-timer-block {
+            text-align: center;
+        }
+
+        .emergency-timer-block label {
+            display: block;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #6e6e73;
+            margin-bottom: 4px;
+        }
+
+        .emergency-timer-value {
+            font-family: "SF Mono", "Fira Code", "Courier New", monospace;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #ff3b30;
+        }
+
+        .emergency-timer-value.normal {
+            color: #34c759;
+        }
+
+        .emergency-timer-value.critical {
+            color: #ff3b30;
+            animation: emergency-pulse-dot 0.333s ease-in-out infinite;
+        }
+
+        .emergency-rider-eta {
+            font-family: "SF Mono", "Fira Code", "Courier New", monospace;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #007aff;
+        }
+
+        .emergency-rider-pending {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #ff9500;
+        }
+
+        .emergency-order-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn-acknowledge {
+            padding: 10px 20px;
+            border-radius: 100px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            border: 2px solid #ff3b30;
+            background: transparent;
+            color: #ff3b30;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-acknowledge:hover {
+            background: #ff3b30;
+            color: #fff;
+        }
+
+        .btn-acknowledge:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-ready-pickup {
+            padding: 10px 20px;
+            border-radius: 100px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            border: none;
+            background: #34c759;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-ready-pickup:hover {
+            background: #2da44e;
+        }
+
+        .btn-ready-pickup:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .emergency-acknowledged-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #34c759;
+            padding: 6px 12px;
+            background: rgba(52, 199, 89, 0.1);
+            border-radius: 100px;
+        }
+
+        .emergency-no-orders {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        
+        <main class="liquid-main">
+            <header style="margin-bottom: 16px;">
+                <h1 class="vibrant-h1">Dispatch Queue</h1>
+                <p style="color: #6e6e73; font-size: 1.2rem; font-weight: 500;">Verify prescriptions and manage order dispatches.</p>
+            </header>
+
+            <!-- Emergency Orders Section (TOP) -->
+            <div class="emergency-orders-section" id="emergency-orders-section" style="display: none;">
+                <div class="emergency-section-header">
+                    <span class="emergency-status-dot"></span>
+                    <h2>Emergency Orders</h2>
+                    <span class="emergency-section-count" id="emergency-count">0</span>
+                </div>
+                <div id="emergency-orders-list">
+                    <!-- Dynamic emergency order cards -->
+                </div>
+            </div>
+
+            <div style="display:flex; gap:12px; align-items:center; margin-bottom:20px; flex-wrap:wrap;">
+                <input type="text" id="vendorOrderSearchInput" placeholder="Search order ID, customer..." oninput="applyVendorOrderFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; min-width:200px; outline:none;">
+                <select id="vendorOrderFilterSelect" onchange="applyVendorOrderFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; font-weight:600;">
+                    <option value="all">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="dispatched">Dispatched</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+                <select id="vendorOrderSortSelect" onchange="applyVendorOrderFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; font-weight:600;">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="amount_high">Amount: High to Low</option>
+                    <option value="amount_low">Amount: Low to High</option>
+                </select>
+            </div>
+
+            <div class="order-tabs-pill" id="order-tabs">
+                <div class="order-pill active" onclick="switchOrderTab(this, 'new')">New (2)</div>
+                <div class="order-pill" onclick="switchOrderTab(this, 'proc')">Processing (2)</div>
+                <div class="order-pill" onclick="switchOrderTab(this, 'disc')">Dispatched (1)</div>
+                <div class="order-pill" onclick="switchOrderTab(this, 'deli')">Delivered (2)</div>
+                <div class="order-pill" onclick="switchOrderTab(this, 'canc')">Cancelled (1)</div>
+            </div>
+
+            <div style="display: grid; gap: 4px;" id="order-list">
+                <!-- Dynamic Orders -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script src="../assets/js/emergency-alerts.js"></script>
+    <script>
+        // Check Vendor Auth
+        const user = auth.getUser();
+        if (!user || user.role !== 'vendor') { window.location.href = '../auth/login.html'; }
+
+        // Load Sidebar
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('vendor');
+        lucide.createIcons();
+
+        let currentOrders = { new: [], proc: [], disc: [], deli: [], canc: [] };
+        let allVendorOrdersRaw = [];
+
+        // =====================================================================
+        // EMERGENCY ORDER HANDLING
+        // =====================================================================
+
+        let emergencyOrders = [];
+        let knownEmergencyIds = new Set();
+        let acknowledgedIds = new Set();
+        let emergencyPollId = null;
+        let countdownInterval = null;
+        let riderEtaPollId = null;
+
+        /**
+         * Start polling for emergency orders every 10 seconds.
+         */
+        function initEmergencyPolling() {
+            emergencyPollId = EmergencyAlerts.startPolling('/vendor/emergency-orders', 10000, handleEmergencyOrdersResponse);
+        }
+
+        /**
+         * Handle the response from GET /vendor/emergency-orders.
+         */
+        function handleEmergencyOrdersResponse(data, error) {
+            if (error) {
+                console.warn('[Emergency] Poll error:', error);
+                return;
+            }
+            if (!data || !data.success) {
+                console.warn('[Emergency] Bad response:', data);
+                return;
+            }
+
+            // Backend returns { emergency_orders: [...], count: N }
+            const orders = (data.data && data.data.emergency_orders) ? data.data.emergency_orders : [];
+            const newOrderIds = orders.map(o => o.order_id);
+
+            // Detect new unacknowledged emergency orders
+            orders.forEach(order => {
+                const isAlreadyAck = order.acknowledgment?.is_acknowledged;
+                if (!knownEmergencyIds.has(order.order_id) && !acknowledgedIds.has(order.order_id) && !isAlreadyAck) {
+                    triggerEmergencyAlert(order);
+                }
+            });
+
+            knownEmergencyIds = new Set(newOrderIds);
+            emergencyOrders = orders;
+
+            renderEmergencyOrders();
+            if (orders.some(o => !o.acknowledgment?.is_acknowledged)) {
+                startCountdownTimer();
+            }
+        }
+
+        /**
+         * Trigger audio alert for a new emergency order.
+         * Plays repeating tone every 10 seconds until acknowledged.
+         * Shows full-screen overlay if audio fails.
+         */
+        function triggerEmergencyAlert(order) {
+            const prepSec = order.preparation_deadline?.remaining_seconds || 300;
+            const orderData = {
+                orderId: order.order_id,
+                customerName: order.customer?.name || 'Patient',
+                items: order.items?.map(i => i.name).join(', ') || 'Emergency Order',
+                slaRemaining: formatPrepTime(prepSec)
+            };
+
+            EmergencyAlerts.startRepeatingAlert(10000, { orderData: orderData });
+        }
+
+        /**
+         * Render emergency orders section.
+         */
+        function renderEmergencyOrders() {
+            const section = document.getElementById('emergency-orders-section');
+            const container = document.getElementById('emergency-orders-list');
+            const countBadge = document.getElementById('emergency-count');
+
+            if (emergencyOrders.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+
+            // Count only active (unacknowledged) orders for the badge
+            const activeCount = emergencyOrders.filter(o => !o.acknowledgment?.is_acknowledged && !acknowledgedIds.has(o.order_id)).length;
+            section.style.display = 'block';
+            countBadge.textContent = emergencyOrders.length;
+            countBadge.style.background = activeCount > 0 ? '#ff3b30' : '#34c759';
+
+            container.innerHTML = emergencyOrders.map(order => {
+                const orderId = order.order_id;
+                const customerName = order.customer?.name || 'Patient';
+                const itemsSummary = order.items?.map(i => `${i.name} ×${i.quantity}`).join(', ') || 'Emergency Order';
+                const prepRemaining = order.preparation_deadline?.remaining_seconds || 0;
+                const isAcknowledged = acknowledgedIds.has(orderId) || order.acknowledgment?.is_acknowledged;
+                const isReady = order.is_ready;
+                const isCritical = prepRemaining > 0 && prepRemaining <= 120;
+                const pulseClass = isAcknowledged ? '' : (isCritical ? 'emergency-pulse-critical' : 'emergency-pulse');
+                const timerClass = isCritical ? 'critical' : (prepRemaining > 180 ? 'normal' : '');
+
+                const riderEtaHtml = order.rider_eta?.minutes
+                    ? `<span class="emergency-rider-eta">${order.rider_eta.minutes} min</span>`
+                    : `<span class="emergency-rider-pending">Awaiting rider assignment</span>`;
+
+                let actionsHtml;
+                if (isReady) {
+                    actionsHtml = `
+                        <span class="emergency-acknowledged-label" style="background:rgba(52,199,89,0.15);color:#34c759;">✓ Ready for Pickup</span>`;
+                } else if (isAcknowledged) {
+                    actionsHtml = `
+                        <span class="emergency-acknowledged-label">✓ Acknowledged</span>
+                        <button class="btn-ready-pickup" onclick="markReadyForPickup(${orderId}, this)">Ready for Pickup</button>`;
+                } else {
+                    actionsHtml = `
+                        <button class="btn-acknowledge" onclick="acknowledgeEmergency(${orderId}, this)">Acknowledge</button>
+                        <button class="btn-ready-pickup" onclick="markReadyForPickup(${orderId}, this)">Ready for Pickup</button>`;
+                }
+
+                const cardOpacity = isReady ? 'opacity:0.65;' : '';
+
+                return `
+                    <div class="emergency-order-card emergency-card ${pulseClass}" id="emergency-card-${orderId}" data-order-id="${orderId}" data-prep-remaining="${prepRemaining}" style="${cardOpacity}">
+                        <div class="emergency-order-card-top">
+                            <div class="emergency-order-info">
+                                <div class="v-avatar">${customerName.charAt(0).toUpperCase()}</div>
+                                <div class="emergency-order-details">
+                                    <h4>
+                                        <span class="emergency-badge">🚨 EMERGENCY</span>
+                                        #ORD-${orderId}
+                                    </h4>
+                                    <p>${customerName} — ${itemsSummary}</p>
+                                    <p style="color:#ff9500;font-size:0.75rem;margin-top:4px;">₹${order.total_amount?.toFixed(2) || '0.00'} • Status: ${order.status?.toUpperCase()}</p>
+                                </div>
+                            </div>
+                            <div class="emergency-order-actions">
+                                ${actionsHtml}
+                            </div>
+                        </div>
+                        <div class="emergency-order-timers">
+                            <div class="emergency-timer-block">
+                                <label>Prep Deadline</label>
+                                <span class="emergency-timer-value ${timerClass}" id="prep-timer-${orderId}">${prepRemaining <= 0 ? 'OVERDUE' : formatPrepTime(prepRemaining)}</span>
+                            </div>
+                            <div class="emergency-timer-block">
+                                <label>Rider ETA</label>
+                                ${riderEtaHtml}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        /**
+         * Format preparation time remaining as M:SS.
+         */
+        function formatPrepTime(seconds) {
+            if (seconds <= 0) return '0:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${String(secs).padStart(2, '0')}`;
+        }
+
+        /**
+         * Start a 1-second countdown interval for preparation deadlines.
+         */
+        function startCountdownTimer() {
+            if (countdownInterval) return;
+
+            countdownInterval = setInterval(() => {
+                emergencyOrders.forEach(order => {
+                    const orderId = order.order_id;
+                    if (order.preparation_deadline && order.preparation_deadline.remaining_seconds > 0) {
+                        order.preparation_deadline.remaining_seconds--;
+                    }
+
+                    const remaining = order.preparation_deadline?.remaining_seconds || 0;
+                    const timerEl = document.getElementById(`prep-timer-${orderId}`);
+                    const cardEl = document.getElementById(`emergency-card-${orderId}`);
+
+                    if (timerEl) {
+                        timerEl.textContent = formatPrepTime(remaining);
+                        timerEl.classList.remove('normal', 'critical');
+                        if (remaining <= 0) {
+                            timerEl.classList.add('critical');
+                            timerEl.textContent = 'OVERDUE';
+                        } else if (remaining <= 120) {
+                            timerEl.classList.add('critical');
+                        } else if (remaining > 180) {
+                            timerEl.classList.add('normal');
+                        }
+                    }
+
+                    if (cardEl && !acknowledgedIds.has(orderId) && !order.acknowledgment?.is_acknowledged) {
+                        if (remaining > 0 && remaining <= 120) {
+                            EmergencyAlerts.applyPulseAnimation(cardEl, 3);
+                        } else if (remaining > 120) {
+                            EmergencyAlerts.applyPulseAnimation(cardEl, 1);
+                        }
+                    }
+                });
+            }, 1000);
+        }
+
+        /**
+         * Acknowledge an emergency order.
+         * Calls POST /orders/{id}/acknowledge-emergency
+         * Stops audio and pulsing, retains red border.
+         */
+        async function acknowledgeEmergency(orderId, btn) {
+            btn.disabled = true;
+            btn.textContent = 'Acknowledging...';
+
+            try {
+                await api.post(`/orders/${orderId}/acknowledge-emergency`);
+
+                EmergencyAlerts.stopAudio();
+                EmergencyAlerts.hideOverlay();
+
+                acknowledgedIds.add(orderId);
+
+                const order = emergencyOrders.find(o => o.order_id === orderId);
+                if (order && order.acknowledgment) order.acknowledgment.is_acknowledged = true;
+
+                const cardEl = document.getElementById(`emergency-card-${orderId}`);
+                if (cardEl) {
+                    EmergencyAlerts.removePulseAnimation(cardEl);
+                }
+
+                renderEmergencyOrders();
+            } catch (err) {
+                btn.disabled = false;
+                btn.textContent = 'Acknowledge';
+                components.showError('Failed to acknowledge emergency order.');
+            }
+        }
+
+        /**
+         * Mark an emergency order as ready for pickup.
+         * Calls POST /orders/{id}/ready-for-pickup
+         */
+        async function markReadyForPickup(orderId, btn) {
+            btn.disabled = true;
+            btn.textContent = 'Updating...';
+
+            try {
+                const res = await api.post(`/orders/${orderId}/ready-for-pickup`);
+
+                if (res.data && res.data.rider_assignment_pending) {
+                    components.showSuccess('Order marked ready. Rider assignment pending.');
+                } else {
+                    components.showSuccess('Order marked ready for pickup. Rider notified.');
+                }
+
+                const order = emergencyOrders.find(o => o.order_id === orderId);
+                if (order) order.is_ready = true;
+
+                renderEmergencyOrders();
+            } catch (err) {
+                btn.disabled = false;
+                btn.textContent = 'Ready for Pickup';
+                components.showError('Failed to mark order as ready.');
+            }
+        }
+
+        // =====================================================================
+        // STANDARD ORDER HANDLING (existing logic)
+        // =====================================================================
+
+        async function loadVendorOrders() {
+            try {
+                components.showLoader();
+                const res = await api.get('/vendor/orders');
+                allVendorOrdersRaw = res.data.orders || [];
+                applyVendorOrderFilters();
+            } catch (err) {
+                console.error(err);
+                components.showError("Failed to sync orders.");
+                document.getElementById('order-list').innerHTML = `<div style="text-align:center; padding: 60px; color: #ff3b30; font-weight: 600;"><i data-lucide="server-crash" style="margin-bottom:12px;opacity:0.6;" size="48"></i><br>Connection to server lost. Please try again.</div>`;
+                lucide.createIcons();
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        function applyVendorOrderFilters() {
+            const q = document.getElementById('vendorOrderSearchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('vendorOrderFilterSelect').value;
+            const sort = document.getElementById('vendorOrderSortSelect').value;
+
+            let filtered = allVendorOrdersRaw.filter(o => {
+                const matchSearch = String(o.id).toLowerCase().includes(q) || (o.customer_name || '').toLowerCase().includes(q);
+                let matchStatus = true;
+                if (statusFilter !== 'all') {
+                    if (statusFilter === 'pending') matchStatus = (o.status === 'placed' || o.status === 'pending_review' || o.status === 'pending');
+                    else if (statusFilter === 'confirmed') matchStatus = (o.status === 'confirmed' || o.status === 'processing');
+                    else if (statusFilter === 'dispatched') matchStatus = (o.status === 'dispatched' || o.status === 'shipped');
+                    else matchStatus = o.status === statusFilter;
+                }
+                return matchSearch && matchStatus;
+            });
+
+            if (sort === 'newest') filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            else if (sort === 'oldest') filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+            else if (sort === 'amount_high') filtered.sort((a, b) => parseFloat(b.total || 0) - parseFloat(a.total || 0));
+            else if (sort === 'amount_low') filtered.sort((a, b) => parseFloat(a.total || 0) - parseFloat(b.total || 0));
+
+            currentOrders = { new: [], proc: [], disc: [], deli: [], canc: [] };
+            filtered.forEach(o => {
+                const mapped = {
+                    id: o.id,
+                    time: new Date(o.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    user: o.customer_name || 'Generic Patient',
+                    initial: (o.customer_name || 'G').charAt(0).toUpperCase(),
+                    loc: o.city || 'Phaltan',
+                    items: o.items_summary || 'Multi-SKU Order',
+                    status: o.status.toUpperCase(),
+                    urg: o.delivery_type === 'Emergency',
+                    rx: o.requires_prescription ? (o.prescription_status === 'approved' ? 'VERIFIED ✓' : 'NEEDS REVIEW ⌛') : 'NOT REQ.'
+                };
+
+                const s = o.status;
+                if (s === 'placed' || s === 'pending_review' || s === 'pending') currentOrders.new.push(mapped);
+                else if (s === 'confirmed' || s === 'processing') currentOrders.proc.push(mapped);
+                else if (s === 'dispatched' || s === 'shipped') currentOrders.disc.push(mapped);
+                else if (s === 'delivered') currentOrders.deli.push(mapped);
+                else if (s === 'cancelled') currentOrders.canc.push(mapped);
+            });
+
+            // Find the currently active tab
+            const activeTab = document.querySelector('.order-pill.active');
+            const activeType = activeTab ? activeTab.getAttribute('onclick').match(/'(\w+)'/)?.[1] || 'new' : 'new';
+            renderOrders(activeType);
+        }
+
+        function updateTabs() {
+            const tabs = document.getElementById('order-tabs').children;
+            tabs[0].innerText = `New (${currentOrders.new.length})`;
+            tabs[1].innerText = `Processing (${currentOrders.proc.length})`;
+            tabs[2].innerText = `Dispatched (${currentOrders.disc.length})`;
+            tabs[3].innerText = `Delivered (${currentOrders.deli.length})`;
+            tabs[4].innerText = `Cancelled (${currentOrders.canc.length})`;
+        }
+
+        function switchOrderTab(el, type) {
+            document.querySelectorAll('.order-pill').forEach(p => p.classList.remove('active'));
+            el.classList.add('active');
+            renderOrders(type);
+        }
+
+        function renderOrders(type) {
+            const container = document.getElementById('order-list');
+            const data = currentOrders[type] || [];
+            updateTabs();
+
+            if (data.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding: 60px; color: #6e6e73; font-weight: 600;">No orders found.</div>`;
+                return;
+            }
+
+            container.innerHTML = data.map(o => `
+                <div class="order-strip-card" style="${o.urg ? 'border-left: 4px solid #ff3b30;' : ''}">
+                    <div style="width: 120px;">
+                        <div style="font-family: monospace; font-weight: 800; color: #1d1d1f; font-size: 0.85rem;">#ORD-${o.id}</div>
+                        <div style="font-size: 0.75rem; color: ${o.urg ? '#ff3b30' : '#6e6e73'}; font-weight: 800; margin-top: 4px;">${o.urg ? '🚨 EMERGENCY' : o.time}</div>
+                    </div>
+                    <div class="customer-v-pill" style="flex: 1;">
+                        <div class="v-avatar">${o.initial}</div>
+                        <div>
+                            <div style="font-weight: 800; color: #1d1d1f;">${o.user}</div>
+                            <div style="font-size: 0.8rem; color: #6e6e73;">${o.loc}</div>
+                        </div>
+                    </div>
+                    <div style="flex: 1; padding: 0 20px;">
+                        <div style="font-weight: 700; font-size: 0.95rem;">${o.items}</div>
+                        <div style="font-size: 0.75rem; color: ${o.rx.includes('✓') ? 'var(--success)' : 'var(--warning)'}; font-weight: 800; margin-top: 4px;">${o.rx}</div>
+                    </div>
+                    <div style="width: 150px;">
+                        <span class="status-badge-v" style="background: rgba(0, 122, 255, 0.1); color: var(--primary);">${o.status}</span>
+                    </div>
+                    <button class="pill-button" style="padding: 10px 24px; font-size: 0.9rem;" onclick="handleDispatch(this, '${o.id}', '${type}')">
+                        ${type === 'new' ? 'Confirm' : (type === 'proc' ? 'Dispatch' : 'View Details')}
+                    </button>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        async function handleDispatch(btn, id, type) {
+            if (type !== 'new' && type !== 'proc') {
+                window.location.href = `../user/order-details.html?id=${id}`;
+                return;
+            }
+
+            const nextStatus = type === 'new' ? 'confirmed' : 'dispatched';
+            btn.innerHTML = 'Updating...';
+            btn.disabled = true;
+
+            try {
+                await api.put(`/vendor/orders/${id}/status`, { status: nextStatus });
+                components.showSuccess(`Order ${id} status updated to ${nextStatus}.`);
+                loadVendorOrders();
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = type === 'new' ? 'Confirm' : 'Dispatch';
+                components.showError("Failed to update status.");
+            }
+        }
+
+        // =====================================================================
+        // INITIALIZATION
+        // =====================================================================
+
+        // Unlock AudioContext on first user gesture (browser autoplay policy)
+        const _unlockAudio = () => {
+            EmergencyAlerts._initAudioContext();
+            document.removeEventListener('click',      _unlockAudio);
+            document.removeEventListener('keydown',    _unlockAudio);
+            document.removeEventListener('touchstart', _unlockAudio);
+        };
+        document.addEventListener('click',      _unlockAudio);
+        document.addEventListener('keydown',    _unlockAudio);
+        document.addEventListener('touchstart', _unlockAudio);
+
+        loadVendorOrders();
+        initEmergencyPolling();
+    </script>
+</body>
+</html>

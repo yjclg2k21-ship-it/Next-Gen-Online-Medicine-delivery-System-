@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet Recharge | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .amount-chips { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .amount-chip { padding: 10px 20px; border-radius: 100px; border: 1px solid rgba(0,0,0,0.1); background: rgba(255,255,255,0.4); font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; }
+        .amount-chip:hover, .amount-chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .pay-tab-bar { display: flex; gap: 4px; background: rgba(0,0,0,0.05); border-radius: 12px; padding: 4px; margin-bottom: 20px; }
+        .pay-tab { flex: 1; padding: 10px; text-align: center; border-radius: 10px; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; color: #6e6e73; }
+        .pay-tab.active { background: white; color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .pay-input { width: 100%; padding: 14px 18px; border: 1px solid rgba(0,0,0,0.08); border-radius: 14px; font-size: 0.95rem; font-weight: 600; outline: none; box-sizing: border-box; background: #f9f9fb; margin-bottom: 12px; transition: border-color 0.2s; }
+        .pay-input:focus { border-color: var(--primary); }
+        .pay-label { font-size: 0.7rem; font-weight: 800; color: #6e6e73; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; display: block; }
+        .balance-card { background: linear-gradient(135deg, #0d9488, #34d399); color: white; border-radius: 16px; padding: 20px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
+        .balance-card .bal-label { font-size: 0.75rem; font-weight: 700; opacity: 0.8; }
+        .balance-card .bal-value { font-size: 2rem; font-weight: 800; }
+    </style>
+</head>
+<body>
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        <main class="liquid-main">
+            <header style="margin-bottom: 20px;">
+                <h1 class="vibrant-h1">Wallet Recharge</h1>
+                <p style="color: #6e6e73; font-size: 1rem; font-weight: 500;">Add funds to your MediMitra wallet for faster checkout.</p>
+            </header>
+
+            <div class="balance-card">
+                <div>
+                    <div class="bal-label">CURRENT BALANCE</div>
+                    <div class="bal-value" id="wallet-balance">₹0.00</div>
+                </div>
+                <i data-lucide="wallet" size="40" style="opacity: 0.6;"></i>
+            </div>
+
+            <div class="liquid-card" style="padding: 24px;">
+                <h3 style="font-weight: 800; margin-bottom: 16px;">Select Amount</h3>
+                <div class="amount-chips">
+                    <div class="amount-chip" onclick="selectAmount(100, this)">₹100</div>
+                    <div class="amount-chip" onclick="selectAmount(200, this)">₹200</div>
+                    <div class="amount-chip" onclick="selectAmount(500, this)">₹500</div>
+                    <div class="amount-chip" onclick="selectAmount(1000, this)">₹1000</div>
+                </div>
+                <label class="pay-label">Or enter custom amount</label>
+                <input type="number" class="pay-input" id="recharge-amount" placeholder="Enter amount (₹)" min="10">
+
+                <h3 style="font-weight: 800; margin: 24px 0 12px;">Payment Method</h3>
+                <div class="pay-tab-bar">
+                    <div class="pay-tab active" onclick="switchPayTab('card', this)">💳 Card</div>
+                    <div class="pay-tab" onclick="switchPayTab('upi', this)">📱 UPI</div>
+                </div>
+
+                <!-- Card Form -->
+                <div id="form-card">
+                    <label class="pay-label">Card Number</label>
+                    <input type="text" class="pay-input" id="card-number" placeholder="•••• •••• •••• ••••" maxlength="19">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div>
+                            <label class="pay-label">Expiry</label>
+                            <input type="text" class="pay-input" id="card-expiry" placeholder="MM/YY" maxlength="5">
+                        </div>
+                        <div>
+                            <label class="pay-label">CVV</label>
+                            <input type="password" class="pay-input" id="card-cvv" placeholder="•••" maxlength="3">
+                        </div>
+                    </div>
+                    <label class="pay-label">Name on Card</label>
+                    <input type="text" class="pay-input" id="card-name" placeholder="Full Name">
+                </div>
+
+                <!-- UPI Form -->
+                <div id="form-upi" style="display: none;">
+                    <div style="text-align: center; margin-bottom: 16px;">
+                        <div id="upi-qr-code" style="display: inline-block; padding: 16px; background: white; border-radius: 16px; border: 2px solid rgba(0,0,0,0.06);"></div>
+                        <p style="font-size: 0.75rem; color: #6e6e73; font-weight: 600; margin-top: 8px;">Scan QR to pay via any UPI app</p>
+                    </div>
+                    <div style="text-align: center; font-size: 0.8rem; color: #8e8e93; font-weight: 600; margin-bottom: 12px;">— OR enter UPI ID manually —</div>
+                    <label class="pay-label">UPI ID</label>
+                    <input type="text" class="pay-input" id="upi-id" placeholder="yourname@upi">
+                </div>
+
+                <button class="pill-button" style="width: 100%; justify-content: center; padding: 16px; font-size: 1rem; margin-top: 20px;" onclick="processRecharge()">
+                    <i data-lucide="zap"></i> <span id="pay-btn-text">Recharge Wallet</span>
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        const user = auth.getUser();
+        if (!user) window.location.href = '../auth/login.html';
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('user');
+        lucide.createIcons();
+
+        let selectedMethod = 'card';
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderMode = urlParams.get('mode') === 'order';
+        const orderId = urlParams.get('id');
+        const orderIdsParam = urlParams.get('ids');
+        const orderAmount = urlParams.get('amount');
+        let orderIds = [];
+
+        if (orderMode) {
+            if (orderIdsParam) {
+                try {
+                    orderIds = JSON.parse(decodeURIComponent(orderIdsParam));
+                } catch (e) {
+                    console.error('Error parsing order IDs:', e);
+                }
+            }
+            if (orderIds.length === 0 && orderId) {
+                orderIds = [orderId];
+            }
+        }
+
+        if (orderMode && orderAmount) {
+            // Order payment mode - show order amount, hide preset chips
+            document.getElementById('recharge-amount').value = orderAmount;
+            document.getElementById('recharge-amount').readOnly = true;
+            document.querySelector('h1').textContent = 'Complete Payment';
+            document.querySelector('header p').textContent = `Pay for Order #${orderIds.join(', #')}`;
+            document.querySelector('.amount-chips').style.display = 'none';
+            document.querySelector('.pay-label').style.display = 'none';
+            document.querySelector('.balance-card .bal-label').textContent = 'ORDER AMOUNT';
+            document.getElementById('wallet-balance').textContent = '₹' + parseFloat(orderAmount).toFixed(2);
+            document.getElementById('pay-btn-text').textContent = 'Pay Bill';
+        }
+
+        async function loadBalance() {
+            try {
+                const res = await api.get('/user/wallet');
+                const balance = res.data ? (res.data.balance || res.data.wallet_balance || 0) : 0;
+                document.getElementById('wallet-balance').textContent = '₹' + parseFloat(balance).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+            } catch (e) { console.warn('Balance fetch failed'); }
+        }
+
+        function selectAmount(amount, el) {
+            document.querySelectorAll('.amount-chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('recharge-amount').value = amount;
+        }
+
+        function switchPayTab(method, el) {
+            selectedMethod = method;
+            document.querySelectorAll('.pay-tab').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('form-card').style.display = method === 'card' ? 'block' : 'none';
+            document.getElementById('form-upi').style.display = method === 'upi' ? 'block' : 'none';
+            if (method === 'upi') generateUPIQR();
+        }
+
+        function generateUPIQR() {
+            const amount = document.getElementById('recharge-amount').value || '0';
+            const upiLink = `upi://pay?pa=medimitra@ybl&pn=MediMitra&am=${amount}&cu=INR&tn=MediMitra+Payment`;
+            const container = document.getElementById('upi-qr-code');
+            container.innerHTML = '';
+            if (typeof QRCode !== 'undefined') {
+                new QRCode(container, { text: upiLink, width: 180, height: 180, colorDark: '#1d1d1f', colorLight: '#ffffff' });
+            }
+        }
+
+        async function processRecharge() {
+            const amount = parseFloat(document.getElementById('recharge-amount').value);
+            if (!amount || amount < 10) { components.showError('Enter a valid amount (min ₹10).'); return; }
+
+            // Validate payment fields
+            if (selectedMethod === 'card') {
+                const cardNum = document.getElementById('card-number').value.replace(/\s/g, '');
+                const expiry = document.getElementById('card-expiry').value;
+                const cvv = document.getElementById('card-cvv').value;
+                const name = document.getElementById('card-name').value.trim();
+
+                if (!cardNum || cardNum.length < 16) { components.showError('Enter a valid 16-digit card number.'); return; }
+                if (!expiry || !/^\d{2}\/\d{2}$/.test(expiry)) { components.showError('Enter expiry in MM/YY format.'); return; }
+                if (!cvv || cvv.length < 3) { components.showError('Enter a valid 3-digit CVV.'); return; }
+                if (!name) { components.showError('Enter the name on card.'); return; }
+            } else if (selectedMethod === 'upi') {
+                const upiId = document.getElementById('upi-id').value.trim();
+                if (!upiId || !upiId.includes('@')) { components.showError('Enter a valid UPI ID (e.g. name@upi).'); return; }
+            }
+
+            try {
+                components.showLoader();
+
+                if (orderMode && orderIds.length > 0) {
+                    // Order payment - call payments/initiate for all order IDs
+                    for (const oId of orderIds) {
+                        await api.post('/payments/initiate', { order_id: oId, amount, method: selectedMethod });
+                    }
+                    components.showSuccess('Payment of ₹' + amount + ' successful!');
+                    setTimeout(() => {
+                        if (orderIds.length > 1) {
+                            window.location.href = 'orders-page.html';
+                        } else {
+                            window.location.href = 'order-details.html?id=' + orderIds[0];
+                        }
+                    }, 1500);
+                } else {
+                    // Wallet recharge
+                    const res = await api.post('/wallet/recharge', { amount, method: selectedMethod });
+                    if (res.success) {
+                        components.showSuccess('₹' + amount + ' added to wallet successfully!');
+                        document.getElementById('recharge-amount').value = '';
+                        document.querySelectorAll('.amount-chip').forEach(c => c.classList.remove('active'));
+                        loadBalance();
+                    }
+                }
+            } catch (err) {
+                components.showError(err.message || 'Payment failed. Please try again.');
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        loadBalance();
+    </script>
+</body>
+</html>

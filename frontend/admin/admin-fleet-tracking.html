@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fleet Tracking | Admin | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <link rel="stylesheet" href="../assets/css/admin-dark.css">
+    <!-- Leaflet Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: 'Plus Jakarta Sans', sans-serif; }
+
+        .fleet-stats-bar {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .fleet-stat-card {
+            background: white;
+            padding: 16px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .fleet-stat-card .stat-label {
+            font-size: 0.7rem;
+            color: #6e6e73;
+            font-weight: 800;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            letter-spacing: 0.05em;
+        }
+        .fleet-stat-card .stat-value {
+            font-size: 1.6rem;
+            font-weight: 800;
+        }
+
+        .fleet-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .filter-btn {
+            padding: 8px 18px;
+            border-radius: 100px;
+            border: 1px solid rgba(0,0,0,0.08);
+            background: rgba(255,255,255,0.6);
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #6e6e73;
+        }
+        .filter-btn:hover { background: white; color: #1d1d1f; }
+        .filter-btn.active { background: #1d1d1f; color: white; border-color: #1d1d1f; }
+
+        .map-container {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: var(--l-card-r);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            overflow: hidden;
+            flex: 1;
+            position: relative;
+        }
+        #fleet-map { height: 100%; width: 100%; border-radius: var(--l-card-r); }
+
+        .rider-marker-green, .rider-marker-orange, .rider-marker-red {
+            display: flex; align-items: center; justify-content: center;
+        }
+        .marker-dot {
+            width: 38px; height: 38px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: white;
+            font-size: 16px;
+            font-weight: 800;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+            border: 3px solid white;
+        }
+        .marker-dot.green { background: #34c759; box-shadow: 0 0 15px rgba(52,199,89,0.4); }
+        .marker-dot.orange { background: #ff9500; box-shadow: 0 0 15px rgba(255,149,0,0.4); }
+        .marker-dot.red { background: #ff3b30; box-shadow: 0 0 15px rgba(255,59,48,0.4); animation: pulse-emergency 1.5s infinite; }
+
+        @keyframes pulse-emergency {
+            0% { box-shadow: 0 0 15px rgba(255,59,48,0.4); }
+            50% { box-shadow: 0 0 25px rgba(255,59,48,0.7); }
+            100% { box-shadow: 0 0 15px rgba(255,59,48,0.4); }
+        }
+
+        .rider-popup { font-family: 'Plus Jakarta Sans', sans-serif; min-width: 180px; }
+        .rider-popup strong { font-size: 0.95rem; color: #1d1d1f; display: block; margin-bottom: 4px; }
+        .rider-popup div { font-size: 0.8rem; color: #6e6e73; margin-bottom: 3px; font-weight: 500; }
+        .popup-status { display: inline-block; padding: 3px 10px; border-radius: 100px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; margin: 4px 0; }
+        .popup-status.emergency { background: rgba(255,59,48,0.1); color: #ff3b30; }
+        .popup-status.in-delivery { background: rgba(255,149,0,0.1); color: #ff9500; }
+        .popup-status.idle { background: rgba(52,199,89,0.1); color: #34c759; }
+        .popup-updated { font-size: 0.7rem !important; color: #8e8e93 !important; margin-top: 6px !important; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 6px; }
+
+        .marker-stale { opacity: 0.5; }
+
+        .liquid-main { display: flex; flex-direction: column; overflow: hidden; }
+    </style>
+</head>
+<body>
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        <main class="liquid-main">
+            <header style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-end;">
+                <div>
+                    <h1 class="vibrant-h1">Live Fleet Tracking</h1>
+                    <p style="color: #6e6e73; font-size: 1.1rem; font-weight: 500;">Real-time GPS positions of all delivery partners.</p>
+                </div>
+                <a href="admin-delivery-agents.html" class="pill-button" style="background: rgba(255,255,255,0.4); color: #1d1d1f; border: 1px solid rgba(0,0,0,0.08); font-size: 0.85rem;">
+                    <i data-lucide="users"></i> Fleet List
+                </a>
+            </header>
+
+            <!-- Stats Bar -->
+            <div class="fleet-stats-bar" id="stats-bar">
+                <div class="fleet-stat-card">
+                    <div class="stat-label">Total Riders</div>
+                    <div class="stat-value" id="stat-total" style="color: #1d1d1f;">0</div>
+                </div>
+                <div class="fleet-stat-card">
+                    <div class="stat-label">Online</div>
+                    <div class="stat-value" id="stat-online" style="color: #34c759;">0</div>
+                </div>
+                <div class="fleet-stat-card">
+                    <div class="stat-label">In Delivery</div>
+                    <div class="stat-value" id="stat-in-delivery" style="color: #ff9500;">0</div>
+                </div>
+                <div class="fleet-stat-card">
+                    <div class="stat-label">Idle</div>
+                    <div class="stat-value" id="stat-idle" style="color: #007aff;">0</div>
+                </div>
+                <div class="fleet-stat-card">
+                    <div class="stat-label">Emergency Active</div>
+                    <div class="stat-value" id="stat-emergency" style="color: #ff3b30;">0</div>
+                </div>
+            </div>
+
+            <!-- Filter Controls -->
+            <div class="fleet-controls">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="online">Online</button>
+                <button class="filter-btn" data-filter="emergency">Emergency</button>
+                <button class="filter-btn" data-filter="idle">Idle</button>
+                <div style="margin-left: auto; font-size: 0.75rem; color: #8e8e93; font-weight: 600;">
+                    <span id="last-refresh">—</span> · Auto-refresh 15s
+                </div>
+            </div>
+
+            <!-- Map -->
+            <div class="map-container">
+                <div id="fleet-map"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        // Auth check
+        const user = auth.getUser();
+        if (!user || user.role !== 'admin') { window.location.href = '../auth/login.html'; }
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('admin');
+        lucide.createIcons();
+
+        // ─── State ───────────────────────────────────────────────────────────
+        const state = {
+            map: null,
+            markers: {},
+            allRiders: [],
+            activeFilter: 'all',
+            pollInterval: null
+        };
+
+        // ─── Initialize Map ──────────────────────────────────────────────────
+        function initMap() {
+            state.map = L.map('fleet-map', { zoomControl: true }).setView([17.9868, 74.4379], 13);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', {
+                attribution: '&copy; CartoDB'
+            }).addTo(state.map);
+        }
+
+        // ─── Marker Icon Factory ─────────────────────────────────────────────
+        function createColoredIcon(type) {
+            const symbols = { green: '●', orange: '🚚', red: '⚠' };
+            return L.divIcon({
+                className: `rider-marker-${type}`,
+                html: `<div class="marker-dot ${type}">${symbols[type]}</div>`,
+                iconSize: [38, 38],
+                iconAnchor: [19, 19],
+                popupAnchor: [0, -20]
+            });
+        }
+
+        // ─── Popup Builder ───────────────────────────────────────────────────
+        function createRiderPopup(rider) {
+            const statusLabel = rider.is_emergency && rider.current_order_id ? 'EMERGENCY' :
+                                rider.current_order_id ? 'In Delivery' : 'Idle';
+            const statusClass = rider.is_emergency && rider.current_order_id ? 'emergency' :
+                                rider.current_order_id ? 'in-delivery' : 'idle';
+
+            const orderInfo = rider.current_order_id
+                ? `<div>📦 Order: #MM-ORD-${rider.current_order_id}</div>
+                   <div>📏 Distance: ${rider.distance_to_dest !== null ? rider.distance_to_dest.toFixed(1) : '—'} km</div>
+                   <div>⏱ ETA: ${rider.eta_minutes || '—'} min</div>`
+                : '<div>No active order</div>';
+
+            const lastUpdated = rider.last_updated
+                ? new Date(rider.last_updated).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+                : 'Unknown';
+
+            return `
+                <div class="rider-popup">
+                    <strong>${rider.name}</strong>
+                    <div>📞 ${rider.phone || 'N/A'}</div>
+                    <div class="popup-status ${statusClass}">${statusLabel}</div>
+                    ${orderInfo}
+                    <div class="popup-updated">Last updated: ${lastUpdated}</div>
+                </div>
+            `;
+        }
+
+        // ─── Check if location is stale (>5 min) ────────────────────────────
+        function isStale(lastUpdated) {
+            if (!lastUpdated) return true;
+            const diff = (Date.now() - new Date(lastUpdated).getTime()) / 1000;
+            return diff > 300; // 5 minutes
+        }
+
+        // ─── Render/Update Markers ───────────────────────────────────────────
+        function renderMarkers(riders) {
+            // Remove markers for riders no longer in dataset
+            const currentIds = new Set(riders.map(r => r.id));
+            Object.keys(state.markers).forEach(id => {
+                if (!currentIds.has(parseInt(id))) {
+                    state.map.removeLayer(state.markers[id]);
+                    delete state.markers[id];
+                }
+            });
+
+            riders.forEach(rider => {
+                // Skip riders without GPS coordinates
+                if (!rider.latitude || !rider.longitude) return;
+
+                const icon = createColoredIcon(rider.marker_type);
+                const stale = isStale(rider.last_updated);
+
+                if (state.markers[rider.id]) {
+                    // Update existing marker position (smooth)
+                    state.markers[rider.id].setLatLng([rider.latitude, rider.longitude]);
+                    state.markers[rider.id].setIcon(icon);
+                    state.markers[rider.id].setOpacity(stale ? 0.5 : 1);
+                    // Update popup content
+                    state.markers[rider.id].setPopupContent(createRiderPopup(rider));
+                } else {
+                    // Create new marker
+                    const marker = L.marker([rider.latitude, rider.longitude], {
+                        icon: icon,
+                        opacity: stale ? 0.5 : 1
+                    })
+                    .bindPopup(createRiderPopup(rider))
+                    .addTo(state.map);
+                    state.markers[rider.id] = marker;
+                }
+            });
+        }
+
+        // ─── Update Stats Bar ────────────────────────────────────────────────
+        function updateStatsBar(stats) {
+            document.getElementById('stat-total').textContent = stats.total || 0;
+            document.getElementById('stat-online').textContent = stats.online || 0;
+            document.getElementById('stat-in-delivery').textContent = stats.in_delivery || 0;
+            document.getElementById('stat-idle').textContent = stats.idle || 0;
+            document.getElementById('stat-emergency').textContent = stats.emergency_active || 0;
+        }
+
+        // ─── Fetch Fleet Data ────────────────────────────────────────────────
+        async function fetchFleetData(filter) {
+            try {
+                const res = await api.get(`/admin/fleet/live?filter=${filter}`);
+                const { riders, stats } = res.data;
+                state.allRiders = riders;
+                renderMarkers(riders);
+                updateStatsBar(stats);
+                document.getElementById('last-refresh').textContent = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            } catch (err) {
+                console.error('Fleet data fetch failed:', err);
+                // Retain last known positions on map
+            }
+        }
+
+        // ─── Filter Handling ─────────────────────────────────────────────────
+        function applyFilter(filterType) {
+            state.activeFilter = filterType;
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-filter="${filterType}"]`).classList.add('active');
+            fetchFleetData(filterType);
+        }
+
+        // ─── Polling ─────────────────────────────────────────────────────────
+        function startPolling() {
+            state.pollInterval = setInterval(() => {
+                fetchFleetData(state.activeFilter);
+            }, 15000);
+        }
+
+        function stopPolling() {
+            if (state.pollInterval) {
+                clearInterval(state.pollInterval);
+                state.pollInterval = null;
+            }
+        }
+
+        // ─── Event Listeners ─────────────────────────────────────────────────
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => applyFilter(btn.dataset.filter));
+        });
+
+        // Cleanup on page leave
+        window.addEventListener('beforeunload', stopPolling);
+
+        // ─── Initialize ──────────────────────────────────────────────────────
+        initMap();
+        fetchFleetData('all');
+        startPolling();
+    </script>
+</body>
+</html>

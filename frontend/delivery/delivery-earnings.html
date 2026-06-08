@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yield Analytics | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        
+        .e-hero {
+            background: linear-gradient(135deg, #FF9500, #FFCC00);
+            color: white; border-radius: var(--l-card-r); padding: var(--l-card-p);
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 16px; position: relative; overflow: hidden;
+        }
+        .e-hero::after { content: '💰'; position: absolute; font-size: 10rem; opacity: 0.1; right: -20px; bottom: -20px; }
+
+        .e-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 16px; }
+        
+        .e-card {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: var(--l-card-r); padding: var(--l-card-p);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .e-table { width: 100%; border-collapse: separate; border-spacing: 0 12px; }
+        .e-table th { text-align: left; color: #6e6e73; font-size: 0.75rem; text-transform: uppercase; font-weight: 800; padding: 0 16px; }
+        .e-table td { background: white; padding: 24px 16px; font-weight: 700; color: #1d1d1f; }
+        .e-table tr td:first-child { border-radius: var(--l-card-r) 0 0 20px; }
+        .e-table tr td:last-child { border-radius: 0 20px 20px 0; }
+    </style>
+</head>
+<body>
+    
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        
+        <main class="liquid-main">
+            <header style="margin-bottom: 16px;">
+                <h1 class="vibrant-h1">Yield Analytics</h1>
+                <p style="color: #6e6e73; font-size: 1.2rem; font-weight: 500;">Aggregated earnings from pharmaceutical distribution dispatches.</p>
+            </header>
+
+            <div class="e-hero">
+                <div>
+                    <h2 style="font-size: 2.5rem; font-weight: 900; margin-bottom: 12px;">Total Wallet Liquid</h2>
+                    <p style="font-size: 1.1rem; font-weight: 500; opacity: 0.9;" id="pending-payout">Available for instant withdrawal to clinical node.</p>
+                </div>
+                <div style="display:flex; gap:12px;">
+                    <div style="background: rgba(255,255,255,0.1); padding: 24px; border-radius: var(--l-card-r); text-align: right; backdrop-filter: blur(10px); border:1px solid rgba(255,255,255,0.2);">
+                        <div style="font-size: 0.7rem; font-weight: 800; opacity: 0.8; margin-bottom: 8px; color:white;">CASH IN HAND (COD)</div>
+                        <div style="font-size: 2rem; font-weight: 900; color:white;" id="cash-hand">₹0.00</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.2); padding: 24px; border-radius: var(--l-card-r); text-align: right; backdrop-filter: blur(10px);">
+                        <div style="font-size: 0.7rem; font-weight: 800; opacity: 0.8; margin-bottom: 8px;">NET SURPLUS</div>
+                        <div style="font-size: 2.5rem; font-weight: 900;" id="wallet-total">₹0.00</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="e-grid">
+                <div class="e-card">
+                    <h3 style="font-weight: 800; margin-bottom: 16px;">Trip Logistics</h3>
+                    <div style="display:flex; gap:12px; align-items:center; margin-bottom:16px; flex-wrap:wrap;">
+                        <input type="text" id="earningsSearchInput" placeholder="Search order ID..." oninput="applyEarningsFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; min-width:160px; outline:none;">
+                        <select id="earningsSortSelect" onchange="applyEarningsFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; font-weight:600;">
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                            <option value="amount_high">Amount: High to Low</option>
+                            <option value="amount_low">Amount: Low to High</option>
+                        </select>
+                    </div>
+                    <table class="e-table">
+                        <thead>
+                            <tr><th>Dispatch ID</th><th>Yield</th><th>Time</th></tr>
+                        </thead>
+                        <tbody id="earnings-table-body">
+                            <tr><td colspan="3" style="text-align:center;">Loading audit logs...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="e-card" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                    <i data-lucide="zap" size="48" style="color: var(--warning); margin-bottom: 16px;"></i>
+                    <h3 style="font-weight: 800; font-size: 1.5rem; margin-bottom: 12px;">Incentive Surge</h3>
+                    <p style="color: #6e6e73; font-weight: 600; margin-bottom: 16px;" id="incentive-desc">Calculating dispatch bonuses...</p>
+                    <div style="width: 100%; height: 12px; background: rgba(0,0,0,0.05); border-radius: var(--l-card-r); overflow: hidden;">
+                        <div style="width: 0%; height: 100%; background: var(--warning); border-radius: var(--l-card-r);" id="incentive-progress"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 24px;">
+                <button class="pill-button" style="padding: 24px 40px; font-size: 1rem;"><i data-lucide="download"></i> Instant Withdrawal</button>
+                <button class="pill-button" style="background: white; color: black; border: 1px solid rgba(0,0,0,0.1); padding: 24px 40px; font-size: 1rem;">View Detailed Audit</button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        // Check Auth
+        const user = auth.getUser();
+        if (!user || user.role !== 'delivery') window.location.href = '../auth/login.html';
+
+        // Load Sidebar
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('delivery');
+        lucide.createIcons();
+
+        let allEarningsData = [];
+
+        async function loadEarnings() {
+            try {
+                components.showLoader();
+                const res = await api.get('/delivery/earnings');
+                const data = res.data;
+
+                // Update Hero Stats
+                document.getElementById('wallet-total').textContent = `₹${data.this_month.toLocaleString()}`;
+                document.getElementById('cash-hand').textContent = `₹${(data.cash_in_hand || 0).toLocaleString()}`;
+                
+                // Update Payout Status
+                document.getElementById('pending-payout').innerHTML = `Available for instant withdrawal: <b>₹${data.pending_payout.toFixed(2)}</b>`;
+
+                // Store daily breakdown for filtering
+                allEarningsData = data.daily_breakdown || [];
+                applyEarningsFilters();
+
+                // Calculate Progress for Incentive (Mock logic for UI visual but using real dispatch count)
+                const totalDispatches = allEarningsData.reduce((sum, d) => sum + Number(d.dispatches), 0);
+                const progress = Math.min((totalDispatches / 10) * 100, 100);
+                document.getElementById('incentive-progress').style.width = `${progress}%`;
+                document.getElementById('incentive-desc').innerText = totalDispatches >= 10 
+                    ? "Clinical bonus unlocked!" 
+                    : `Complete ${10 - totalDispatches} more dispatches to unlock ₹500 bonus.`;
+
+            } catch (err) {
+                console.error(err);
+                components.showError("Earnings synchronization failed.");
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        function applyEarningsFilters() {
+            const q = document.getElementById('earningsSearchInput').value.toLowerCase();
+            const sort = document.getElementById('earningsSortSelect').value;
+
+            let filtered = allEarningsData.filter(day => {
+                return String(day.dispatches).includes(q) || (day.day || '').toLowerCase().includes(q) || String(day.yield).includes(q);
+            });
+
+            if (sort === 'newest') filtered.sort((a, b) => new Date(b.day) - new Date(a.day));
+            else if (sort === 'oldest') filtered.sort((a, b) => new Date(a.day) - new Date(b.day));
+            else if (sort === 'amount_high') filtered.sort((a, b) => parseFloat(b.yield) - parseFloat(a.yield));
+            else if (sort === 'amount_low') filtered.sort((a, b) => parseFloat(a.yield) - parseFloat(b.yield));
+
+            renderEarningsTable(filtered);
+        }
+
+        function renderEarningsTable(data) {
+            const tbody = document.getElementById('earnings-table-body');
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:40px; color:#8e8e93;">No historical yields recorded.</td></tr>';
+            } else {
+                tbody.innerHTML = data.map(day => `
+                    <tr>
+                        <td>${day.dispatches} Dispatches</td>
+                        <td>₹${Number(day.yield).toFixed(2)}</td>
+                        <td>${day.day}</td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        async function requestWithdrawal() {
+            // Check pending payout balance before showing prompt
+            const pendingText = document.getElementById('pending-payout').textContent || '';
+            const match = pendingText.match(/₹([\d,.]+)/);
+            const pendingBalance = match ? parseFloat(match[1].replace(/,/g, '')) : 0;
+
+            if (pendingBalance <= 0) {
+                components.showError("No pending balance available for withdrawal.");
+                return;
+            }
+
+            const amount = await components.prompt("Request Withdrawal", `Enter amount to withdraw (Available: ₹${pendingBalance.toLocaleString()}):`, "", "Withdraw");
+            if (!amount || isNaN(amount)) return;
+
+            const numAmount = parseFloat(amount);
+            if (numAmount <= 0) { components.showError("Enter a valid amount."); return; }
+            if (numAmount > pendingBalance) {
+                components.showError(`Amount exceeds your available balance of ₹${pendingBalance.toLocaleString()}.`);
+                return;
+            }
+
+            try {
+                components.showLoader();
+                const res = await api.post('/delivery/payout/request', { amount: numAmount });
+                if (res.success) {
+                    components.showSuccess("Withdrawal request of ₹" + numAmount + " submitted.");
+                    await loadEarnings();
+                }
+            } catch (err) {
+                components.showError("Withdrawal failed: " + err.message);
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        // Add onclick to button
+        document.querySelector('.pill-button[i-data-lucide="download"]')?.addEventListener('click', requestWithdrawal);
+        // Fallback since lucide icons are applied after
+        document.querySelectorAll('.pill-button').forEach(btn => {
+            if (btn.innerText.includes('Instant Withdrawal')) {
+                btn.onclick = requestWithdrawal;
+            }
+        });
+
+        loadEarnings();
+    </script>
+</body>
+</html>

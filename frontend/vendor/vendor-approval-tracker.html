@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medicine Approval Tracker | Vendor | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .tracker-item { background: #fff; border-radius: 20px; padding: 20px; margin-bottom: 12px; display: flex; align-items: center; gap: 20px; border: 1px solid rgba(0,0,0,0.05); }
+        .status-pill { padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
+        .status-pending { background: rgba(255,149,0,0.1); color: #ff9500; }
+        .status-approved { background: rgba(52,199,89,0.1); color: #34c759; }
+        .status-rejected { background: rgba(255,59,48,0.1); color: #ff3b30; }
+        .med-icon { width: 48px; height: 48px; border-radius: 14px; background: #fbfbfd; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+        .filter-active { background: #007aff !important; color: #fff !important; border-color: #007aff !important; }
+    </style>
+</head>
+<body>
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        <main class="liquid-main">
+            <header style="margin-bottom:24px;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div>
+                        <h1 class="vibrant-h1">Medicine Approvals</h1>
+                        <p style="color:#6e6e73; font-size:1rem; font-weight:500;">Track the review status of your submitted catalog items.</p>
+                    </div>
+                </div>
+            </header>
+
+            <div class="liquid-card" style="padding:24px;">
+                <div style="display:flex; gap:12px; margin-bottom:24px; align-items:center; justify-content:space-between;" id="filter-bar">
+                    <div style="display:flex; gap:12px;">
+                        <button class="pill-button filter-active" onclick="filterMeds('all', this)">All</button>
+                        <button class="pill-button" style="background:rgba(0,0,0,0.05); color:#1d1d1f;" onclick="filterMeds('pending', this)" id="btn-pending">Pending (—)</button>
+                        <button class="pill-button" style="background:rgba(0,0,0,0.05); color:#1d1d1f;" onclick="filterMeds('approved', this)" id="btn-approved">Approved (—)</button>
+                        <button class="pill-button" style="background:rgba(0,0,0,0.05); color:#1d1d1f;" onclick="filterMeds('rejected', this)" id="btn-rejected">Rejected (—)</button>
+                    </div>
+                    <button class="pill-button" style="background:#007aff; color:#fff;" onclick="location.href='vendor-medicine-form.html'"><i data-lucide="plus" style="width:16px;height:16px;"></i> Submit New</button>
+                </div>
+
+                <div id="tracker-list">
+                    <p style="text-align:center; color:#8e8e93; padding:40px;">Loading medicines...</p>
+                </div>
+
+                <div style="margin-top:24px; padding:20px; background:rgba(0,0,0,0.02); border-radius:16px; border:1px solid rgba(0,0,0,0.04); display:flex; align-items:center; gap:16px;">
+                    <i data-lucide="info" style="color:#007aff;"></i>
+                    <p style="font-size:0.85rem; color:#6e6e73; font-weight:500;">Administrators review submissions every 60 minutes. If your item is rejected, please check the 'Notes' in the medicine edit form and re-submit.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        const user = auth.getUser();
+        if (!user || user.role !== 'vendor') window.location.href = '../auth/login.html';
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('vendor');
+        lucide.createIcons();
+
+        let allMeds = [];
+
+        async function loadMeds() {
+            try {
+                components.showLoader();
+                const res = await api.get('/vendor/medicines');
+                allMeds = res.data.medicines || res.data || [];
+
+                // Update filter counts
+                const pending = allMeds.filter(m => m.approval_status === 'pending').length;
+                const approved = allMeds.filter(m => m.approval_status === 'approved').length;
+                const rejected = allMeds.filter(m => m.approval_status === 'rejected').length;
+                document.getElementById('btn-pending').textContent = `Pending (${pending})`;
+                document.getElementById('btn-approved').textContent = `Approved (${approved})`;
+                document.getElementById('btn-rejected').textContent = `Rejected (${rejected})`;
+
+                renderMeds(allMeds);
+            } catch (err) {
+                console.error(err);
+                document.getElementById('tracker-list').innerHTML = '<p style="text-align:center; color:#ff3b30; padding:40px;">Failed to load medicines.</p>';
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        function renderMeds(list) {
+            const el = document.getElementById('tracker-list');
+            if (list.length === 0) {
+                el.innerHTML = '<p style="text-align:center; color:#8e8e93; padding:40px;">No medicines found. Submit your first medicine to see it here.</p>';
+                return;
+            }
+
+            const icons = ['💊', '🩹', '🧴', '💉', '🩺', '🧬'];
+            el.innerHTML = list.map((m, i) => {
+                const status = m.approval_status || 'pending';
+                const statusClass = status === 'approved' ? 'status-approved' : (status === 'rejected' ? 'status-rejected' : 'status-pending');
+                const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
+                const date = m.created_at ? new Date(m.created_at).toLocaleDateString('en-US', {day:'2-digit', month:'short', year:'numeric'}) : '—';
+                const icon = icons[i % icons.length];
+
+                const hasImage = m.image && m.image !== 'null' && m.image !== '';
+                const imgSrc = hasImage ? `../assets/images/medicines/${m.image}` : '';
+                const iconHtml = hasImage 
+                    ? `<img src="${imgSrc}" style="width:48px; height:48px; border-radius:14px; object-fit:cover;" onerror="this.outerHTML='<div class=\\'med-icon\\'>${icon}</div>'">`
+                    : `<div class="med-icon">${icon}</div>`;
+
+                let subtext = '';
+                if (status === 'approved') subtext = 'Added to Public Storefront';
+                else if (status === 'rejected') subtext = m.rejection_note || 'Review notes available';
+                else subtext = 'Awaiting admin review';
+
+                return `
+                    <div class="tracker-item">
+                        ${iconHtml}
+                        <div style="flex:1;">
+                            <div style="font-weight:800; font-size:1.1rem; margin-bottom:2px;">${m.name}</div>
+                            <div style="font-size:0.85rem; color:#8e8e93; font-weight:600;">Submitted: ${date} · ₹${parseFloat(m.price || 0).toFixed(2)}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <span class="status-pill ${statusClass}">${statusLabel}</span>
+                            <div style="font-size:0.75rem; color:${status === 'rejected' ? '#ff3b30' : '#8e8e93'}; margin-top:6px; font-weight:${status === 'rejected' ? '700' : '500'};">${subtext}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterMeds(filter, btn) {
+            document.querySelectorAll('#filter-bar button:not(:last-child)').forEach(b => {
+                b.classList.remove('filter-active');
+                b.style.background = 'rgba(0,0,0,0.05)';
+                b.style.color = '#1d1d1f';
+            });
+            btn.classList.add('filter-active');
+            btn.style.background = '';
+            btn.style.color = '';
+
+            if (filter === 'all') renderMeds(allMeds);
+            else renderMeds(allMeds.filter(m => m.approval_status === filter));
+        }
+
+        loadMeds();
+    </script>
+</body>
+</html>

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendor Management | Admin | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <link rel="stylesheet" href="../assets/css/admin-dark.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .vendor-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; overflow-y: auto; max-height: calc(100vh - 200px); padding-bottom: 40px; }
+        .vendor-card { background: rgba(255, 255, 255, 0.4); border-radius: var(--l-card-r); padding: var(--l-card-p); border: 1px solid rgba(255, 255, 255, 0.5); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); position: relative; }
+        .vendor-card:hover { background: rgba(255, 255, 255, 0.6); transform: translateY(-5px); }
+        .vendor-logo { width: 48px; height: 48px; background: rgba(255, 255, 255, 0.5); border-radius: var(--l-card-r); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; margin-bottom: 20px; border: 1px solid rgba(255, 255, 255, 0.3); }
+        .kyc-status { position: absolute; top: 32px; right: 32px; font-size: 0.7rem; font-weight: 800; padding: 6px 12px; border-radius: 100px; letter-spacing: 0.05em; }
+        .kyc-verified { background: rgba(52, 199, 89, 0.1); color: var(--success); }
+        .kyc-pending { background: rgba(255, 149, 0, 0.1); color: var(--warning); }
+        .kyc-suspended { background: rgba(255, 59, 48, 0.1); color: var(--danger); }
+        .vendor-info h3 { font-size: 1.25rem; font-weight: 700; margin-bottom: 8px; color: #1d1d1f; }
+        .vendor-info p { font-size: 0.9rem; color: #6e6e73; margin-bottom: 16px; line-height: 1.5; }
+        .vendor-stats { display: grid; grid-template-columns: 1fr 1fr; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.3); gap: 24px; }
+        .v-stat .val { font-weight: 800; font-size: 1.1rem; display: block; color: #1d1d1f; }
+        .v-stat .lbl { font-size: 0.75rem; color: #6e6e73; text-transform: uppercase; font-weight: 700; }
+    </style>
+</head>
+<body>
+    <div class="squircle-card">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        <main class="liquid-main">
+            <header style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16px;">
+                <div>
+                    <h1 class="vibrant-h1">Pharmacy Network</h1>
+                    <p style="color: #6e6e73; font-size: 1.2rem; font-weight: 500;">Manage pharmaceutical vendors and vetting protocols.</p>
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    <div style="background: rgba(255,255,255,0.4); border-radius: var(--l-card-r); padding: var(--l-btn-p); display: flex; align-items: center; gap: 12px; border: 1px solid rgba(255,255,255,0.3);">
+                        <i data-lucide="search" size="18" style="color: #6e6e73;"></i>
+                        <input type="text" id="vendor-search" placeholder="Search pharmacy..." style="background: transparent; border: none; outline: none; font-size: 0.95rem; font-weight: 600;">
+                    </div>
+                    <select id="vendor-status-filter" onchange="applyVendorFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; font-weight:600; background:rgba(255,255,255,0.4);">
+                        <option value="all">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive/Suspended</option>
+                    </select>
+                    <button class="pill-button" onclick="loadVendors()"><i data-lucide="refresh-cw"></i></button>
+                </div>
+            </header>
+
+            <div class="vendor-grid" id="vendor-list">
+                <!-- Dynamic Content -->
+            </div>
+        </main>
+    </div>
+
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        const user = auth.getUser();
+        if (!user || user.role !== 'admin') { window.location.href = '../auth/login.html'; }
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('admin');
+        lucide.createIcons();
+
+        let allVendors = [];
+
+        async function loadVendors() {
+            try {
+                components.showLoader();
+                const data = await api.get('/admin/vendors');
+                allVendors = data.data.vendors;
+                renderVendors(allVendors);
+            } catch (err) {
+                console.error(err);
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        function renderVendors(vendors) {
+            const container = document.getElementById('vendor-list');
+            if (!vendors || vendors.length === 0) {
+                container.innerHTML = '<div style="padding:60px; text-align:center; color:#8e8e93; font-weight:600; grid-column: 1 / -1;">No registered pharmacy partners found.</div>';
+                return;
+            }
+            container.innerHTML = vendors.map(v => {
+                const statusClass = v.status === 'active' || v.status == 1 ? 'kyc-verified' : (v.status === 'pending' ? 'kyc-pending' : 'kyc-suspended');
+                const statusLabel = v.status === 'active' || v.status == 1 ? 'VERIFIED' : (v.status === 'pending' ? 'PENDING' : 'SUSPENDED');
+                const isActive = v.status === 'active' || v.status == 1;
+
+                return `
+                    <div class="vendor-card">
+                        <span class="kyc-status ${statusClass}">${statusLabel}</span>
+                        <div class="vendor-logo">🏥</div>
+                        <div class="vendor-info">
+                            <h3>${v.name}</h3>
+                            <p>${v.address || 'Address verification in progress'}</p>
+                        </div>
+                        <div class="vendor-stats">
+                            <div class="v-stat">
+                                <span class="val">${v.orders || 0}</span>
+                                <span class="lbl">Fulfillment</span>
+                            </div>
+                            <div class="v-stat">
+                                <span class="val">${v.id}</span>
+                                <span class="lbl">Node ID</span>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:10px; margin-top:24px;">
+                            <button class="pill-button" style="flex:1; background: ${isActive ? 'rgba(0,0,0,0.05)' : 'var(--success)'}; color: ${isActive ? 'black' : 'white'}; font-size:0.85rem;" onclick="handleVendorAction(${v.id}, '${isActive ? 'suspend' : 'approve'}')">
+                                ${isActive ? 'Suspend' : 'Approve'}
+                            </button>
+                            <button class="pill-button btn-outline" style="padding:10px;" onclick="window.location.href='admin-vendor-form.html?id=${v.id}'"><i data-lucide="edit-3" size="16"></i></button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        async function handleVendorAction(id, action) {
+            const confirmed = await components.confirm(
+                action === 'approve' ? 'Approve Vendor' : 'Suspend Vendor',
+                `Are you sure you want to ${action} this pharmacy partner?`,
+                action === 'approve' ? 'Yes, Approve' : 'Yes, Suspend'
+            );
+            if (!confirmed) return;
+
+            try {
+                components.showLoader();
+                await api.post(`/admin/vendors/${id}/${action}`);
+                components.showSuccess(`Pharmacy node ${action}ed successfully.`);
+                loadVendors();
+            } catch (err) { console.error(err); } finally { components.hideLoader(); }
+        }
+
+        document.getElementById('vendor-search').addEventListener('input', (e) => {
+            applyVendorFilters();
+        });
+
+        function applyVendorFilters() {
+            const q = (document.getElementById('vendor-search').value || '').toLowerCase();
+            const statusFilter = document.getElementById('vendor-status-filter').value;
+
+            let filtered = allVendors.filter(v => {
+                const matchesSearch = !q || v.name.toLowerCase().includes(q) || (v.email && v.email.toLowerCase().includes(q)) || (v.address && v.address.toLowerCase().includes(q));
+                const isActive = v.status === 'active' || v.status == 1;
+                const matchesStatus = statusFilter === 'all' || (statusFilter === 'active' && isActive) || (statusFilter === 'inactive' && !isActive);
+                return matchesSearch && matchesStatus;
+            });
+            renderVendors(filtered);
+        }
+
+        loadVendors();
+    </script>
+</body>
+</html>

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payout Management | Admin | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <link rel="stylesheet" href="../assets/css/admin-dark.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .tab-bar { display: flex; gap: 4px; background: rgba(0,0,0,0.06); border-radius: 12px; padding: 4px; margin-bottom: 20px; width: fit-content; }
+        .tab-btn { padding: 8px 20px; border-radius: 10px; border: none; background: transparent; font-weight: 600; font-size: 0.85rem; cursor: pointer; font-family: Inter,sans-serif; color: #6e6e73; transition: all 0.2s; }
+        .tab-btn.active { background: #fff; color: #1d1d1f; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .payout-row { display: grid; grid-template-columns: 1fr 120px 140px 100px 180px; gap: 12px; align-items: center; padding: 14px 18px; border-radius: 12px; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 0.85rem; }
+        .payout-row:hover { background: rgba(0,122,255,0.03); }
+        .payout-header { display: grid; grid-template-columns: 1fr 120px 140px 100px 180px; gap: 12px; padding: 8px 18px; font-size: 0.72rem; font-weight: 700; color: #8e8e93; text-transform: uppercase; }
+        .status-badge { padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; }
+        .badge-pending { background: rgba(255,149,0,0.12); color: #ff9500; }
+        .badge-approved { background: rgba(52,199,89,0.12); color: #34c759; }
+        .badge-rejected { background: rgba(255,59,48,0.12); color: #ff3b30; }
+        .btn-approve { padding: 6px 14px; border-radius: 8px; background: #34c759; color: #fff; border: none; font-weight: 700; font-size: 0.75rem; cursor: pointer; font-family: Inter,sans-serif; }
+        .btn-reject { padding: 6px 14px; border-radius: 8px; background: #ff3b30; color: #fff; border: none; font-weight: 700; font-size: 0.75rem; cursor: pointer; font-family: Inter,sans-serif; }
+        .btn-approve:hover { background: #2db84e; }
+        .btn-reject:hover { background: #e0342b; }
+    </style>
+</head>
+<body>
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        <main class="liquid-main">
+            <header style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1 class="vibrant-h1">Payout Management</h1>
+                    <p style="color: #6e6e73; font-size: 1rem; font-weight: 500;">Manage vendor and delivery partner payout requests.</p>
+                </div>
+                <button class="pill-button" onclick="refreshAll()"><i data-lucide="refresh-cw"></i> Refresh</button>
+            </header>
+
+            <!-- Stats -->
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;">
+                <div class="liquid-card" style="padding:18px;text-align:center;">
+                    <div style="font-size:1.8rem;font-weight:800;color:#ff9500" id="stat-total-pending">0</div>
+                    <div style="font-size:0.75rem;color:#8e8e93;font-weight:600;margin-top:4px;">Total Pending</div>
+                </div>
+                <div class="liquid-card" style="padding:18px;text-align:center;">
+                    <div style="font-size:1.8rem;font-weight:800;color:#5856d6" id="stat-vendor-amount">₹0</div>
+                    <div style="font-size:0.75rem;color:#8e8e93;font-weight:600;margin-top:4px;">Vendor Pending Amount</div>
+                </div>
+                <div class="liquid-card" style="padding:18px;text-align:center;">
+                    <div style="font-size:1.8rem;font-weight:800;color:#007aff" id="stat-delivery-amount">₹0</div>
+                    <div style="font-size:0.75rem;color:#8e8e93;font-weight:600;margin-top:4px;">Delivery Pending Amount</div>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="liquid-card" style="padding:20px;">
+                <div class="tab-bar">
+                    <button class="tab-btn active" id="tab-vendor-btn" onclick="switchTab('vendor')">💰 Vendor Payouts</button>
+                    <button class="tab-btn" id="tab-delivery-btn" onclick="switchTab('delivery')">🚴 Delivery Payouts</button>
+                </div>
+
+                <!-- Vendor Payouts Tab -->
+                <div id="tab-vendor">
+                    <div class="payout-header">
+                        <span>Vendor Name</span>
+                        <span>Amount</span>
+                        <span>Requested Date</span>
+                        <span>Status</span>
+                        <span>Actions</span>
+                    </div>
+                    <div id="vendor-payout-list">
+                        <p style="text-align:center;padding:40px;color:#8e8e93;">Loading vendor payouts...</p>
+                    </div>
+                </div>
+
+                <!-- Delivery Payouts Tab -->
+                <div id="tab-delivery" style="display:none;">
+                    <div class="payout-header">
+                        <span>Partner Name</span>
+                        <span>Amount</span>
+                        <span>Requested Date</span>
+                        <span>Status</span>
+                        <span>Actions</span>
+                    </div>
+                    <div id="delivery-payout-list">
+                        <p style="text-align:center;padding:40px;color:#8e8e93;">Loading delivery payouts...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        const user = auth.getUser();
+        if (!user || user.role !== 'admin') { window.location.href = '../auth/login.html'; }
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('admin');
+        lucide.createIcons();
+
+        let vendorPayouts = [];
+        let deliveryPayouts = [];
+
+        function switchTab(tab) {
+            document.getElementById('tab-vendor').style.display = tab === 'vendor' ? 'block' : 'none';
+            document.getElementById('tab-delivery').style.display = tab === 'delivery' ? 'block' : 'none';
+            document.getElementById('tab-vendor-btn').classList.toggle('active', tab === 'vendor');
+            document.getElementById('tab-delivery-btn').classList.toggle('active', tab === 'delivery');
+        }
+
+        function refreshAll() {
+            loadVendorPayouts();
+            loadDeliveryPayouts();
+        }
+
+        function updateStats() {
+            const totalPending = vendorPayouts.length + deliveryPayouts.length;
+            const vendorTotal = vendorPayouts.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+            const deliveryTotal = deliveryPayouts.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+
+            document.getElementById('stat-total-pending').textContent = totalPending;
+            document.getElementById('stat-vendor-amount').textContent = '₹' + vendorTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+            document.getElementById('stat-delivery-amount').textContent = '₹' + deliveryTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+        }
+
+        // --- Vendor Payouts ---
+        async function loadVendorPayouts() {
+            try {
+                const res = await api.get('/admin/payouts/pending');
+                vendorPayouts = (res.data && res.data.payouts) ? res.data.payouts : [];
+                renderVendorPayouts();
+                updateStats();
+            } catch (err) {
+                console.error('Vendor payout load error:', err);
+                components.showError('Failed to load vendor payouts.');
+            }
+        }
+
+        function renderVendorPayouts() {
+            const container = document.getElementById('vendor-payout-list');
+            if (!vendorPayouts.length) {
+                container.innerHTML = '<p style="text-align:center;padding:40px;color:#8e8e93;">No pending vendor payouts.</p>';
+                return;
+            }
+            container.innerHTML = vendorPayouts.map(p => `
+                <div class="payout-row">
+                    <div style="font-weight:700;">${p.vendor_name || 'Vendor #' + p.vendor_id}</div>
+                    <div style="font-weight:800;">₹${parseFloat(p.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                    <div style="color:#8e8e93;font-size:0.8rem;">${new Date(p.created_at).toLocaleDateString('en-IN')}</div>
+                    <div><span class="status-badge badge-pending">${(p.status || 'pending').toUpperCase()}</span></div>
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn-approve" onclick="approveVendorPayout(${p.id})">✓ Approve</button>
+                        <button class="btn-reject" onclick="rejectVendorPayout(${p.id})">✗ Reject</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function approveVendorPayout(id) {
+            const confirmed = await components.confirm('Approve Vendor Payout', 'Are you sure you want to approve this payout? The amount will be marked as settled.', 'Yes, Approve');
+            if (!confirmed) return;
+            try {
+                components.showLoader();
+                await api.post('/admin/payouts/' + id + '/approve');
+                components.showSuccess('Vendor payout approved successfully.');
+                loadVendorPayouts();
+                loadDeliveryPayouts();
+            } catch (err) {
+                components.showError(err.message || 'Failed to approve vendor payout.');
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        async function rejectVendorPayout(id) {
+            const confirmed = await components.confirm('Reject Vendor Payout', 'Are you sure you want to reject this payout request? The vendor will be notified.', 'Yes, Reject');
+            if (!confirmed) return;
+            try {
+                components.showLoader();
+                await api.post('/admin/payouts/' + id + '/reject');
+                components.showSuccess('Vendor payout rejected.');
+                loadVendorPayouts();
+                loadDeliveryPayouts();
+            } catch (err) {
+                components.showError(err.message || 'Failed to reject vendor payout.');
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        // --- Delivery Payouts ---
+        async function loadDeliveryPayouts() {
+            try {
+                const res = await api.get('/admin/payouts/delivery');
+                deliveryPayouts = (res.data && res.data.payouts) ? res.data.payouts : [];
+                renderDeliveryPayouts();
+                updateStats();
+            } catch (err) {
+                console.error('Delivery payout load error:', err);
+                components.showError('Failed to load delivery payouts.');
+            }
+        }
+
+        function renderDeliveryPayouts() {
+            const container = document.getElementById('delivery-payout-list');
+            if (!deliveryPayouts.length) {
+                container.innerHTML = '<p style="text-align:center;padding:40px;color:#8e8e93;">No pending delivery payouts.</p>';
+                return;
+            }
+            container.innerHTML = deliveryPayouts.map(p => `
+                <div class="payout-row">
+                    <div style="font-weight:700;">${p.rider_name || 'Rider #' + p.rider_id}</div>
+                    <div style="font-weight:800;">₹${parseFloat(p.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                    <div style="color:#8e8e93;font-size:0.8rem;">${new Date(p.created_at).toLocaleDateString('en-IN')}</div>
+                    <div><span class="status-badge badge-pending">${(p.status || 'pending').toUpperCase()}</span></div>
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn-approve" onclick="approveDeliveryPayout(${p.id})">✓ Approve</button>
+                        <button class="btn-reject" onclick="rejectDeliveryPayout(${p.id})">✗ Reject</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function approveDeliveryPayout(id) {
+            const confirmed = await components.confirm('Approve Delivery Payout', 'Are you sure you want to approve this delivery partner payout?', 'Yes, Approve');
+            if (!confirmed) return;
+            try {
+                components.showLoader();
+                await api.post('/admin/payouts/delivery/' + id + '/approve');
+                components.showSuccess('Delivery payout approved successfully.');
+                loadDeliveryPayouts();
+                loadVendorPayouts();
+            } catch (err) {
+                components.showError(err.message || 'Failed to approve delivery payout.');
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        async function rejectDeliveryPayout(id) {
+            const confirmed = await components.confirm('Reject Delivery Payout', 'Are you sure you want to reject this delivery partner payout?', 'Yes, Reject');
+            if (!confirmed) return;
+            try {
+                components.showLoader();
+                await api.post('/admin/payouts/delivery/' + id + '/reject');
+                components.showSuccess('Delivery payout rejected.');
+                loadDeliveryPayouts();
+                loadVendorPayouts();
+            } catch (err) {
+                components.showError(err.message || 'Failed to reject delivery payout.');
+            } finally {
+                components.hideLoader();
+            }
+        }
+
+        // Initial load
+        loadVendorPayouts();
+        loadDeliveryPayouts();
+    </script>
+</body>
+</html>

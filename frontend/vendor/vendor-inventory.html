@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Manager | Vendor | MediMitra</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/liquid.css">
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .inventory-row { display: grid; grid-template-columns: 60px 2fr 1fr 1fr 1.2fr 100px; gap: 16px; align-items: center; padding: 16px 24px; border-bottom: 1px solid rgba(0,0,0,0.05); transition: background 0.2s; }
+        .inventory-row:hover { background: rgba(0,122,255,0.02); }
+        .editable-input { background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05); border-radius: 8px; padding: 8px 12px; width: 80px; font-weight: 700; color: #1d1d1f; text-align: center; }
+        .editable-input:focus { border-color: #007aff; outline: none; background: white; }
+    </style>
+</head>
+<body>
+    <div class="squircle-card animate-scale-in">
+        <aside class="liquid-sidebar" id="sidebar-root"></aside>
+        <main class="liquid-main">
+            <header style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1 class="vibrant-h1">Stock Manager</h1>
+                    <p style="color: #6e6e73; font-size: 1.1rem; font-weight: 500;">Manage your pharmacy inventory and marketplace presence.</p>
+                </div>
+                <button class="pill-button" onclick="loadInventory()"><i data-lucide="refresh-cw"></i> Refresh</button>
+            </header>
+
+            <!-- Search, Filter & Sort Bar -->
+            <div style="display:flex; gap:12px; align-items:center; margin-bottom:20px; flex-wrap:wrap;">
+                <input type="text" id="invSearchInput" placeholder="Search medicine name..." oninput="applyInvFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; min-width:200px; outline:none;">
+                <select id="invFilterSelect" onchange="applyInvFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; font-weight:600;">
+                    <option value="all">All Stock</option>
+                    <option value="low">Low Stock (≤10)</option>
+                    <option value="out">Out of Stock</option>
+                </select>
+                <select id="invSortSelect" onchange="applyInvFilters()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); font-family:Inter,sans-serif; font-size:0.85rem; font-weight:600;">
+                    <option value="name_az">Name: A → Z</option>
+                    <option value="name_za">Name: Z → A</option>
+                    <option value="stock_low">Stock: Low → High</option>
+                    <option value="stock_high">Stock: High → Low</option>
+                    <option value="price_low">Price: Low → High</option>
+                    <option value="price_high">Price: High → Low</option>
+                </select>
+            </div>
+
+            <div class="liquid-card" style="padding: 0; overflow: hidden;">
+                <div style="display: grid; grid-template-columns: 60px 2fr 1fr 1fr 1.2fr 100px; gap: 16px; padding: 12px 24px; background: rgba(0,0,0,0.02); border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 0.72rem; font-weight: 800; color: #8e8e93; text-transform: uppercase;">
+                    <span>IMG</span><span>Medicine</span><span>Category</span><span>Stock</span><span>Price (₹)</span><span>Action</span>
+                </div>
+                <div id="inventory-list" style="max-height: 60vh; overflow-y: auto;">
+                    <!-- Inventory Rows -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/liquid.js"></script>
+    <script>
+        const user = auth.getUser();
+        if (!user || user.role !== 'vendor') window.location.href = '../auth/login.html';
+        document.getElementById('sidebar-root').innerHTML = components.liquidSidebar('vendor');
+        lucide.createIcons();
+
+        let allInventory = [];
+
+        async function loadInventory() {
+            try {
+                components.showLoader();
+                api.headers['X-User-ID'] = user.id;
+                const data = await api.get('/pharmacy/inventory');
+                allInventory = (data && data.data && data.data.inventory) ? data.data.inventory : [];
+                applyInvFilters();
+            } catch (err) { console.error(err); } finally { components.hideLoader(); }
+        }
+
+        function applyInvFilters() {
+            const search = (document.getElementById('invSearchInput').value || '').toLowerCase();
+            const filter = document.getElementById('invFilterSelect').value;
+            const sort = document.getElementById('invSortSelect').value;
+
+            let filtered = [...allInventory];
+
+            if (search) {
+                filtered = filtered.filter(m => (m.name || '').toLowerCase().includes(search));
+            }
+            if (filter === 'low') filtered = filtered.filter(m => parseInt(m.stock) > 0 && parseInt(m.stock) <= 10);
+            else if (filter === 'out') filtered = filtered.filter(m => parseInt(m.stock) === 0);
+
+            if (sort === 'name_az') filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            else if (sort === 'name_za') filtered.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+            else if (sort === 'stock_low') filtered.sort((a, b) => parseInt(a.stock || 0) - parseInt(b.stock || 0));
+            else if (sort === 'stock_high') filtered.sort((a, b) => parseInt(b.stock || 0) - parseInt(a.stock || 0));
+            else if (sort === 'price_low') filtered.sort((a, b) => parseFloat(a.price || 0) - parseFloat(b.price || 0));
+            else if (sort === 'price_high') filtered.sort((a, b) => parseFloat(b.price || 0) - parseFloat(a.price || 0));
+
+            renderInventory(filtered);
+        }
+
+        function renderInventory(inventory) {
+                const container = document.getElementById('inventory-list');
+                
+                if (inventory.length === 0) {
+                    container.innerHTML = `<div style="padding: 60px; text-align: center; color: #8e8e93; font-weight: 600;">No matching inventory items found.</div>`;
+                    return;
+                }
+
+                container.innerHTML = inventory.map(m => `
+                    <div class="inventory-row" id="row-${m.id}">
+                        <div style="width: 40px; height: 40px; background: white; border-radius: 8px; overflow: hidden; border: 1px solid rgba(0,0,0,0.05);">
+                            <img src="../assets/images/medicines/${m.image || m.image_path || 'placeholder.png'}" style="width: 100%; height: 100%; object-fit: contain;" onerror="this.src='../assets/images/medicines/placeholder.png'">
+                        </div>
+                        <div style="display: flex; flex-direction: column;">
+                            <span style="font-weight: 700; color: #1d1d1f;">${m.name}</span>
+                            <span style="font-size: 0.72rem; color: #8e8e93; font-weight: 600;"> SKU: MM-PHY-${m.id}</span>
+                        </div>
+                        <span style="color: #6e6e73; font-weight: 500;">${m.category_name || 'Uncategorized'}</span>
+                        <div>
+                            <input type="number" value="${m.stock}" class="editable-input" id="stock-${m.id}" min="0">
+                        </div>
+                        <div>
+                            <input type="number" value="${m.price}" class="editable-input" id="price-${m.id}" step="0.5">
+                        </div>
+                        <button class="pill-button" style="padding: 6px 12px; font-size: 0.75rem; background: #34c759; color: white;" onclick="syncInventory(${m.id})">Sync</button>
+                    </div>
+                `).join('');
+                lucide.createIcons();
+        }
+
+        async function syncInventory(id) {
+            const stock = document.getElementById(`stock-${id}`).value;
+            const price = document.getElementById(`price-${id}`).value;
+            
+            try {
+                components.showLoader();
+                await api.post(`/pharmacy/inventory/update/${id}`, { stock, price });
+                components.showSuccess('Inventory updated.');
+                // Visual feedback
+                const row = document.getElementById(`row-${id}`);
+                row.style.background = 'rgba(52,199,89,0.05)';
+                setTimeout(() => row.style.background = 'transparent', 1000);
+            } catch (err) { console.error(err); } finally { components.hideLoader(); }
+        }
+
+        loadInventory();
+    </script>
+</body>
+</html>
