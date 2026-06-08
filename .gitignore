@@ -1,0 +1,15 @@
+# Mediflow Git Ignore
+/backend/.env
+/backend/storage/logs/*.log
+/backend/php_errors.log
+/backend/php_test.log
+/scratch/
+*.tmp
+.DS_Store
+.vscode/
+node_modules/
+dist/
+build/
+
+.env
+backend/php_server.log
